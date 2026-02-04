@@ -137,21 +137,13 @@ async function handleAnnotationCreated() {
         </div>
       </div>
 
-      <!-- Veritas Score -->
-      <UCard v-if="entry.veritasScore">
-        <template #header>
-          <h2 class="font-semibold text-gray-900 dark:text-white">Veritas Score</h2>
+      <!-- Veritas Score (Pro feature) -->
+      <AppUpgradePrompt feature="veritasScore" required-tier="pro">
+        Get AI-powered credibility assessments for your sources with the Pro plan.
+        <template #content>
+          <VeritasVeritasScoreDetail :entry-id="entryId" />
         </template>
-        <div class="flex items-center gap-4">
-          <VeritasVeritasScoreBadge :score="entry.veritasScore.overallScore" size="lg" />
-          <div class="flex-1">
-            <UProgress :model-value="entry.veritasScore.overallScore" />
-            <p class="text-sm text-gray-500 mt-1">
-              Confidence: {{ Math.round(entry.veritasScore.confidence * 100) }}%
-            </p>
-          </div>
-        </div>
-      </UCard>
+      </AppUpgradePrompt>
 
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Metadata -->
