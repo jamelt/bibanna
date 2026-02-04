@@ -164,7 +164,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'sm:max-w-2xl' }">
+  <UModal v-model:open="isOpen" :ui="{ content: 'sm:max-w-2xl' }">
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
@@ -174,7 +174,7 @@ async function handleSubmit() {
           <UButton
             icon="i-heroicons-x-mark"
             variant="ghost"
-            color="gray"
+            color="neutral"
             @click="isOpen = false"
           />
         </div>
@@ -183,31 +183,30 @@ async function handleSubmit() {
       <form class="space-y-4" @submit.prevent="handleSubmit">
         <UAlert
           v-if="errors.general"
-          color="red"
+          color="error"
           icon="i-heroicons-exclamation-triangle"
           :title="errors.general"
         />
 
         <!-- Entry Type -->
-        <UFormGroup label="Type" required>
+        <UFormField label="Type" required>
           <USelectMenu
             v-model="form.entryType"
-            :options="entryTypeOptions"
-            value-attribute="value"
-            option-attribute="label"
+            :items="entryTypeOptions"
+            value-key="value"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Title -->
-        <UFormGroup label="Title" required :error="errors.title">
+        <UFormField label="Title" required :error="errors.title">
           <UInput
             v-model="form.title"
             placeholder="Enter the title"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Authors -->
-        <UFormGroup label="Authors">
+        <UFormField label="Authors">
           <div class="space-y-2">
             <div
               v-for="(author, index) in form.authors"
@@ -221,7 +220,7 @@ async function handleSubmit() {
               <UButton
                 icon="i-heroicons-x-mark"
                 variant="ghost"
-                color="gray"
+                color="neutral"
                 size="xs"
                 @click="removeAuthor(index)"
               />
@@ -249,15 +248,15 @@ async function handleSubmit() {
               <UButton
                 icon="i-heroicons-plus"
                 variant="outline"
-                color="gray"
+                color="neutral"
                 @click="addAuthor"
               />
             </div>
           </div>
-        </UFormGroup>
+        </UFormField>
 
         <!-- Year -->
-        <UFormGroup label="Year">
+        <UFormField label="Year">
           <UInput
             v-model.number="form.year"
             type="number"
@@ -265,91 +264,90 @@ async function handleSubmit() {
             :max="9999"
             placeholder="Publication year"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Type-specific metadata -->
         <div v-if="['book', 'thesis', 'report'].includes(form.entryType)" class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Publisher">
+          <UFormField label="Publisher">
             <UInput v-model="form.metadata.publisher" placeholder="Publisher name" />
-          </UFormGroup>
-          <UFormGroup label="ISBN">
+          </UFormField>
+          <UFormField label="ISBN">
             <UInput v-model="form.metadata.isbn" placeholder="ISBN" />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <div v-if="form.entryType === 'journal_article'" class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Journal" class="col-span-2">
+          <UFormField label="Journal" class="col-span-2">
             <UInput v-model="form.metadata.journal" placeholder="Journal name" />
-          </UFormGroup>
-          <UFormGroup label="Volume">
+          </UFormField>
+          <UFormField label="Volume">
             <UInput v-model="form.metadata.volume" placeholder="Volume" />
-          </UFormGroup>
-          <UFormGroup label="Issue">
+          </UFormField>
+          <UFormField label="Issue">
             <UInput v-model="form.metadata.issue" placeholder="Issue" />
-          </UFormGroup>
-          <UFormGroup label="Pages">
+          </UFormField>
+          <UFormField label="Pages">
             <UInput v-model="form.metadata.pages" placeholder="e.g., 123-145" />
-          </UFormGroup>
-          <UFormGroup label="DOI">
+          </UFormField>
+          <UFormField label="DOI">
             <UInput v-model="form.metadata.doi" placeholder="DOI" />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <div v-if="form.entryType === 'website'" class="space-y-4">
-          <UFormGroup label="URL">
+          <UFormField label="URL">
             <UInput v-model="form.metadata.url" type="url" placeholder="https://..." />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Abstract -->
-        <UFormGroup label="Abstract">
+        <UFormField label="Abstract">
           <UTextarea
             v-model="form.metadata.abstract"
             :rows="3"
             placeholder="Enter the abstract..."
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Projects -->
-        <UFormGroup label="Projects">
+        <UFormField label="Projects">
           <USelectMenu
             v-model="form.projectIds"
-            :options="projects || []"
+            :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
             multiple
             placeholder="Select projects..."
-            value-attribute="id"
-            option-attribute="name"
+            value-key="id"
+            label-key="name"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Tags -->
-        <UFormGroup label="Tags">
+        <UFormField label="Tags">
           <USelectMenu
             v-model="form.tagIds"
-            :options="tags || []"
+            :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
             multiple
             placeholder="Select tags..."
-            value-attribute="id"
-            option-attribute="name"
+            value-key="id"
+            label-key="name"
           >
-            <template #option="{ option }">
+            <template #item-leading="{ item }">
               <span
                 class="w-3 h-3 rounded-full flex-shrink-0"
-                :style="{ backgroundColor: option.color }"
+                :style="{ backgroundColor: item.color ?? 'transparent' }"
               />
-              <span>{{ option.name }}</span>
             </template>
           </USelectMenu>
-        </UFormGroup>
+        </UFormField>
 
         <!-- Notes -->
-        <UFormGroup label="Notes">
+        <UFormField label="Notes">
           <UTextarea
             v-model="form.notes"
             :rows="2"
             placeholder="Personal notes..."
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Favorite -->
         <UCheckbox v-model="form.isFavorite" label="Mark as favorite" />
@@ -359,7 +357,7 @@ async function handleSubmit() {
         <div class="flex justify-end gap-3">
           <UButton
             variant="outline"
-            color="gray"
+            color="neutral"
             @click="isOpen = false"
           >
             Cancel

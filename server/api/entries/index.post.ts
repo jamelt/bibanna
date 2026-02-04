@@ -41,6 +41,13 @@ export default defineEventHandler(async (event) => {
     })
     .returning()
 
+  if (!newEntry) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to create entry',
+    })
+  }
+
   if (projectIds && projectIds.length > 0) {
     await db.insert(entryProjects).values(
       projectIds.map(projectId => ({

@@ -39,7 +39,7 @@ const userNavigation = [
           <UButton
             icon="i-heroicons-x-mark"
             variant="ghost"
-            color="gray"
+            color="neutral"
             @click="isMobileMenuOpen = false"
           />
         </div>
@@ -78,8 +78,7 @@ const userNavigation = [
           v-for="item in navigation"
           :key="item.name"
           :text="item.name"
-          :popper="{ placement: 'right' }"
-          :ui="{ container: isSidebarOpen ? 'hidden' : '' }"
+          :content="{ side: 'right' }"
         >
           <NuxtLink
             :to="item.to"
@@ -97,8 +96,7 @@ const userNavigation = [
           v-for="item in userNavigation"
           :key="item.name"
           :text="item.name"
-          :popper="{ placement: 'right' }"
-          :ui="{ container: isSidebarOpen ? 'hidden' : '' }"
+          :content="{ side: 'right' }"
         >
           <NuxtLink
             :to="item.to"
@@ -113,7 +111,7 @@ const userNavigation = [
         <UButton
           :icon="isSidebarOpen ? 'i-heroicons-chevron-double-left' : 'i-heroicons-chevron-double-right'"
           variant="ghost"
-          color="gray"
+          color="neutral"
           :class="isSidebarOpen ? '' : 'mx-auto'"
           block
           @click="isSidebarOpen = !isSidebarOpen"
@@ -131,7 +129,7 @@ const userNavigation = [
         <UButton
           icon="i-heroicons-bars-3"
           variant="ghost"
-          color="gray"
+          color="neutral"
           class="lg:hidden"
           @click="isMobileMenuOpen = true"
         />
@@ -142,7 +140,7 @@ const userNavigation = [
             icon="i-heroicons-magnifying-glass"
             placeholder="Search entries, projects, tags..."
             size="sm"
-            :ui="{ wrapper: 'w-full' }"
+            class="w-full"
           />
         </div>
 
@@ -163,7 +161,7 @@ const userNavigation = [
         <UButton
           :icon="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'"
           variant="ghost"
-          color="gray"
+          color="neutral"
           @click="isDark = !isDark"
         />
 
@@ -171,7 +169,7 @@ const userNavigation = [
         <UButton
           icon="i-heroicons-bell"
           variant="ghost"
-          color="gray"
+          color="neutral"
         />
 
         <!-- User menu -->
@@ -182,13 +180,13 @@ const userNavigation = [
               { label: 'Settings', icon: 'i-heroicons-cog-6-tooth', to: '/app/settings' },
             ],
             [
-              { label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle', click: () => {} },
+              { label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle', onClick: () => {} },
             ],
           ]"
-          :popper="{ placement: 'bottom-end' }"
+          :content="{ side: 'bottom', align: 'end' }"
         >
           <UAvatar
-            :text="user?.email?.slice(0, 2).toUpperCase() || 'U'"
+            :text="(user as { email?: string })?.email?.slice(0, 2).toUpperCase() || 'U'"
             size="sm"
             class="cursor-pointer"
           />

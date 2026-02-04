@@ -80,46 +80,46 @@ async function handleOAuthLogin(provider: string) {
         <form class="space-y-4" @submit.prevent="handleSignup">
           <UAlert
             v-if="error"
-            color="red"
+            color="error"
             icon="i-heroicons-exclamation-triangle"
             :title="error"
           />
 
-          <UFormGroup label="Name">
+          <UFormField label="Name">
             <UInput
               v-model="name"
               placeholder="Your name"
               required
               autofocus
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Email">
+          <UFormField label="Email">
             <UInput
               v-model="email"
               type="email"
               placeholder="you@example.com"
               required
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Password">
+          <UFormField label="Password">
             <UInput
               v-model="password"
               type="password"
               placeholder="At least 8 characters"
               required
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Confirm Password">
+          <UFormField label="Confirm Password">
             <UInput
               v-model="confirmPassword"
               type="password"
               placeholder="Confirm your password"
               required
             />
-          </UFormGroup>
+          </UFormField>
 
           <UButton
             type="submit"
@@ -131,13 +131,13 @@ async function handleOAuthLogin(provider: string) {
           </UButton>
         </form>
 
-        <UDivider label="or continue with" class="my-6" />
+        <USeparator label="or continue with" class="my-6" />
 
         <div class="space-y-3">
           <UButton
             icon="i-simple-icons-google"
             variant="outline"
-            color="gray"
+            color="neutral"
             block
             @click="handleOAuthLogin('google')"
           >
@@ -146,7 +146,7 @@ async function handleOAuthLogin(provider: string) {
           <UButton
             icon="i-simple-icons-github"
             variant="outline"
-            color="gray"
+            color="neutral"
             block
             @click="handleOAuthLogin('github')"
           >

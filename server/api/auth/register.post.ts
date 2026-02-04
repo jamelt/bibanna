@@ -47,6 +47,13 @@ export default defineEventHandler(async (event) => {
     })
     .returning()
 
+  if (!newUser) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to create user',
+    })
+  }
+
   await setUserSession(event, {
     user: {
       id: newUser.id,

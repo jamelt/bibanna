@@ -89,7 +89,7 @@ async function handleAnnotationCreated() {
             </UBadge>
             <UButton
               :icon="entry.isFavorite ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
-              :color="entry.isFavorite ? 'yellow' : 'gray'"
+              :color="entry.isFavorite ? 'warning' : 'neutral'"
               variant="ghost"
               size="xs"
               @click="toggleFavorite"
@@ -110,7 +110,7 @@ async function handleAnnotationCreated() {
           <UButton
             icon="i-heroicons-pencil"
             variant="outline"
-            color="gray"
+            color="neutral"
             @click="isEditModalOpen = true"
           >
             Edit
@@ -118,20 +118,20 @@ async function handleAnnotationCreated() {
           <UDropdown
             :items="[
               [
-                { label: 'Export', icon: 'i-heroicons-arrow-down-tray', click: () => {} },
-                { label: 'Share', icon: 'i-heroicons-share', click: () => {} },
-                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', click: () => {} },
+                { label: 'Export', icon: 'i-heroicons-arrow-down-tray', onClick: () => {} },
+                { label: 'Share', icon: 'i-heroicons-share', onClick: () => {} },
+                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onClick: () => {} },
               ],
               [
-                { label: 'Delete', icon: 'i-heroicons-trash', click: () => isDeleteModalOpen = true },
+                { label: 'Delete', icon: 'i-heroicons-trash', onClick: () => isDeleteModalOpen = true },
               ],
             ]"
-            :popper="{ placement: 'bottom-end' }"
+            :content="{ side: 'bottom', align: 'end' }"
           >
             <UButton
               icon="i-heroicons-ellipsis-vertical"
               variant="outline"
-              color="gray"
+              color="neutral"
             />
           </UDropdown>
         </div>
@@ -145,7 +145,7 @@ async function handleAnnotationCreated() {
         <div class="flex items-center gap-4">
           <VeritasVeritasScoreBadge :score="entry.veritasScore.overallScore" size="lg" />
           <div class="flex-1">
-            <UProgress :value="entry.veritasScore.overallScore" />
+            <UProgress :model-value="entry.veritasScore.overallScore" />
             <p class="text-sm text-gray-500 mt-1">
               Confidence: {{ Math.round(entry.veritasScore.confidence * 100) }}%
             </p>
@@ -331,10 +331,10 @@ async function handleAnnotationCreated() {
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <UButton variant="outline" color="gray" @click="isDeleteModalOpen = false">
+            <UButton variant="outline" color="neutral" @click="isDeleteModalOpen = false">
               Cancel
             </UButton>
-            <UButton color="red" @click="handleDelete">
+            <UButton color="error" @click="handleDelete">
               Delete
             </UButton>
           </div>

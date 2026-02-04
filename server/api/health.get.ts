@@ -11,11 +11,17 @@ export default defineEventHandler(async () => {
   try {
     const dbStart = Date.now()
     await db.execute(sql`SELECT 1`)
-    checks.database.latency = Date.now() - dbStart
+    const dbCheck = checks.database
+    if (dbCheck) {
+      dbCheck.latency = Date.now() - dbStart
+    }
   }
   catch (error: any) {
-    checks.database.status = 'unhealthy'
-    checks.database.error = error.message
+    const dbCheck = checks.database
+    if (dbCheck) {
+      dbCheck.status = 'unhealthy'
+      dbCheck.error = error.message
+    }
   }
 
   const overallStatus = Object.values(checks).every(c => c.status === 'healthy')

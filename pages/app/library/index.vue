@@ -19,7 +19,9 @@ const page = ref(1)
 const pageSize = ref(20)
 
 const isAddModalOpen = ref(false)
+const isExportModalOpen = ref(false)
 const viewMode = ref<'list' | 'grid'>('list')
+const selectedEntryIds = ref<string[]>([])
 
 const queryParams = computed(() => ({
   q: searchQuery.value || undefined,
@@ -55,7 +57,7 @@ const sortOptions = [
   { value: 'year', label: 'Year' },
 ]
 
-function formatAuthors(authors: any[]) {
+function formatAuthors(authors: any[] | null) {
   if (!authors || authors.length === 0) return 'Unknown'
   if (authors.length === 1) {
     return `${authors[0].lastName}, ${authors[0].firstName}`
@@ -97,16 +99,25 @@ async function handleEntryCreated() {
         </p>
       </div>
 
-      <UButton
-        icon="i-heroicons-plus"
-        label="Add Entry"
-        color="primary"
-        @click="isAddModalOpen = true"
-      />
+      <div class="flex gap-2">
+        <UButton
+          icon="i-heroicons-arrow-down-tray"
+          label="Export"
+          variant="outline"
+          color="neutral"
+          @click="isExportModalOpen = true"
+        />
+        <UButton
+          icon="i-heroicons-plus"
+          label="Add Entry"
+          color="primary"
+          @click="isAddModalOpen = true"
+        />
+      </div>
     </div>
 
     <!-- Filters -->
-    <UCard :ui="{ body: { padding: 'p-4' } }">
+    <UCard class="p-4">
       <div class="flex flex-col lg:flex-row gap-4">
         <!-- Search -->
         <div class="flex-1">
@@ -121,39 +132,36 @@ async function handleEntryCreated() {
         <!-- Type filter -->
         <USelectMenu
           v-model="selectedTypes"
-          :options="entryTypeOptions"
+          :items="entryTypeOptions"
           multiple
           placeholder="All types"
-          value-attribute="value"
-          option-attribute="label"
+          value-key="value"
           class="w-full lg:w-48"
         />
 
         <!-- Tag filter -->
         <USelectMenu
           v-model="selectedTags"
-          :options="tags || []"
+          :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
           multiple
           placeholder="All tags"
-          value-attribute="id"
-          option-attribute="name"
+          value-key="id"
+          label-key="name"
           class="w-full lg:w-48"
         >
-          <template #option="{ option }">
+          <template #item-leading="{ item }">
             <span
               class="w-3 h-3 rounded-full flex-shrink-0"
-              :style="{ backgroundColor: option.color }"
+              :style="{ backgroundColor: item.color ?? 'transparent' }"
             />
-            <span>{{ option.name }}</span>
           </template>
         </USelectMenu>
 
         <!-- Sort -->
         <USelectMenu
           v-model="sortBy"
-          :options="sortOptions"
-          value-attribute="value"
-          option-attribute="label"
+          :items="sortOptions"
+          value-key="value"
           class="w-full lg:w-40"
         />
 
@@ -161,32 +169,32 @@ async function handleEntryCreated() {
         <UButton
           :icon="sortOrder === 'asc' ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'"
           variant="outline"
-          color="gray"
+          color="neutral"
           @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
         />
 
         <!-- View mode toggle -->
-        <UButtonGroup>
+        <UFieldGroup>
           <UButton
             icon="i-heroicons-list-bullet"
             :variant="viewMode === 'list' ? 'solid' : 'outline'"
-            color="gray"
+            color="neutral"
             @click="viewMode = 'list'"
           />
           <UButton
             icon="i-heroicons-squares-2x2"
             :variant="viewMode === 'grid' ? 'solid' : 'outline'"
-            color="gray"
+            color="neutral"
             @click="viewMode = 'grid'"
           />
-        </UButtonGroup>
+        </UFieldGroup>
 
         <!-- Clear filters -->
         <UButton
           v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0"
           icon="i-heroicons-x-mark"
           variant="ghost"
-          color="gray"
+          color="neutral"
           @click="clearFilters"
         />
       </div>
@@ -224,9 +232,8 @@ async function handleEntryCreated() {
       <UCard
         v-for="entry in entries"
         :key="entry.id"
-        :ui="{ body: { padding: 'p-4' } }"
-        class="hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
-        @click="$router.push(`/app/library/${entry.id}`)"
+        class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
+        @click="router.push(`/app/library/${entry.id}`)"
       >
         <div class="flex items-start gap-4">
           <div class="flex-1 min-w-0">
@@ -241,7 +248,7 @@ async function handleEntryCreated() {
               />
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {{ formatAuthors(entry.authors) }}
+              {{ formatAuthors(entry.authors ?? []) }}
               <span v-if="entry.year"> &middot; {{ entry.year }}</span>
             </p>
             <div class="flex items-center gap-2 mt-2">
@@ -252,7 +259,7 @@ async function handleEntryCreated() {
                 v-for="tag in entry.tags?.slice(0, 3)"
                 :key="tag.id"
                 class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                :style="{ backgroundColor: `${tag.color}20`, color: tag.color }"
+                :style="{ backgroundColor: `${tag.color ?? ''}20`, color: tag.color ?? undefined }"
               >
                 {{ tag.name }}
               </span>
@@ -279,9 +286,8 @@ async function handleEntryCreated() {
       <UCard
         v-for="entry in entries"
         :key="entry.id"
-        :ui="{ body: { padding: 'p-4' } }"
-        class="hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
-        @click="$router.push(`/app/library/${entry.id}`)"
+        class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
+        @click="router.push(`/app/library/${entry.id}`)"
       >
         <div class="space-y-2">
           <div class="flex items-start justify-between gap-2">
@@ -310,8 +316,8 @@ async function handleEntryCreated() {
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center">
       <UPagination
-        v-model="page"
-        :page-count="pageSize"
+        v-model:page="page"
+        :items-per-page="pageSize"
         :total="totalEntries"
       />
     </div>
@@ -320,6 +326,12 @@ async function handleEntryCreated() {
     <LazyAppEntryFormModal
       v-model:open="isAddModalOpen"
       @created="handleEntryCreated"
+    />
+
+    <!-- Export Modal -->
+    <LazyAppExportModal
+      v-model:open="isExportModalOpen"
+      :entry-ids="selectedEntryIds.length > 0 ? selectedEntryIds : undefined"
     />
   </div>
 </template>

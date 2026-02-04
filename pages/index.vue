@@ -95,7 +95,7 @@ const tiers = [
           <UButton
             icon="i-heroicons-bars-3"
             variant="ghost"
-            color="gray"
+            color="neutral"
             class="md:hidden"
           />
         </div>
@@ -117,7 +117,7 @@ const tiers = [
           <UButton to="/signup" size="xl" color="primary">
             Start Free
           </UButton>
-          <UButton to="#features" size="xl" variant="outline" color="gray">
+          <UButton to="#features" size="xl" variant="outline" color="neutral">
             Learn More
           </UButton>
         </div>
@@ -140,7 +140,7 @@ const tiers = [
           <UCard
             v-for="feature in features"
             :key="feature.title"
-            :ui="{ body: { padding: 'p-6' } }"
+            class="p-6"
           >
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
@@ -176,10 +176,7 @@ const tiers = [
           <UCard
             v-for="tier in tiers"
             :key="tier.name"
-            :ui="{
-              base: tier.highlighted ? 'ring-2 ring-primary-500' : '',
-              body: { padding: 'p-6' },
-            }"
+            :class="[tier.highlighted ? 'ring-2 ring-primary-500' : '', 'p-6']"
           >
             <div v-if="tier.highlighted" class="absolute -top-3 left-1/2 -translate-x-1/2">
               <UBadge color="primary" variant="solid">
@@ -212,7 +209,7 @@ const tiers = [
             </ul>
 
             <UButton
-              :color="tier.highlighted ? 'primary' : 'gray'"
+              :color="tier.highlighted ? 'primary' : 'neutral'"
               :variant="tier.highlighted ? 'solid' : 'outline'"
               block
               class="mt-8"

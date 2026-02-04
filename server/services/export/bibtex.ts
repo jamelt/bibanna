@@ -164,6 +164,7 @@ export function parseBibtex(bibtex: string): Partial<Entry>[] {
   let match
   while ((match = entryRegex.exec(bibtex)) !== null) {
     const [, type, , fieldsStr] = match
+    if (!type || !fieldsStr) continue
 
     const entry: Partial<Entry> = {
       entryType: mapBibtexType(type),
@@ -175,6 +176,7 @@ export function parseBibtex(bibtex: string): Partial<Entry>[] {
 
     while ((fieldMatch = fieldRegex.exec(fieldsStr)) !== null) {
       const [, field, value] = fieldMatch
+      if (!field || value === undefined) continue
       const cleanValue = value.trim()
 
       switch (field.toLowerCase()) {
@@ -254,18 +256,23 @@ function parseAuthors(authorsStr: string): Author[] {
     const parts = authorStr.trim().split(',').map(p => p.trim())
 
     if (parts.length >= 2) {
-      const nameParts = parts[1].split(/\s+/)
+      const part0 = parts[0] ?? ''
+      const part1 = parts[1] ?? ''
+      const nameParts = part1.split(/\s+/)
+      const firstName = nameParts[0] ?? ''
       return {
-        lastName: unescapeBibtex(parts[0]),
-        firstName: unescapeBibtex(nameParts[0] || ''),
+        lastName: unescapeBibtex(part0),
+        firstName: unescapeBibtex(firstName),
         middleName: nameParts.slice(1).join(' ') || undefined,
       }
     }
     else {
       const nameParts = authorStr.trim().split(/\s+/)
+      const lastName = nameParts[nameParts.length - 1] ?? ''
+      const firstName = nameParts[0] ?? ''
       return {
-        lastName: unescapeBibtex(nameParts[nameParts.length - 1] || ''),
-        firstName: unescapeBibtex(nameParts[0] || ''),
+        lastName: unescapeBibtex(lastName),
+        firstName: unescapeBibtex(firstName),
         middleName: nameParts.slice(1, -1).join(' ') || undefined,
       }
     }

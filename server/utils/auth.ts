@@ -13,8 +13,9 @@ export interface AuthUser {
 
 export async function requireAuth(event: H3Event): Promise<AuthUser> {
   const session = await getUserSession(event)
+  const sessionUser = session?.user as { id?: string } | undefined
 
-  if (!session?.user?.id) {
+  if (!sessionUser?.id) {
     throw createError({
       statusCode: 401,
       message: 'Authentication required',
@@ -22,7 +23,7 @@ export async function requireAuth(event: H3Event): Promise<AuthUser> {
   }
 
   const user = await db.query.users.findFirst({
-    where: eq(users.id, session.user.id),
+    where: eq(users.id, sessionUser.id),
   })
 
   if (!user) {

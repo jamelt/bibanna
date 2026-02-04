@@ -1,6 +1,8 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
+  css: ['~/assets/css/main.css'],
+
   modules: [
     '@nuxt/ui',
     '@nuxt/icon',
@@ -8,18 +10,8 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     'nuxt-auth-utils',
-    '@vite-pwa/nuxt',
   ],
 
-  ui: {
-    icons: ['heroicons', 'lucide'],
-  },
-
-  colorMode: {
-    preference: 'system',
-    fallback: 'light',
-    classSuffix: '',
-  },
 
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -51,7 +43,6 @@ export default defineNuxtConfig({
 
   experimental: {
     payloadExtraction: true,
-    treeshakeClientOnly: true,
   },
 
   image: {
@@ -68,34 +59,6 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
     '/app/**': { ssr: false },
-  },
-
-  pwa: {
-    registerType: 'autoUpdate',
-    manifest: {
-      name: 'Bibanna',
-      short_name: 'Bibanna',
-      description: 'Bibliography & Annotation Management',
-      theme_color: '#4F46E5',
-      background_color: '#ffffff',
-      display: 'standalone',
-      icons: [
-        {
-          src: '/pwa-192x192.png',
-          sizes: '192x192',
-          type: 'image/png',
-        },
-        {
-          src: '/pwa-512x512.png',
-          sizes: '512x512',
-          type: 'image/png',
-        },
-      ],
-    },
-    workbox: {
-      navigateFallback: '/',
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-    },
   },
 
   nitro: {

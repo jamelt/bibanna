@@ -66,12 +66,12 @@ async function handleOAuthLogin(provider: string) {
         <form class="space-y-4" @submit.prevent="handleLogin">
           <UAlert
             v-if="error"
-            color="red"
+            color="error"
             icon="i-heroicons-exclamation-triangle"
             :title="error"
           />
 
-          <UFormGroup label="Email">
+          <UFormField label="Email">
             <UInput
               v-model="email"
               type="email"
@@ -79,16 +79,16 @@ async function handleOAuthLogin(provider: string) {
               required
               autofocus
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Password">
+          <UFormField label="Password">
             <UInput
               v-model="password"
               type="password"
               placeholder="Enter your password"
               required
             />
-          </UFormGroup>
+          </UFormField>
 
           <div class="flex items-center justify-between">
             <UCheckbox label="Remember me" />
@@ -107,13 +107,13 @@ async function handleOAuthLogin(provider: string) {
           </UButton>
         </form>
 
-        <UDivider label="or continue with" class="my-6" />
+        <USeparator label="or continue with" class="my-6" />
 
         <div class="space-y-3">
           <UButton
             icon="i-simple-icons-google"
             variant="outline"
-            color="gray"
+            color="neutral"
             block
             @click="handleOAuthLogin('google')"
           >
@@ -122,7 +122,7 @@ async function handleOAuthLogin(provider: string) {
           <UButton
             icon="i-simple-icons-github"
             variant="outline"
-            color="gray"
+            color="neutral"
             block
             @click="handleOAuthLogin('github')"
           >

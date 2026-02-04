@@ -59,20 +59,25 @@ export default defineEventHandler(async (event) => {
   ])
 
   const tagsByEntry = entryTagsData.reduce((acc, tag) => {
-    if (!acc[tag.entryId]) acc[tag.entryId] = []
-    acc[tag.entryId].push({
+    if (tag.entryId === undefined) return acc
+    const arr = acc[tag.entryId] ?? []
+    arr.push({
       id: tag.tagId,
       name: tag.tagName,
       color: tag.tagColor || '#6B7280',
     })
+    acc[tag.entryId] = arr
     return acc
   }, {} as Record<string, Array<{ id: string; name: string; color: string }>>)
 
+  type Annotation = (typeof entryAnnotationsData)[number]
   const annotationsByEntry = entryAnnotationsData.reduce((acc, ann) => {
-    if (!acc[ann.entryId]) acc[ann.entryId] = []
-    acc[ann.entryId].push(ann)
+    if (ann.entryId === undefined) return acc
+    const arr = acc[ann.entryId] ?? []
+    arr.push(ann)
+    acc[ann.entryId] = arr
     return acc
-  }, {} as Record<string, typeof entryAnnotationsData>)
+  }, {} as Record<string, Annotation[]>)
 
   const enrichedEntries: Entry[] = userEntries.map(e => ({
     ...e,

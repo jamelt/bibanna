@@ -214,6 +214,7 @@ function generateBibliographyHtml(entries: Entry[], opts: PdfExportOptions): str
 
     if (opts.includeAnnotations && entry.annotations?.length) {
       const annotation = entry.annotations[0]
+      if (!annotation) continue
       let content = annotation.content
 
       if (opts.annotationMaxLength && content.length > opts.annotationMaxLength) {
@@ -306,15 +307,19 @@ function formatAuthors(authors: Author[]): string {
   if (!authors || authors.length === 0) return ''
 
   if (authors.length === 1) {
-    return formatSingleAuthor(authors[0])
+    const first = authors[0]
+    return first ? formatSingleAuthor(first) : ''
   }
 
   if (authors.length === 2) {
-    return `${formatSingleAuthor(authors[0])} & ${formatSingleAuthor(authors[1])}`
+    const a0 = authors[0]
+    const a1 = authors[1]
+    return a0 && a1 ? `${formatSingleAuthor(a0)} & ${formatSingleAuthor(a1)}` : ''
   }
 
   const firstAuthors = authors.slice(0, -1).map(formatSingleAuthor).join(', ')
-  const lastAuthor = formatSingleAuthor(authors[authors.length - 1])
+  const lastAuthor = authors[authors.length - 1]
+  return lastAuthor ? `${firstAuthors}, & ${formatSingleAuthor(lastAuthor)}` : firstAuthors
   return `${firstAuthors}, & ${lastAuthor}`
 }
 

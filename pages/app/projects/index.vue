@@ -6,6 +6,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
+const router = useRouter()
 const isCreateModalOpen = ref(false)
 const showArchived = ref(false)
 
@@ -80,9 +81,8 @@ async function handleProjectCreated() {
         <UCard
           v-for="project in activeProjects"
           :key="project.id"
-          :ui="{ body: { padding: 'p-4' } }"
-          class="hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer group"
-          @click="$router.push(`/app/projects/${project.id}`)"
+          class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer group"
+          @click="router.push(`/app/projects/${project.id}`)"
         >
           <div class="flex items-start gap-3">
             <div
@@ -109,20 +109,20 @@ async function handleProjectCreated() {
             <UDropdown
               :items="[
                 [
-                  { label: 'Edit', icon: 'i-heroicons-pencil', click: () => {} },
-                  { label: 'Share', icon: 'i-heroicons-share', click: () => {} },
-                  { label: 'Export', icon: 'i-heroicons-arrow-down-tray', click: () => {} },
+                  { label: 'Edit', icon: 'i-heroicons-pencil', onClick: () => {} },
+                  { label: 'Share', icon: 'i-heroicons-share', onClick: () => {} },
+                  { label: 'Export', icon: 'i-heroicons-arrow-down-tray', onClick: () => {} },
                 ],
                 [
-                  { label: 'Archive', icon: 'i-heroicons-archive-box', click: () => {} },
+                  { label: 'Archive', icon: 'i-heroicons-archive-box', onClick: () => {} },
                 ],
               ]"
-              :popper="{ placement: 'bottom-end' }"
+              :content="{ side: 'bottom', align: 'end' }"
             >
               <UButton
                 icon="i-heroicons-ellipsis-vertical"
                 variant="ghost"
-                color="gray"
+                color="neutral"
                 size="sm"
                 class="opacity-0 group-hover:opacity-100 transition-opacity"
                 @click.stop
@@ -137,7 +137,7 @@ async function handleProjectCreated() {
         <UButton
           :icon="showArchived ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
           variant="ghost"
-          color="gray"
+          color="neutral"
           size="sm"
           @click="showArchived = !showArchived"
         >
@@ -148,9 +148,8 @@ async function handleProjectCreated() {
           <UCard
             v-for="project in archivedProjects"
             :key="project.id"
-            :ui="{ body: { padding: 'p-4' } }"
-            class="opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            @click="$router.push(`/app/projects/${project.id}`)"
+            class="p-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+            @click="router.push(`/app/projects/${project.id}`)"
           >
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">

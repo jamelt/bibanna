@@ -96,7 +96,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <UModal v-model="isOpen">
+  <UModal v-model:open="isOpen">
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
@@ -106,7 +106,7 @@ async function handleSubmit() {
           <UButton
             icon="i-heroicons-x-mark"
             variant="ghost"
-            color="gray"
+            color="neutral"
             @click="isOpen = false"
           />
         </div>
@@ -115,28 +115,28 @@ async function handleSubmit() {
       <form class="space-y-4" @submit.prevent="handleSubmit">
         <UAlert
           v-if="error"
-          color="red"
+          color="error"
           icon="i-heroicons-exclamation-triangle"
           :title="error"
         />
 
-        <UFormGroup label="Name" required>
+        <UFormField label="Name" required>
           <UInput
             v-model="form.name"
             placeholder="Enter project name"
             autofocus
           />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Description">
+        <UFormField label="Description">
           <UTextarea
             v-model="form.description"
             :rows="3"
             placeholder="What is this project about?"
           />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Color">
+        <UFormField label="Color">
           <div class="flex flex-wrap gap-2">
             <button
               v-for="color in colors"
@@ -148,14 +148,14 @@ async function handleSubmit() {
               @click="form.color = color"
             />
           </div>
-        </UFormGroup>
+        </UFormField>
       </form>
 
       <template #footer>
         <div class="flex justify-end gap-3">
           <UButton
             variant="outline"
-            color="gray"
+            color="neutral"
             @click="isOpen = false"
           >
             Cancel

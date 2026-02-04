@@ -32,7 +32,7 @@ const recentProjects = ref<any[]>([])
       <UCard
         v-for="stat in stats"
         :key="stat.label"
-        :ui="{ body: { padding: 'p-4' } }"
+        class="p-4"
       >
         <div class="flex items-center gap-4">
           <div class="flex-shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
@@ -63,28 +63,28 @@ const recentProjects = ref<any[]>([])
           icon="i-heroicons-plus"
           label="Add Entry"
           variant="outline"
-          color="gray"
+          color="neutral"
           block
         />
         <UButton
           icon="i-heroicons-folder-plus"
           label="New Project"
           variant="outline"
-          color="gray"
+          color="neutral"
           block
         />
         <UButton
           icon="i-heroicons-arrow-up-tray"
           label="Import"
           variant="outline"
-          color="gray"
+          color="neutral"
           block
         />
         <UButton
           icon="i-heroicons-arrow-down-tray"
           label="Export"
           variant="outline"
-          color="gray"
+          color="neutral"
           block
         />
       </div>
@@ -101,7 +101,7 @@ const recentProjects = ref<any[]>([])
             <UButton
               to="/app/library"
               variant="ghost"
-              color="gray"
+              color="neutral"
               size="sm"
               trailing-icon="i-heroicons-arrow-right"
             >
@@ -156,7 +156,7 @@ const recentProjects = ref<any[]>([])
             <UButton
               to="/app/projects"
               variant="ghost"
-              color="gray"
+              color="neutral"
               size="sm"
               trailing-icon="i-heroicons-arrow-right"
             >

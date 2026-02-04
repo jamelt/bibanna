@@ -49,11 +49,13 @@ export async function generateExcel(
 
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i]
+    if (!entry) continue
+
     const rowData: Record<string, unknown> = {}
 
     for (const col of enabledColumns) {
       rowData[col.id] = formatCellValue(
-        getNestedValue(entry, col.field),
+        getNestedValue(entry as unknown as Record<string, unknown>, col.field),
         col.format,
         entry,
       )
@@ -75,7 +77,7 @@ export async function generateExcel(
 
     for (const col of enabledColumns) {
       if (col.format === 'hyperlink') {
-        const cellValue = getNestedValue(entry, col.field)
+        const cellValue = getNestedValue(entry as unknown as Record<string, unknown>, col.field)
         if (cellValue && typeof cellValue === 'string') {
           const cell = row.getCell(col.id)
           const url = cellValue.startsWith('10.') ? `https://doi.org/${cellValue}` : cellValue
@@ -123,7 +125,9 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
 
     const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/)
     if (arrayMatch) {
-      const [, key, indexStr] = arrayMatch
+      const key = arrayMatch[1]
+      const indexStr = arrayMatch[2]
+      if (!key || indexStr === undefined) return undefined
       const index = parseInt(indexStr, 10)
       value = (value as Record<string, unknown>)[key]
       if (Array.isArray(value)) {

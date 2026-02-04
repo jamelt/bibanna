@@ -68,15 +68,23 @@ export default defineEventHandler(async (event) => {
     .where(and(...conditions))
 
   if (projectId) {
-    baseQuery = baseQuery
-      .innerJoin(entryProjects, eq(entries.id, entryProjects.entryId))
-      .where(and(...conditions, eq(entryProjects.projectId, projectId)))
+    baseQuery = baseQuery.innerJoin(
+      entryProjects,
+      and(
+        eq(entries.id, entryProjects.entryId),
+        eq(entryProjects.projectId, projectId),
+      ),
+    )
   }
 
   if (tagIds && tagIds.length > 0) {
-    baseQuery = baseQuery
-      .innerJoin(entryTags, eq(entries.id, entryTags.entryId))
-      .where(and(...conditions, inArray(entryTags.tagId, tagIds)))
+    baseQuery = baseQuery.innerJoin(
+      entryTags,
+      and(
+        eq(entries.id, entryTags.entryId),
+        inArray(entryTags.tagId, tagIds),
+      ),
+    )
   }
 
   const orderColumn = {
@@ -131,24 +139,28 @@ export default defineEventHandler(async (event) => {
   ])
 
   const tagsByEntry = entryTagsData.reduce((acc, tag) => {
-    if (!acc[tag.entryId]) acc[tag.entryId] = []
-    acc[tag.entryId].push({
+    if (tag.entryId === undefined) return acc
+    const arr = acc[tag.entryId] ?? []
+    arr.push({
       id: tag.tagId,
       name: tag.tagName,
       color: tag.tagColor,
     })
+    acc[tag.entryId] = arr
     return acc
   }, {} as Record<string, Array<{ id: string; name: string; color: string | null }>>)
 
   const annotationCountByEntry = entryAnnotationsData.reduce((acc, a) => {
-    acc[a.entryId] = Number(a.count)
+    if (a.entryId !== undefined) {
+      acc[a.entryId] = Number(a.count ?? 0)
+    }
     return acc
   }, {} as Record<string, number>)
 
   const data = results.map(entry => ({
     ...entry,
-    tags: tagsByEntry[entry.id] || [],
-    annotationCount: annotationCountByEntry[entry.id] || 0,
+    tags: tagsByEntry[entry.id] ?? [],
+    annotationCount: annotationCountByEntry[entry.id] ?? 0,
   }))
 
   return {

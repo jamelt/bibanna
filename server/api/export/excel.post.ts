@@ -73,19 +73,19 @@ export default defineEventHandler(async (event) => {
     if (userPreset) {
       preset = {
         id: userPreset.id,
-        name: userPreset.name,
-        description: userPreset.description || '',
+        name: userPreset.name ?? 'Custom',
+        description: userPreset.description ?? '',
         isSystem: false,
         columns: userPreset.columns,
-        options: userPreset.options,
+        options: userPreset.options ?? systemPresets[0]!.options,
       }
     }
   }
 
-  if (customColumns) {
+  if (customColumns && preset) {
     preset = { ...preset, columns: customColumns }
   }
-  if (customOptions) {
+  if (customOptions && preset) {
     preset = { ...preset, options: customOptions }
   }
 
@@ -125,25 +125,31 @@ export default defineEventHandler(async (event) => {
   ])
 
   const tagsByEntry = entryTagsData.reduce((acc, tag) => {
-    if (!acc[tag.entryId]) acc[tag.entryId] = []
-    acc[tag.entryId].push({
+    if (tag.entryId === undefined) return acc
+    const arr = acc[tag.entryId] ?? []
+    arr.push({
       id: tag.tagId,
       name: tag.tagName,
       color: tag.tagColor || '#6B7280',
     })
+    acc[tag.entryId] = arr
     return acc
   }, {} as Record<string, Array<{ id: string; name: string; color: string }>>)
 
+  type Annotation = (typeof entryAnnotationsData)[number]
   const annotationsByEntry = entryAnnotationsData.reduce((acc, ann) => {
-    if (!acc[ann.entryId]) acc[ann.entryId] = []
-    acc[ann.entryId].push(ann)
+    if (ann.entryId === undefined) return acc
+    const arr = acc[ann.entryId] ?? []
+    arr.push(ann)
+    acc[ann.entryId] = arr
     return acc
-  }, {} as Record<string, typeof entryAnnotationsData>)
+  }, {} as Record<string, Annotation[]>)
 
+  type VeritasScore = (typeof entryVeritasData)[number]
   const veritasByEntry = entryVeritasData.reduce((acc, v) => {
-    acc[v.entryId] = v
+    if (v.entryId !== undefined) acc[v.entryId] = v
     return acc
-  }, {} as Record<string, typeof entryVeritasData[0]>)
+  }, {} as Record<string, VeritasScore>)
 
   const enrichedEntries: Entry[] = userEntries.map(e => ({
     ...e,
@@ -151,6 +157,13 @@ export default defineEventHandler(async (event) => {
     annotations: annotationsByEntry[e.id] || [],
     veritasScore: veritasByEntry[e.id],
   } as Entry))
+
+  if (!preset) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid preset',
+    })
+  }
 
   const buffer = await generateExcel(enrichedEntries, preset)
 
