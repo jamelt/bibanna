@@ -1,0 +1,167 @@
+steps:
+  # Install dependencies
+  - name: 'node:20'
+    id: 'install'
+    entrypoint: 'npm'
+    args: ['install', '--frozen-lockfile']
+
+  # Run linting and type checking
+  - name: 'node:20'
+    id: 'lint'
+    entrypoint: 'npm'
+    args: ['run', 'lint']
+    waitFor: ['install']
+
+  - name: 'node:20'
+    id: 'typecheck'
+    entrypoint: 'npm'
+    args: ['run', 'typecheck']
+    waitFor: ['install']
+
+  # Build the application
+  - name: 'node:20'
+    id: 'build'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    waitFor: ['lint', 'typecheck']
+
+  # Build Docker image for preview
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-build'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/bibanna/bibanna-preview:pr-${_PR_NUMBER}'
+      - '--cache-from'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/bibanna/bibanna-app:latest'
+      - '.'
+    waitFor: ['build']
+
+  # Push Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'docker-push'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/bibanna/bibanna-preview:pr-${_PR_NUMBER}'
+    waitFor: ['docker-build']
+
+  # Create preview namespace if not exists
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'create-namespace'
+    args:
+      - 'create'
+      - 'namespace'
+      - 'preview-pr-${_PR_NUMBER}'
+      - '--dry-run=client'
+      - '-o'
+      - 'yaml'
+      - '|'
+      - 'kubectl'
+      - 'apply'
+      - '-f'
+      - '-'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_PREVIEW_CLUSTER}'
+    waitFor: ['docker-push']
+
+  # Generate preview Kustomize overlay
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'generate-kustomization'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        mkdir -p /workspace/k8s/overlays/preview-pr-${_PR_NUMBER}
+        cat > /workspace/k8s/overlays/preview-pr-${_PR_NUMBER}/kustomization.yaml << EOF
+        apiVersion: kustomize.config.k8s.io/v1beta1
+        kind: Kustomization
+        namespace: preview-pr-${_PR_NUMBER}
+        resources:
+          - ../../base
+        patches:
+          - patch: |-
+              - op: replace
+                path: /spec/replicas
+                value: 1
+            target:
+              kind: Deployment
+              name: bibanna-app
+          - patch: |-
+              - op: replace
+                path: /spec/rules/0/host
+                value: pr-${_PR_NUMBER}.preview.bibanna.dev
+            target:
+              kind: Ingress
+              name: bibanna-ingress
+        images:
+          - name: bibanna-app
+            newName: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/bibanna/bibanna-preview
+            newTag: pr-${_PR_NUMBER}
+        configMapGenerator:
+          - name: bibanna-config
+            behavior: merge
+            literals:
+              - NUXT_PUBLIC_APP_URL=https://pr-${_PR_NUMBER}.preview.bibanna.dev
+              - NODE_ENV=preview
+        EOF
+    waitFor: ['create-namespace']
+
+  # Deploy to preview environment
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    id: 'deploy-preview'
+    args:
+      - 'run'
+      - '--filename=/workspace/k8s/overlays/preview-pr-${_PR_NUMBER}'
+      - '--location=${_REGION}'
+      - '--cluster=${_PREVIEW_CLUSTER}'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+    waitFor: ['generate-kustomization']
+
+  # Wait for deployment to be ready
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'wait-deployment'
+    args:
+      - 'rollout'
+      - 'status'
+      - 'deployment/bibanna-app'
+      - '-n'
+      - 'preview-pr-${_PR_NUMBER}'
+      - '--timeout=300s'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_PREVIEW_CLUSTER}'
+    waitFor: ['deploy-preview']
+
+  # Post preview URL to GitHub PR
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'post-comment'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        curl -X POST \
+          -H "Authorization: token $$GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${_GITHUB_REPO}/issues/${_PR_NUMBER}/comments" \
+          -d "{\"body\": \"🚀 Preview environment deployed!\\n\\n**URL:** https://pr-${_PR_NUMBER}.preview.bibanna.dev\\n\\nThis preview will be automatically deleted when the PR is closed.\"}"
+    secretEnv: ['GITHUB_TOKEN']
+    waitFor: ['wait-deployment']
+
+substitutions:
+  _REGION: 'us-central1'
+  _PREVIEW_CLUSTER: 'bibanna-preview-gke'
+  _PR_NUMBER: ''
+  _GITHUB_REPO: ''
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/${PROJECT_ID}/secrets/github-token/versions/latest
+      env: 'GITHUB_TOKEN'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1200s'

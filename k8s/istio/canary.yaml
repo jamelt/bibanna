@@ -1,0 +1,182 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: bibanna-vs
+  namespace: bibanna-production
+spec:
+  hosts:
+    - bibanna.dev
+    - www.bibanna.dev
+  gateways:
+    - bibanna-gateway
+  http:
+    - match:
+        - headers:
+            x-canary:
+              exact: "true"
+      route:
+        - destination:
+            host: bibanna-app-canary
+            port:
+              number: 80
+    - route:
+        - destination:
+            host: bibanna-app-stable
+            port:
+              number: 80
+          weight: 100
+        - destination:
+            host: bibanna-app-canary
+            port:
+              number: 80
+          weight: 0
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: bibanna-dr
+  namespace: bibanna-production
+spec:
+  host: bibanna-app
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+    loadBalancer:
+      simple: ROUND_ROBIN
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: stable
+      labels:
+        version: stable
+    - name: canary
+      labels:
+        version: canary
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: bibanna-gateway
+  namespace: bibanna-production
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - bibanna.dev
+        - www.bibanna.dev
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - bibanna.dev
+        - www.bibanna.dev
+      tls:
+        mode: SIMPLE
+        credentialName: bibanna-tls
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: bibanna-app
+  namespace: bibanna-production
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bibanna-app
+  progressDeadlineSeconds: 600
+  service:
+    port: 80
+    targetPort: 3000
+    gateways:
+      - bibanna-gateway
+    hosts:
+      - bibanna.dev
+    trafficPolicy:
+      tls:
+        mode: DISABLE
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+    webhooks:
+      - name: load-test
+        type: rollout
+        url: http://flagger-loadtester.flagger-system/
+        timeout: 15s
+        metadata:
+          type: cmd
+          cmd: "hey -z 1m -q 10 -c 2 https://bibanna.dev/api/health"
+      - name: acceptance-test
+        type: pre-rollout
+        url: http://flagger-loadtester.flagger-system/
+        timeout: 30s
+        metadata:
+          type: bash
+          cmd: "curl -s https://canary.bibanna.dev/api/health | grep -q 'healthy'"
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: request-success-rate
+  namespace: bibanna-production
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.istio-system:9090
+  query: |
+    sum(rate(istio_requests_total{
+      reporter="destination",
+      destination_workload_namespace="{{ namespace }}",
+      destination_workload="{{ target }}",
+      response_code!~"5.*"
+    }[{{ interval }}])) /
+    sum(rate(istio_requests_total{
+      reporter="destination",
+      destination_workload_namespace="{{ namespace }}",
+      destination_workload="{{ target }}"
+    }[{{ interval }}])) * 100
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: request-duration
+  namespace: bibanna-production
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.istio-system:9090
+  query: |
+    histogram_quantile(0.99,
+      sum(rate(istio_request_duration_milliseconds_bucket{
+        reporter="destination",
+        destination_workload_namespace="{{ namespace }}",
+        destination_workload="{{ target }}"
+      }[{{ interval }}])) by (le)
+    )

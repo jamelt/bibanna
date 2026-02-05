@@ -1,0 +1,57 @@
+steps:
+  # Delete preview namespace (cascades to all resources)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'delete-namespace'
+    args:
+      - 'delete'
+      - 'namespace'
+      - 'preview-pr-${_PR_NUMBER}'
+      - '--ignore-not-found=true'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_PREVIEW_CLUSTER}'
+
+  # Delete preview Docker image
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'delete-image'
+    entrypoint: 'gcloud'
+    args:
+      - 'artifacts'
+      - 'docker'
+      - 'images'
+      - 'delete'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/bibanna/bibanna-preview:pr-${_PR_NUMBER}'
+      - '--quiet'
+      - '--delete-tags'
+    waitFor: ['delete-namespace']
+
+  # Post cleanup confirmation to GitHub PR
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'post-comment'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        curl -X POST \
+          -H "Authorization: token $$GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${_GITHUB_REPO}/issues/${_PR_NUMBER}/comments" \
+          -d "{\"body\": \"🧹 Preview environment for PR #${_PR_NUMBER} has been cleaned up.\"}"
+    secretEnv: ['GITHUB_TOKEN']
+    waitFor: ['delete-image']
+
+substitutions:
+  _REGION: 'us-central1'
+  _PREVIEW_CLUSTER: 'bibanna-preview-gke'
+  _PR_NUMBER: ''
+  _GITHUB_REPO: ''
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/${PROJECT_ID}/secrets/github-token/versions/latest
+      env: 'GITHUB_TOKEN'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '300s'
