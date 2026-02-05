@@ -13,6 +13,10 @@ const stats = ref([
 
 const recentEntries = ref<any[]>([])
 const recentProjects = ref<any[]>([])
+
+function projectSlugOrId(project: any) {
+  return project.slug || project.id
+}
 </script>
 
 <template>
@@ -187,7 +191,7 @@ const recentProjects = ref<any[]>([])
             class="py-3 first:pt-0 last:pb-0"
           >
             <NuxtLink
-              :to="`/app/projects/${project.id}`"
+              :to="`/app/projects/${projectSlugOrId(project)}`"
               class="block hover:bg-gray-50 dark:hover:bg-gray-800 -mx-4 px-4 py-2 rounded-lg transition-colors"
             >
               <p class="font-medium text-gray-900 dark:text-white truncate">

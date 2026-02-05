@@ -29,6 +29,10 @@ async function handleProjectCreated() {
   isCreateModalOpen.value = false
   await refresh()
 }
+
+function projectSlugOrId(project: Project) {
+  return project.slug || project.id
+}
 </script>
 
 <template>
@@ -82,7 +86,7 @@ async function handleProjectCreated() {
           v-for="project in activeProjects"
           :key="project.id"
           class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer group"
-          @click="router.push(`/app/projects/${project.id}`)"
+          @click="router.push(`/app/projects/${projectSlugOrId(project)}`)"
         >
             <div class="flex items-start gap-3">
             <div
@@ -149,7 +153,7 @@ async function handleProjectCreated() {
             v-for="project in archivedProjects"
             :key="project.id"
             class="p-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            @click="router.push(`/app/projects/${project.id}`)"
+            @click="router.push(`/app/projects/${projectSlugOrId(project)}`)"
           >
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">

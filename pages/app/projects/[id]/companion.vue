@@ -10,6 +10,11 @@ const projectId = route.params.id as string
 const { hasFeature } = useSubscription()
 
 const { data: project, pending } = await useFetch(`/api/projects/${projectId}`)
+
+const projectDetailPath = computed(() => {
+  if (!project.value) return `/app/projects/${projectId}`
+  return `/app/projects/${project.value.slug || projectId}`
+})
 </script>
 
 <template>
@@ -55,7 +60,7 @@ const { data: project, pending } = await useFetch(`/api/projects/${projectId}`)
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center gap-3">
           <NuxtLink
-            :to="`/app/projects/${projectId}`"
+            :to="projectDetailPath"
             class="text-gray-400 hover:text-gray-600"
           >
             <UIcon name="i-heroicons-arrow-left" class="w-5 h-5" />

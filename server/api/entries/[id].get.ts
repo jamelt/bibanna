@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
         id: projects.id,
         name: projects.name,
         color: projects.color,
+        slug: projects.slug,
       })
       .from(entryProjects)
       .innerJoin(projects, eq(entryProjects.projectId, projects.id))

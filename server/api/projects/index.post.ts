@@ -2,7 +2,7 @@ import { db } from '~/server/database/client'
 import { projects } from '~/server/database/schema'
 import { createProjectSchema } from '~/shared/validation'
 import { getTierLimits } from '~/server/utils/auth'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -31,11 +31,20 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const baseSlug = slugify(parsed.data.name)
+
+  let uniqueSlug: string | undefined
+
+  if (baseSlug) {
+    uniqueSlug = await generateUniqueProjectSlug(user.id, baseSlug)
+  }
+
   const [newProject] = await db
     .insert(projects)
     .values({
       userId: user.id,
       ...parsed.data,
+      slug: uniqueSlug,
     })
     .returning()
 
@@ -44,3 +53,36 @@ export default defineEventHandler(async (event) => {
     entryCount: 0,
   }
 })
+
+// Helpers
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+}
+
+async function generateUniqueProjectSlug(userId: string, baseSlug: string): Promise<string> {
+  let candidate = baseSlug || 'project'
+  let suffix = 2
+
+  for (;;) {
+    const existing = await db.query.projects.findFirst({
+      where: and(
+        eq(projects.userId, userId),
+        eq(projects.slug, candidate),
+      ),
+    })
+
+    if (!existing) {
+      return candidate
+    }
+
+    candidate = `${baseSlug}-${suffix}`
+    suffix += 1
+  }
+}

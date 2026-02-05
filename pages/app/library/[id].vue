@@ -221,7 +221,7 @@ async function handleAnnotationCreated() {
               <NuxtLink
                 v-for="project in entry.projects"
                 :key="project.id"
-                :to="`/app/projects/${project.id}`"
+                :to="`/app/projects/${project.slug || project.id}`"
                 class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <div

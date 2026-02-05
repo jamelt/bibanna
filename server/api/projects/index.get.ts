@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
       color: projects.color,
       isArchived: projects.isArchived,
       settings: projects.settings,
+      slug: projects.slug,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
       entryCount: sql<number>`(

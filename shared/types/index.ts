@@ -108,6 +108,7 @@ export interface Project {
   color: string
   isArchived: boolean
   settings: ProjectSettings
+  slug?: string
   createdAt: Date
   updatedAt: Date
   entries?: Entry[]

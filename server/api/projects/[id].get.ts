@@ -1,6 +1,6 @@
 import { db } from '~/server/database/client'
 import { projects, entryProjects, entries } from '~/server/database/schema'
-import { eq, and, sql, desc } from 'drizzle-orm'
+import { eq, and, sql, desc, or } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
 
   const project = await db.query.projects.findFirst({
     where: and(
-      eq(projects.id, projectId),
+      or(
+        eq(projects.id, projectId),
+        eq(projects.slug, projectId),
+      ),
       eq(projects.userId, user.id),
     ),
   })
