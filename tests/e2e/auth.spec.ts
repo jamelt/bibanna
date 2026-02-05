@@ -55,4 +55,32 @@ test.describe('Auth Flow', () => {
     await page.waitForLoadState('domcontentloaded')
     await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10000 })
   })
+
+  test('should stay logged in after page reload', async ({ page }) => {
+    await page.goto('/login')
+    await page.waitForLoadState('networkidle')
+
+    await page.getByPlaceholder('you@example.com').fill(testUser.email)
+    await page.locator('input[type="password"]').fill(testUser.password)
+
+    const [loginResponse] = await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/auth/login'), { timeout: 10000 }),
+      page.getByRole('button', { name: 'Sign in' }).click(),
+    ])
+
+    if (!loginResponse.ok()) {
+      const body = await loginResponse.text().catch(() => 'Unable to read response body')
+      throw new Error(`Login API failed: ${loginResponse.status()} - ${body}`)
+    }
+
+    await expect(page).toHaveURL('/app', { timeout: 10000 })
+    await page.waitForLoadState('domcontentloaded')
+    await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10000 })
+
+    await page.reload()
+    await page.waitForLoadState('domcontentloaded')
+
+    await expect(page).toHaveURL('/app', { timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10000 })
+  })
 })
