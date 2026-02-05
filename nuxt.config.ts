@@ -74,6 +74,28 @@ export default defineNuxtConfig({
     esbuild: {
       options: {
         target: 'esnext',
+        logOverride: {
+          'this-is-undefined-in-esm': 'silent',
+        },
+      },
+    },
+    rollupConfig: {
+      onwarn(warning, warn) {
+        if (
+          warning.code === 'THIS_IS_UNDEFINED' &&
+          warning.id?.includes('@opentelemetry')
+        ) {
+          return
+        }
+        if (
+          warning.code === 'CIRCULAR_DEPENDENCY' &&
+          (warning.message?.includes('node_modules') ||
+            warning.id?.includes('node_modules') ||
+            warning.ids?.some((id: string) => id.includes('node_modules')))
+        ) {
+          return
+        }
+        warn(warning)
       },
     },
   },
@@ -84,6 +106,25 @@ export default defineNuxtConfig({
     },
     build: {
       sourcemap: false,
+      rollupOptions: {
+        onwarn(warning, warn) {
+          if (
+            warning.code === 'THIS_IS_UNDEFINED' &&
+            warning.id?.includes('@opentelemetry')
+          ) {
+            return
+          }
+          if (
+            warning.code === 'CIRCULAR_DEPENDENCY' &&
+            (warning.message?.includes('node_modules') ||
+              warning.id?.includes('node_modules') ||
+              warning.ids?.some((id: string) => id.includes('node_modules')))
+          ) {
+            return
+          }
+          warn(warning)
+        },
+      },
     },
   },
 
