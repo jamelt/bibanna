@@ -7,8 +7,14 @@ definePageMeta({
 })
 
 const router = useRouter()
+const toast = useToast()
+
 const isCreateModalOpen = ref(false)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const selectedProject = ref<Project | undefined>()
 const showArchived = ref(false)
+const isDeleting = ref(false)
 
 const { data: projects, pending, refresh } = await useFetch<Project[]>('/api/projects', {
   query: computed(() => ({
@@ -30,8 +36,91 @@ async function handleProjectCreated() {
   await refresh()
 }
 
+async function handleProjectUpdated() {
+  isEditModalOpen.value = false
+  selectedProject.value = undefined
+  await refresh()
+}
+
 function projectSlugOrId(project: Project) {
   return project.slug || project.id
+}
+
+function openEditModal(project: Project) {
+  selectedProject.value = project
+  isEditModalOpen.value = true
+}
+
+function openDeleteModal(project: Project) {
+  selectedProject.value = project
+  isDeleteModalOpen.value = true
+}
+
+async function toggleArchive(project: Project) {
+  try {
+    await $fetch(`/api/projects/${project.id}`, {
+      method: 'PUT',
+      body: { isArchived: !project.isArchived },
+    })
+    toast.add({
+      title: project.isArchived ? 'Project restored' : 'Project archived',
+      color: 'success',
+    })
+    await refresh()
+  }
+  catch (e: any) {
+    toast.add({
+      title: 'Failed to update project',
+      description: e.data?.message || 'An error occurred',
+      color: 'error',
+    })
+  }
+}
+
+async function deleteProject() {
+  if (!selectedProject.value) return
+
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/projects/${selectedProject.value.id}`, {
+      method: 'DELETE',
+    })
+    toast.add({
+      title: 'Project deleted',
+      color: 'success',
+    })
+    isDeleteModalOpen.value = false
+    selectedProject.value = undefined
+    await refresh()
+  }
+  catch (e: any) {
+    toast.add({
+      title: 'Failed to delete project',
+      description: e.data?.message || 'An error occurred',
+      color: 'error',
+    })
+  }
+  finally {
+    isDeleting.value = false
+  }
+}
+
+function getDropdownItems(project: Project) {
+  return [
+    [
+      { label: 'Edit', icon: 'i-heroicons-pencil', click: () => openEditModal(project) },
+      { label: 'Share', icon: 'i-heroicons-share', click: () => router.push(`/app/projects/${projectSlugOrId(project)}?share=true`) },
+      { label: 'Export', icon: 'i-heroicons-arrow-down-tray', click: () => router.push(`/app/projects/${projectSlugOrId(project)}?export=true`) },
+    ],
+    [
+      {
+        label: project.isArchived ? 'Restore' : 'Archive',
+        icon: project.isArchived ? 'i-heroicons-arrow-uturn-up' : 'i-heroicons-archive-box',
+        click: () => toggleArchive(project),
+      },
+      { label: 'Delete', icon: 'i-heroicons-trash', color: 'error' as const, click: () => openDeleteModal(project) },
+    ],
+  ]
 }
 </script>
 
@@ -111,16 +200,7 @@ function projectSlugOrId(project: Project) {
               </p>
             </div>
             <UDropdown
-              :items="[
-                [
-                  { label: 'Edit', icon: 'i-heroicons-pencil', onClick: () => {} },
-                  { label: 'Share', icon: 'i-heroicons-share', onClick: () => {} },
-                  { label: 'Export', icon: 'i-heroicons-arrow-down-tray', onClick: () => {} },
-                ],
-                [
-                  { label: 'Archive', icon: 'i-heroicons-archive-box', onClick: () => {} },
-                ],
-              ]"
+              :items="getDropdownItems(project)"
               :content="{ side: 'bottom', align: 'end' }"
             >
               <UButton
@@ -152,7 +232,7 @@ function projectSlugOrId(project: Project) {
           <UCard
             v-for="project in archivedProjects"
             :key="project.id"
-            class="p-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+            class="p-4 opacity-60 hover:opacity-100 transition-opacity cursor-pointer group"
             @click="router.push(`/app/projects/${projectSlugOrId(project)}`)"
           >
             <div class="flex items-start gap-3">
@@ -167,6 +247,19 @@ function projectSlugOrId(project: Project) {
                   {{ project.entryCount }} entries
                 </p>
               </div>
+              <UDropdown
+                :items="getDropdownItems(project)"
+                :content="{ side: 'bottom', align: 'end' }"
+              >
+                <UButton
+                  icon="i-heroicons-ellipsis-vertical"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity"
+                  @click.stop
+                />
+              </UDropdown>
             </div>
           </UCard>
         </div>
@@ -178,5 +271,54 @@ function projectSlugOrId(project: Project) {
       v-model:open="isCreateModalOpen"
       @created="handleProjectCreated"
     />
+
+    <!-- Edit Project Modal -->
+    <LazyAppProjectFormModal
+      v-model:open="isEditModalOpen"
+      :project="selectedProject"
+      @updated="handleProjectUpdated"
+    />
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="isDeleteModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete Project
+              </h2>
+            </div>
+          </template>
+
+          <p class="text-gray-600 dark:text-gray-400">
+            Are you sure you want to delete <strong class="text-gray-900 dark:text-white">{{ selectedProject?.name }}</strong>?
+            This action cannot be undone. All entries will remain in your library but will be removed from this project.
+          </p>
+
+          <template #footer>
+            <div class="flex justify-end gap-3">
+              <UButton
+                variant="outline"
+                color="neutral"
+                @click="isDeleteModalOpen = false"
+              >
+                Cancel
+              </UButton>
+              <UButton
+                color="error"
+                :loading="isDeleting"
+                @click="deleteProject"
+              >
+                Delete Project
+              </UButton>
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
