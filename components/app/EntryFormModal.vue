@@ -164,213 +164,227 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" :ui="{ content: 'sm:max-w-2xl' }">
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ isEditing ? 'Edit Entry' : 'Add Entry' }}
-          </h2>
-          <UButton
-            icon="i-heroicons-x-mark"
-            variant="ghost"
-            color="neutral"
-            @click="isOpen = false"
-          />
-        </div>
-      </template>
-
-      <form class="space-y-4" @submit.prevent="handleSubmit">
-        <UAlert
-          v-if="errors.general"
-          color="error"
-          icon="i-heroicons-exclamation-triangle"
-          :title="errors.general"
-        />
-
-        <!-- Entry Type -->
-        <UFormField label="Type" required>
-          <USelectMenu
-            v-model="form.entryType"
-            :items="entryTypeOptions"
-            value-key="value"
-          />
-        </UFormField>
-
-        <!-- Title -->
-        <UFormField label="Title" required :error="errors.title">
-          <UInput
-            v-model="form.title"
-            placeholder="Enter the title"
-          />
-        </UFormField>
-
-        <!-- Authors -->
-        <UFormField label="Authors">
-          <div class="space-y-2">
-            <div
-              v-for="(author, index) in form.authors"
-              :key="index"
-              class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-            >
-              <span class="flex-1">
-                {{ author.lastName }}, {{ author.firstName }}
-                {{ author.middleName ? ` ${author.middleName}` : '' }}
-              </span>
-              <UButton
-                icon="i-heroicons-x-mark"
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                @click="removeAuthor(index)"
-              />
-            </div>
-
-            <div class="flex gap-2">
-              <UInput
-                v-model="newAuthor.firstName"
-                placeholder="First name"
-                class="flex-1"
-                @keyup.enter.prevent="addAuthor"
-              />
-              <UInput
-                v-model="newAuthor.middleName"
-                placeholder="Middle"
-                class="w-24"
-                @keyup.enter.prevent="addAuthor"
-              />
-              <UInput
-                v-model="newAuthor.lastName"
-                placeholder="Last name"
-                class="flex-1"
-                @keyup.enter.prevent="addAuthor"
-              />
-              <UButton
-                icon="i-heroicons-plus"
-                variant="outline"
-                color="neutral"
-                @click="addAuthor"
-              />
-            </div>
+  <UModal
+    v-model:open="isOpen"
+    :ui="{
+      container: 'items-start sm:items-center',
+      content: 'sm:max-w-2xl w-full max-h-[min(90vh,40rem)]',
+    }"
+  >
+    <template #content>
+      <UCard class="flex flex-col max-h-[min(90vh,40rem)]">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ isEditing ? 'Edit Entry' : 'Add Entry' }}
+            </h2>
+            <UButton
+              icon="i-heroicons-x-mark"
+              variant="ghost"
+              color="neutral"
+              @click="isOpen = false"
+            />
           </div>
-        </UFormField>
+        </template>
 
-        <!-- Year -->
-        <UFormField label="Year">
-          <UInput
-            v-model.number="form.year"
-            type="number"
-            :min="1"
-            :max="9999"
-            placeholder="Publication year"
-          />
-        </UFormField>
+        <div class="flex-1 overflow-y-auto pr-1 -mr-1">
+          <form class="space-y-4 pb-4" @submit.prevent="handleSubmit">
+            <UAlert
+              v-if="errors.general"
+              color="error"
+              icon="i-heroicons-exclamation-triangle"
+              :title="errors.general"
+            />
 
-        <!-- Type-specific metadata -->
-        <div v-if="['book', 'thesis', 'report'].includes(form.entryType)" class="grid grid-cols-2 gap-4">
-          <UFormField label="Publisher">
-            <UInput v-model="form.metadata.publisher" placeholder="Publisher name" />
-          </UFormField>
-          <UFormField label="ISBN">
-            <UInput v-model="form.metadata.isbn" placeholder="ISBN" />
-          </UFormField>
-        </div>
-
-        <div v-if="form.entryType === 'journal_article'" class="grid grid-cols-2 gap-4">
-          <UFormField label="Journal" class="col-span-2">
-            <UInput v-model="form.metadata.journal" placeholder="Journal name" />
-          </UFormField>
-          <UFormField label="Volume">
-            <UInput v-model="form.metadata.volume" placeholder="Volume" />
-          </UFormField>
-          <UFormField label="Issue">
-            <UInput v-model="form.metadata.issue" placeholder="Issue" />
-          </UFormField>
-          <UFormField label="Pages">
-            <UInput v-model="form.metadata.pages" placeholder="e.g., 123-145" />
-          </UFormField>
-          <UFormField label="DOI">
-            <UInput v-model="form.metadata.doi" placeholder="DOI" />
-          </UFormField>
-        </div>
-
-        <div v-if="form.entryType === 'website'" class="space-y-4">
-          <UFormField label="URL">
-            <UInput v-model="form.metadata.url" type="url" placeholder="https://..." />
-          </UFormField>
-        </div>
-
-        <!-- Abstract -->
-        <UFormField label="Abstract">
-          <UTextarea
-            v-model="form.metadata.abstract"
-            :rows="3"
-            placeholder="Enter the abstract..."
-          />
-        </UFormField>
-
-        <!-- Projects -->
-        <UFormField label="Projects">
-          <USelectMenu
-            v-model="form.projectIds"
-            :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
-            multiple
-            placeholder="Select projects..."
-            value-key="id"
-            label-key="name"
-          />
-        </UFormField>
-
-        <!-- Tags -->
-        <UFormField label="Tags">
-          <USelectMenu
-            v-model="form.tagIds"
-            :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
-            multiple
-            placeholder="Select tags..."
-            value-key="id"
-            label-key="name"
-          >
-            <template #item-leading="{ item }">
-              <span
-                class="w-3 h-3 rounded-full shrink-0"
-                :style="{ backgroundColor: item.color ?? 'transparent' }"
+            <!-- Entry Type -->
+            <UFormField label="Type" required>
+              <USelectMenu
+                v-model="form.entryType"
+                :items="entryTypeOptions"
+                value-key="value"
+                :ui="{ trigger: 'w-full' }"
               />
-            </template>
-          </USelectMenu>
-        </UFormField>
+            </UFormField>
 
-        <!-- Notes -->
-        <UFormField label="Notes">
-          <UTextarea
-            v-model="form.notes"
-            :rows="2"
-            placeholder="Personal notes..."
-          />
-        </UFormField>
+            <!-- Title -->
+            <UFormField label="Title" required :error="errors.title">
+              <UInput
+                v-model="form.title"
+                placeholder="Enter the title"
+                autofocus
+              />
+            </UFormField>
 
-        <!-- Favorite -->
-        <UCheckbox v-model="form.isFavorite" label="Mark as favorite" />
-      </form>
+          <!-- Authors -->
+          <UFormField label="Authors">
+            <div class="space-y-2">
+              <div
+                v-for="(author, index) in form.authors"
+                :key="index"
+                class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              >
+                <span class="flex-1">
+                  {{ author.lastName }}, {{ author.firstName }}
+                  {{ author.middleName ? ` ${author.middleName}` : '' }}
+                </span>
+                <UButton
+                  icon="i-heroicons-x-mark"
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  @click="removeAuthor(index)"
+                />
+              </div>
 
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="isOpen = false"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            color="primary"
-            :loading="isSubmitting"
-            @click="handleSubmit"
-          >
-            {{ isEditing ? 'Save Changes' : 'Add Entry' }}
-          </UButton>
+              <div class="flex gap-2">
+                <UInput
+                  v-model="newAuthor.firstName"
+                  placeholder="First name"
+                  class="flex-1"
+                  @keyup.enter.prevent="addAuthor"
+                />
+                <UInput
+                  v-model="newAuthor.middleName"
+                  placeholder="Middle"
+                  class="w-24"
+                  @keyup.enter.prevent="addAuthor"
+                />
+                <UInput
+                  v-model="newAuthor.lastName"
+                  placeholder="Last name"
+                  class="flex-1"
+                  @keyup.enter.prevent="addAuthor"
+                />
+                <UButton
+                  icon="i-heroicons-plus"
+                  variant="outline"
+                  color="neutral"
+                  @click="addAuthor"
+                />
+              </div>
+            </div>
+          </UFormField>
+
+          <!-- Year -->
+          <UFormField label="Year">
+            <UInput
+              v-model.number="form.year"
+              type="number"
+              :min="1"
+              :max="9999"
+              placeholder="Publication year"
+            />
+          </UFormField>
+
+          <!-- Type-specific metadata -->
+          <div v-if="['book', 'thesis', 'report'].includes(form.entryType)" class="grid grid-cols-2 gap-4">
+            <UFormField label="Publisher">
+              <UInput v-model="form.metadata.publisher" placeholder="Publisher name" />
+            </UFormField>
+            <UFormField label="ISBN">
+              <UInput v-model="form.metadata.isbn" placeholder="ISBN" />
+            </UFormField>
+          </div>
+
+          <div v-if="form.entryType === 'journal_article'" class="grid grid-cols-2 gap-4">
+            <UFormField label="Journal" class="col-span-2">
+              <UInput v-model="form.metadata.journal" placeholder="Journal name" />
+            </UFormField>
+            <UFormField label="Volume">
+              <UInput v-model="form.metadata.volume" placeholder="Volume" />
+            </UFormField>
+            <UFormField label="Issue">
+              <UInput v-model="form.metadata.issue" placeholder="Issue" />
+            </UFormField>
+            <UFormField label="Pages">
+              <UInput v-model="form.metadata.pages" placeholder="e.g., 123-145" />
+            </UFormField>
+            <UFormField label="DOI">
+              <UInput v-model="form.metadata.doi" placeholder="DOI" />
+            </UFormField>
+          </div>
+
+          <div v-if="form.entryType === 'website'" class="space-y-4">
+            <UFormField label="URL">
+              <UInput v-model="form.metadata.url" type="url" placeholder="https://..." />
+            </UFormField>
+          </div>
+
+          <!-- Abstract -->
+          <UFormField label="Abstract">
+            <UTextarea
+              v-model="form.metadata.abstract"
+              :rows="3"
+              placeholder="Enter the abstract..."
+            />
+          </UFormField>
+
+            <!-- Projects -->
+            <UFormField label="Projects">
+              <USelectMenu
+                v-model="form.projectIds"
+                :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
+                multiple
+                placeholder="Select projects..."
+                value-key="id"
+                label-key="name"
+                :ui="{ trigger: 'w-full' }"
+              />
+            </UFormField>
+
+            <!-- Tags -->
+            <UFormField label="Tags">
+              <USelectMenu
+                v-model="form.tagIds"
+                :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+                multiple
+                placeholder="Select tags..."
+                value-key="id"
+                label-key="name"
+                :ui="{ trigger: 'w-full' }"
+              >
+                <template #item-leading="{ item }">
+                  <span
+                    class="w-3 h-3 rounded-full shrink-0"
+                    :style="{ backgroundColor: item.color ?? 'transparent' }"
+                  />
+                </template>
+              </USelectMenu>
+            </UFormField>
+
+            <!-- Notes -->
+            <UFormField label="Notes">
+              <UTextarea
+                v-model="form.notes"
+                :rows="2"
+                placeholder="Personal notes..."
+              />
+            </UFormField>
+
+            <!-- Favorite -->
+            <UCheckbox v-model="form.isFavorite" label="Mark as favorite" />
+          </form>
         </div>
-      </template>
-    </UCard>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="isOpen = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="primary"
+              :loading="isSubmitting"
+              @click="handleSubmit"
+            >
+              {{ isEditing ? 'Save Changes' : 'Add Entry' }}
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+    </template>
   </UModal>
 </template>
