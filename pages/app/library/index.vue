@@ -12,7 +12,13 @@ const router = useRouter()
 
 const searchQuery = ref(route.query.q as string || '')
 const selectedTypes = ref<string[]>([])
-const selectedTags = ref<string[]>([])
+const selectedTags = ref<string[]>(
+  (() => {
+    const tagIds = route.query.tagIds
+    if (!tagIds) return []
+    return Array.isArray(tagIds) ? tagIds : [tagIds]
+  })(),
+)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const page = ref(1)
