@@ -26,6 +26,7 @@ export default defineNuxtConfig({
     stripeSecretKey: process.env.NUXT_STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.NUXT_STRIPE_WEBHOOK_SECRET,
     openaiApiKey: process.env.NUXT_OPENAI_API_KEY,
+    googleBooksApiKey: process.env.NUXT_GOOGLE_BOOKS_API_KEY,
     public: {
       appName: "Bibanna",
       stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,

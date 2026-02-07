@@ -7,7 +7,15 @@ const isMobile = useMediaQuery("(max-width: 640px)");
 
 interface EntrySuggestion {
   id: string;
-  source: "crossref" | "openlibrary" | "url" | "pubmed";
+  source:
+    | "crossref"
+    | "openlibrary"
+    | "url"
+    | "pubmed"
+    | "openalex"
+    | "semantic_scholar"
+    | "google_books"
+    | "loc";
   title: string;
   authors: Author[];
   year?: number;
@@ -15,7 +23,14 @@ interface EntrySuggestion {
   metadata: EntryMetadata;
 }
 
+interface SuggestResponse {
+  suggestions: EntrySuggestion[];
+  hasMore: boolean;
+  total: number;
+}
+
 type DetectedKind = "doi" | "isbn" | "url" | "pmid" | "title";
+type FieldQualifier = "any" | "author" | "title" | "publisher" | "journal" | "subject" | "year";
 type QuickAddStatus =
   | "idle"
   | "typing"
@@ -59,6 +74,109 @@ const { data: projects } = useFetch("/api/projects", { lazy: true });
 
 const inputRef = ref<HTMLElement | null>(null);
 
+const activeQualifier = ref<FieldQualifier>("any");
+const showSlashDropdown = ref(false);
+const slashFilterText = ref("");
+
+interface QualifierOption {
+  key: FieldQualifier;
+  label: string;
+  shortcut: string;
+  color: string;
+}
+
+const qualifierOptions: QualifierOption[] = [
+  { key: "author", label: "Author", shortcut: "/a", color: "blue" },
+  { key: "title", label: "Title", shortcut: "/t", color: "neutral" },
+  { key: "publisher", label: "Publisher", shortcut: "/p", color: "violet" },
+  { key: "journal", label: "Journal", shortcut: "/j", color: "green" },
+  { key: "subject", label: "Subject", shortcut: "/s", color: "amber" },
+  { key: "year", label: "Year", shortcut: "/y", color: "rose" },
+];
+
+const SLASH_MAP: Record<string, FieldQualifier> = {
+  a: "author",
+  t: "title",
+  p: "publisher",
+  j: "journal",
+  s: "subject",
+  y: "year",
+};
+
+const COLON_PREFIX_MAP: Record<string, FieldQualifier> = {
+  author: "author",
+  title: "title",
+  publisher: "publisher",
+  journal: "journal",
+  subject: "subject",
+  year: "year",
+};
+
+const qualifierColorMap: Record<FieldQualifier, string> = {
+  any: "neutral",
+  author: "blue",
+  title: "neutral",
+  publisher: "violet",
+  journal: "green",
+  subject: "amber",
+  year: "rose",
+};
+
+const qualifierLabelMap: Record<FieldQualifier, string> = {
+  any: "Any",
+  author: "Author",
+  title: "Title",
+  publisher: "Publisher",
+  journal: "Journal",
+  subject: "Subject",
+  year: "Year",
+};
+
+const filteredQualifierOptions = computed(() => {
+  if (!slashFilterText.value) return qualifierOptions;
+  const filter = slashFilterText.value.toLowerCase();
+  return qualifierOptions.filter(
+    (opt) =>
+      opt.label.toLowerCase().startsWith(filter) ||
+      opt.shortcut.slice(1).startsWith(filter),
+  );
+});
+
+const slashHighlightIndex = ref(0);
+
+function selectQualifier(qualifier: FieldQualifier) {
+  activeQualifier.value = qualifier;
+  showSlashDropdown.value = false;
+  slashFilterText.value = "";
+  slashHighlightIndex.value = 0;
+
+  query.value = "";
+
+  nextTick(() => {
+    const el = inputRef.value;
+    if (el) {
+      const input = el.querySelector?.("input") || el;
+      (input as HTMLElement).focus?.();
+    }
+  });
+}
+
+function clearQualifier() {
+  activeQualifier.value = "any";
+  showSlashDropdown.value = false;
+  slashFilterText.value = "";
+  slashHighlightIndex.value = 0;
+}
+
+function parseColonPrefix(value: string): { qualifier: FieldQualifier; cleanQuery: string } | null {
+  const match = value.match(/^(\w+):\s*(.*)/);
+  if (!match) return null;
+  const prefix = match[1].toLowerCase();
+  const qualifier = COLON_PREFIX_MAP[prefix];
+  if (!qualifier) return null;
+  return { qualifier, cleanQuery: match[2] || "" };
+}
+
 function detectInputKind(value: string): DetectedKind {
   const trimmed = value.trim();
   if (!trimmed) return "title";
@@ -92,6 +210,10 @@ const sourceLabels: Record<string, string> = {
   openlibrary: "OpenLibrary",
   url: "URL",
   pubmed: "PubMed",
+  openalex: "OpenAlex",
+  semantic_scholar: "Semantic Scholar",
+  google_books: "Google Books",
+  loc: "Library of Congress",
 };
 
 const sourceColors: Record<string, string> = {
@@ -99,6 +221,10 @@ const sourceColors: Record<string, string> = {
   openlibrary: "green",
   url: "purple",
   pubmed: "orange",
+  openalex: "cyan",
+  semantic_scholar: "violet",
+  google_books: "red",
+  loc: "amber",
 };
 
 function formatAuthorsShort(authors: Author[]): string {
@@ -137,10 +263,15 @@ function getMissingFields(suggestion: EntrySuggestion): string[] {
   return missing;
 }
 
+const hasMore = ref(false);
+const totalResults = ref(0);
+
 const debouncedSuggest = useDebounceFn(async (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) {
     suggestions.value = [];
+    hasMore.value = false;
+    totalResults.value = 0;
     status.value = "idle";
     return;
   }
@@ -151,16 +282,19 @@ const debouncedSuggest = useDebounceFn(async (value: string) => {
   try {
     const kind = detectInputKind(trimmed);
     const maxResults = kind === "title" ? 8 : 5;
+    const field = activeQualifier.value !== "any" ? activeQualifier.value : undefined;
 
-    const response = await $fetch<{ suggestions: EntrySuggestion[] }>(
+    const response = await $fetch<SuggestResponse>(
       "/api/entries/suggest",
       {
         method: "POST",
-        body: { query: trimmed, maxResults },
+        body: { query: trimmed, maxResults, field },
       },
     );
 
     suggestions.value = response.suggestions;
+    hasMore.value = response.hasMore;
+    totalResults.value = response.total;
     highlightedIndex.value = suggestions.value.length > 0 ? 0 : -1;
     status.value = suggestions.value.length > 0 ? "loaded" : "error";
 
@@ -174,9 +308,78 @@ const debouncedSuggest = useDebounceFn(async (value: string) => {
   }
 }, 300);
 
+const loadingMore = ref(false);
+const sentinelRef = ref<HTMLElement | null>(null);
+
+async function loadMore() {
+  if (loadingMore.value || !hasMore.value || !query.value.trim()) return;
+
+  loadingMore.value = true;
+  const currentOffset = suggestions.value.length;
+  const field = activeQualifier.value !== "any" ? activeQualifier.value : undefined;
+
+  try {
+    const response = await $fetch<SuggestResponse>(
+      "/api/entries/suggest",
+      {
+        method: "POST",
+        body: {
+          query: query.value.trim(),
+          maxResults: 8,
+          offset: currentOffset,
+          field,
+        },
+      },
+    );
+
+    suggestions.value = [...suggestions.value, ...response.suggestions];
+    hasMore.value = response.hasMore;
+    totalResults.value = response.total;
+  } catch {
+    hasMore.value = false;
+  } finally {
+    loadingMore.value = false;
+  }
+}
+
 watch(query, (value) => {
   detectedKind.value = detectInputKind(value);
   selectedSuggestion.value = null;
+
+  if (value === "/" && activeQualifier.value === "any") {
+    showSlashDropdown.value = true;
+    slashFilterText.value = "";
+    slashHighlightIndex.value = 0;
+    return;
+  }
+
+  if (showSlashDropdown.value && value.startsWith("/")) {
+    const afterSlash = value.slice(1);
+
+    if (afterSlash.length === 1 && SLASH_MAP[afterSlash.toLowerCase()]) {
+      const qualifier = SLASH_MAP[afterSlash.toLowerCase()]!;
+      selectQualifier(qualifier);
+      return;
+    }
+
+    slashFilterText.value = afterSlash;
+    slashHighlightIndex.value = 0;
+    return;
+  }
+
+  if (showSlashDropdown.value && !value.startsWith("/")) {
+    showSlashDropdown.value = false;
+    slashFilterText.value = "";
+  }
+
+  if (activeQualifier.value === "any" && value.length > 2) {
+    const colonParsed = parseColonPrefix(value);
+    if (colonParsed) {
+      activeQualifier.value = colonParsed.qualifier;
+      query.value = colonParsed.cleanQuery;
+      return;
+    }
+  }
 
   if (value.trim()) {
     status.value = "typing";
@@ -361,6 +564,11 @@ function resetForm() {
   isCreating.value = false;
   selectedProjectId.value = props.defaultProjectId ?? null;
   showOptions.value = false;
+  activeQualifier.value = "any";
+  showSlashDropdown.value = false;
+  slashFilterText.value = "";
+  hasMore.value = false;
+  totalResults.value = 0;
 }
 
 function resetAndClose() {
@@ -369,6 +577,53 @@ function resetAndClose() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
+  if (showSlashDropdown.value) {
+    const opts = filteredQualifierOptions.value;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      slashHighlightIndex.value = Math.min(
+        slashHighlightIndex.value + 1,
+        opts.length - 1,
+      );
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      slashHighlightIndex.value = Math.max(slashHighlightIndex.value - 1, 0);
+      return;
+    }
+    if (e.key === "Enter" && opts.length > 0) {
+      e.preventDefault();
+      const selected = opts[slashHighlightIndex.value] || opts[0];
+      if (selected) selectQualifier(selected.key);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      showSlashDropdown.value = false;
+      slashFilterText.value = "";
+      query.value = "";
+      return;
+    }
+    return;
+  }
+
+  if (
+    e.key === "Backspace" &&
+    query.value === "" &&
+    activeQualifier.value !== "any"
+  ) {
+    e.preventDefault();
+    clearQualifier();
+    return;
+  }
+
+  if (e.key === "Escape" && activeQualifier.value !== "any") {
+    e.preventDefault();
+    clearQualifier();
+    return;
+  }
+
   if (status.value === "preview") {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -418,6 +673,26 @@ watch(isOpen, (open) => {
   }
 });
 
+let scrollObserver: IntersectionObserver | null = null;
+
+watch(sentinelRef, (el) => {
+  if (scrollObserver) {
+    scrollObserver.disconnect();
+    scrollObserver = null;
+  }
+  if (el) {
+    scrollObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    scrollObserver.observe(el);
+  }
+});
+
 onMounted(() => {
   function handleGlobalKeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -430,7 +705,13 @@ onMounted(() => {
     }
   }
   window.addEventListener("keydown", handleGlobalKeydown);
-  onUnmounted(() => window.removeEventListener("keydown", handleGlobalKeydown));
+  onUnmounted(() => {
+    window.removeEventListener("keydown", handleGlobalKeydown);
+    if (scrollObserver) {
+      scrollObserver.disconnect();
+      scrollObserver = null;
+    }
+  });
 });
 </script>
 
@@ -481,17 +762,35 @@ onMounted(() => {
         <!-- Primary input -->
         <div class="px-4 sm:px-5 pt-4 pb-2">
           <div class="relative">
-            <UInput
-              ref="inputRef"
-              v-model="query"
-              icon="i-heroicons-magnifying-glass"
-              size="lg"
-              placeholder="Paste DOI, ISBN, URL, PMID… or type a title"
-              autofocus
-              :ui="{ base: 'text-[16px] sm:text-sm', trailing: 'pr-20' }"
-            />
+            <div class="flex items-center gap-2">
+              <UBadge
+                v-if="activeQualifier !== 'any'"
+                :color="qualifierColorMap[activeQualifier]"
+                variant="subtle"
+                size="sm"
+                class="shrink-0 cursor-pointer"
+                @click="clearQualifier"
+              >
+                {{ qualifierLabelMap[activeQualifier] }}
+                <span class="ml-1 opacity-60">&times;</span>
+              </UBadge>
+              <UInput
+                ref="inputRef"
+                v-model="query"
+                icon="i-heroicons-magnifying-glass"
+                size="lg"
+                :placeholder="
+                  activeQualifier !== 'any'
+                    ? `Search by ${qualifierLabelMap[activeQualifier].toLowerCase()}…`
+                    : 'Paste DOI, ISBN, URL… or search — type / for fields'
+                "
+                autofocus
+                class="flex-1"
+                :ui="{ base: 'text-[16px] sm:text-sm', trailing: 'pr-20' }"
+              />
+            </div>
             <div
-              v-if="query.trim()"
+              v-if="query.trim() && activeQualifier === 'any'"
               class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5"
             >
               <UBadge
@@ -509,7 +808,84 @@ onMounted(() => {
                 @click="query = ''"
               />
             </div>
+            <div
+              v-else-if="query.trim() && activeQualifier !== 'any'"
+              class="absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              <UButton
+                variant="ghost"
+                icon="i-heroicons-x-mark"
+                color="neutral"
+                size="xs"
+                @click="query = ''"
+              />
+            </div>
+
+            <!-- Slash command dropdown -->
+            <div
+              v-if="showSlashDropdown"
+              class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
+            >
+              <div class="py-1">
+                <button
+                  v-for="(opt, idx) in filteredQualifierOptions"
+                  :key="opt.key"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm flex items-center justify-between transition-colors"
+                  :class="
+                    idx === slashHighlightIndex
+                      ? 'bg-primary-50 dark:bg-primary-900/20'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                  "
+                  @click="selectQualifier(opt.key)"
+                  @mouseenter="slashHighlightIndex = idx"
+                >
+                  <div class="flex items-center gap-2">
+                    <UBadge
+                      :color="opt.color"
+                      variant="subtle"
+                      size="xs"
+                    >
+                      {{ opt.label }}
+                    </UBadge>
+                  </div>
+                  <kbd
+                    class="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+                  >
+                    {{ opt.shortcut }}
+                  </kbd>
+                </button>
+                <div
+                  v-if="filteredQualifierOptions.length === 0"
+                  class="px-3 py-2 text-sm text-gray-400"
+                >
+                  No matching field
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Field qualifier pills -->
+          <div
+            v-if="status !== 'preview'"
+            class="flex items-center gap-1.5 mt-2 flex-wrap"
+          >
+            <button
+              v-for="opt in [{ key: 'any' as FieldQualifier, label: 'Any', color: 'neutral' }, ...qualifierOptions]"
+              :key="opt.key"
+              type="button"
+              class="px-2 py-0.5 text-xs rounded-full border transition-colors"
+              :class="
+                activeQualifier === opt.key
+                  ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300'
+              "
+              @click="opt.key === 'any' ? clearQualifier() : selectQualifier(opt.key)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+
           <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
             We'll fetch metadata and show a preview before saving.
           </p>
@@ -595,6 +971,29 @@ onMounted(() => {
                 </span>
               </div>
             </button>
+
+            <!-- Load more sentinel -->
+            <div
+              v-if="hasMore"
+              ref="sentinelRef"
+              class="flex justify-center py-3"
+            >
+              <div
+                v-if="loadingMore"
+                class="flex items-center gap-2 text-xs text-gray-400"
+              >
+                <div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 dark:border-gray-600 border-t-primary-500" />
+                Loading more results…
+              </div>
+              <button
+                v-else
+                type="button"
+                class="text-xs text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                @click="loadMore"
+              >
+                Load more results
+              </button>
+            </div>
           </div>
 
           <!-- Preview card -->

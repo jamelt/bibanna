@@ -40,6 +40,25 @@ export type FeedbackStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 
 export type AnnouncementType = 'info' | 'warning' | 'maintenance' | 'release'
 
+export type FieldQualifier =
+  | 'any'
+  | 'author'
+  | 'title'
+  | 'publisher'
+  | 'journal'
+  | 'subject'
+  | 'year'
+
+export type SuggestionSource =
+  | 'crossref'
+  | 'openlibrary'
+  | 'pubmed'
+  | 'openalex'
+  | 'semantic_scholar'
+  | 'google_books'
+  | 'loc'
+  | 'url'
+
 export interface Author {
   firstName: string
   lastName: string
