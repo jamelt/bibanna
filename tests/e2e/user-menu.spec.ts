@@ -46,6 +46,7 @@ test.describe('User Menu Navigation', () => {
     await avatar.click()
 
     // Check for menu items using text first to be safe
+    await expect(page.getByText('User Menu Test')).toBeVisible()
     await expect(page.getByText('Profile')).toBeVisible()
     await expect(page.getByText('Settings')).toBeVisible()
     await expect(page.getByText('Subscription')).toBeVisible()
