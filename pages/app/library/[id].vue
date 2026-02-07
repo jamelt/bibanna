@@ -118,23 +118,6 @@ async function handleAnnotationCreated() {
   isAddAnnotationOpen.value = false
   await refresh()
 }
-
-const dropdownItems = computed(() => [
-  [
-    { 
-      label: 'Copy citation', 
-      icon: 'i-heroicons-clipboard-document',
-      click: copyCitation,
-    },
-  ],
-  [
-    { 
-      label: 'Delete', 
-      icon: 'i-heroicons-trash',
-      click: () => { isDeleteModalOpen.value = true },
-    },
-  ],
-])
 </script>
 
 <template>
@@ -202,7 +185,14 @@ const dropdownItems = computed(() => [
             Edit
           </UButton>
           <UDropdown
-            :items="dropdownItems"
+            :items="[
+              [
+                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onSelect: copyCitation },
+              ],
+              [
+                { label: 'Delete', icon: 'i-heroicons-trash', onSelect: () => isDeleteModalOpen = true },
+              ],
+            ]"
           >
             <UButton
               icon="i-heroicons-ellipsis-vertical"

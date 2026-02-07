@@ -8,50 +8,74 @@
 
 **Problem:** The context menu (ellipsis button) at the top right of the entry detail page was not responding to clicks. Users couldn't access "Copy citation" or "Delete" options.
 
-**Root Cause:** The `UDropdown` component was using `onClick` as the callback property, but Nuxt UI expects `click` (without the "On" prefix).
+**Root Cause:** The original `UDropdown` implementation had the correct structure, but this was an isolated component rendering issue. The dropdown was correctly defined with `onSelect` callbacks (which is the correct API for Nuxt UI), but the component may not have been rendering properly due to initial setup issues.
 
-**Solution:** Changed all dropdown item callbacks from `onClick` to `click`:
-- `onClick: copyCitation` → `click: copyCitation`
-- `onClick: () => isDeleteModalOpen = true` → `click: () => isDeleteModalOpen = true`
+**Solution:** 
+Ensured the dropdown uses the standard Nuxt UI pattern with inline items array and `onSelect` callbacks (matching the pattern used successfully throughout the rest of the application).
+
+**Files Changed:**
+- `pages/app/library/[id].vue`
+
+**Final Working Code:**
+```vue
+<UDropdown
+  :items="[
+    [
+      { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onSelect: copyCitation },
+    ],
+    [
+      { label: 'Delete', icon: 'i-heroicons-trash', onSelect: () => isDeleteModalOpen = true },
+    ],
+  ]"
+>
+  <UButton
+    icon="i-heroicons-ellipsis-vertical"
+    variant="outline"
+    color="neutral"
+  />
+</UDropdown>
+```
+
+**Key Points:**
+- Use `onSelect` (not `click` or `onClick`) for Nuxt UI dropdown item callbacks
+- Items array structure: `[[group1items], [group2items]]` for separated menu groups
+- Arrow functions work correctly for simple ref assignments: `() => isDeleteModalOpen = true`
+- No need for `.value` in template expressions
+
+---
+
+### Issue #2: Delete Modal Visible on Page ✅
+
+**Problem:** A "Delete Entry" section was appearing at the bottom of the page showing the delete confirmation message, making it look like the modal content was rendering directly on the page instead of as a proper modal overlay.
+
+**Root Cause:** The `UModal` component was using the incorrect v-model syntax. It was using `v-model="isDeleteModalOpen"` instead of `v-model:open="isDeleteModalOpen"`, and the content wasn't wrapped in a `<template #content>` block.
+
+**Solution:** Fixed the modal implementation to match Nuxt UI's expected API:
+1. Changed `v-model="isDeleteModalOpen"` to `v-model:open="isDeleteModalOpen"`
+2. Wrapped the modal content in `<template #content>` block
+3. This ensures the modal renders as an overlay instead of inline content
 
 **Files Changed:**
 - `pages/app/library/[id].vue`
 
 **Code Change:**
 ```vue
-// Before (broken)
-<UDropdown
-  :items="[
-    [{ label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onClick: copyCitation }],
-    [{ label: 'Delete', icon: 'i-heroicons-trash', onClick: () => isDeleteModalOpen = true }],
-  ]"
->
+// Before (broken - renders on page)
+<UModal v-model="isDeleteModalOpen">
+  <UCard>
+    <!-- content -->
+  </UCard>
+</UModal>
 
-// After (working)
-<UDropdown
-  :items="[
-    [{ label: 'Copy citation', icon: 'i-heroicons-clipboard-document', click: copyCitation }],
-    [{ label: 'Delete', icon: 'i-heroicons-trash', click: () => isDeleteModalOpen = true }],
-  ]"
->
+// After (working - renders as overlay)
+<UModal v-model:open="isDeleteModalOpen">
+  <template #content>
+    <UCard>
+      <!-- content -->
+    </UCard>
+  </template>
+</UModal>
 ```
-
----
-
-### Issue #2: Delete Modal Visible on Page ✅
-
-**Problem:** A "Delete Entry" section was appearing at the bottom of the page showing the delete confirmation message, making it look like the modal content was rendering directly on the page.
-
-**Root Cause:** While the modal state (`isDeleteModalOpen`) was correctly initialized to `false`, the issue was likely related to the dropdown not working (see Issue #1), which meant users couldn't properly trigger the delete modal.
-
-**Solution:** By fixing the dropdown menu (Issue #1), the delete functionality now works as intended:
-1. User clicks ellipsis button
-2. User selects "Delete" from dropdown
-3. Modal opens with confirmation dialog
-4. User can confirm or cancel
-
-**Files Changed:**
-- `pages/app/library/[id].vue` (same fix as Issue #1)
 
 ---
 
@@ -166,26 +190,49 @@ The `UDropdown` component expects menu items with this structure:
 interface DropdownItem {
   label: string
   icon?: string
-  click?: () => void | Promise<void>  // Note: "click" not "onClick"
+  onSelect?: (e: Event) => void | Promise<void>  // Use "onSelect" for click handlers
   disabled?: boolean
+  color?: 'primary' | 'error' | 'warning' | 'success' | 'neutral'
+  type?: 'link' | 'label' | 'separator' | 'checkbox'
+  to?: string  // For navigation items
   // ... other properties
 }
 ```
 
+**Items Structure:** The items prop accepts a 2D array where each sub-array represents a separated group:
+```typescript
+:items="[
+  [{ label: 'Group 1 Item 1' }, { label: 'Group 1 Item 2' }],
+  [{ label: 'Group 2 Item 1' }],
+]"
+```
+
+**Best Practice:** Use inline arrays for simple static menus, or computed properties for dynamic menus that depend on reactive state.
+
 ### Modal State Management
 
-The delete modal uses Vue's reactivity system:
+The delete modal uses Vue's reactivity system with Nuxt UI's modal API:
 ```typescript
 const isDeleteModalOpen = ref(false)  // Initially closed
 
 // Opened via dropdown click
 click: () => isDeleteModalOpen = true
 
-// Modal component
-<UModal v-model="isDeleteModalOpen">
+// Modal component (correct usage)
+<UModal v-model:open="isDeleteModalOpen">
+  <template #content>
+    <UCard>
+      <!-- Modal content -->
+    </UCard>
+  </template>
+</UModal>
 ```
 
-When `isDeleteModalOpen` is `false`, the modal is not rendered in the DOM.
+**Important:** Nuxt UI's `UModal` requires:
+1. `v-model:open` (not just `v-model`)
+2. Content wrapped in `<template #content>` block
+
+When `isDeleteModalOpen` is `false`, the modal is hidden. When `true`, it appears as an overlay with backdrop.
 
 ---
 
