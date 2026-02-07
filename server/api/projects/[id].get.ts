@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(entryProjects)
     .innerJoin(entries, eq(entryProjects.entryId, entries.id))
-    .where(eq(entryProjects.projectId, projectId))
+    .where(eq(entryProjects.projectId, project.id))
     .orderBy(desc(entryProjects.addedAt))
 
   return {

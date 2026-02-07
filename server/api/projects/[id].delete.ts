@@ -1,6 +1,6 @@
 import { db } from '~/server/database/client'
 import { projects } from '~/server/database/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
 
   const existingProject = await db.query.projects.findFirst({
     where: and(
-      eq(projects.id, projectId),
+      or(
+        eq(projects.id, projectId),
+        eq(projects.slug, projectId),
+      ),
       eq(projects.userId, user.id),
     ),
   })
@@ -30,9 +33,9 @@ export default defineEventHandler(async (event) => {
   await db
     .delete(projects)
     .where(and(
-      eq(projects.id, projectId),
+      eq(projects.id, existingProject.id),
       eq(projects.userId, user.id),
     ))
 
-  return { success: true, deletedId: projectId }
+  return { success: true, deletedId: existingProject.id }
 })

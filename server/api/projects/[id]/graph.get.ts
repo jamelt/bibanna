@@ -1,6 +1,6 @@
 import { db } from '~/server/database/client'
 import { projects } from '~/server/database/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or } from 'drizzle-orm'
 import { buildProjectGraph, filterGraphByType } from '~/server/services/graph/build-graph'
 import { requireLightOrProTier } from '~/server/utils/auth'
 
@@ -20,7 +20,10 @@ export default defineEventHandler(async (event) => {
 
   const project = await db.query.projects.findFirst({
     where: and(
-      eq(projects.id, projectId),
+      or(
+        eq(projects.id, projectId),
+        eq(projects.slug, projectId),
+      ),
       eq(projects.userId, user.id),
     ),
   })
@@ -32,7 +35,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const graph = await buildProjectGraph(projectId, user.id)
+  const graph = await buildProjectGraph(project.id, user.id)
 
   const filteredGraph = filterGraphByType(graph, {
     showAuthors: query.showAuthors !== 'false',

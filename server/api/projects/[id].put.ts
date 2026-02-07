@@ -1,7 +1,7 @@
 import { db } from '~/server/database/client'
 import { projects } from '~/server/database/schema'
 import { updateProjectSchema } from '~/shared/validation'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -27,7 +27,10 @@ export default defineEventHandler(async (event) => {
 
   const existingProject = await db.query.projects.findFirst({
     where: and(
-      eq(projects.id, projectId),
+      or(
+        eq(projects.id, projectId),
+        eq(projects.slug, projectId),
+      ),
       eq(projects.userId, user.id),
     ),
   })
@@ -47,7 +50,7 @@ export default defineEventHandler(async (event) => {
   if (parsed.data.name && parsed.data.name !== existingProject.name) {
     const baseSlug = slugify(parsed.data.name)
     if (baseSlug) {
-      updateData.slug = await generateUniqueProjectSlug(user.id, baseSlug, projectId)
+      updateData.slug = await generateUniqueProjectSlug(user.id, baseSlug, existingProject.id)
     }
   }
 
@@ -55,7 +58,7 @@ export default defineEventHandler(async (event) => {
     .update(projects)
     .set(updateData)
     .where(and(
-      eq(projects.id, projectId),
+      eq(projects.id, existingProject.id),
       eq(projects.userId, user.id),
     ))
     .returning()

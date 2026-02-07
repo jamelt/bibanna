@@ -1,6 +1,6 @@
 import { db } from '~/server/database/client'
 import { projects, entries, entryProjects } from '~/server/database/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 const addEntrySchema = z.object({
@@ -31,7 +31,10 @@ export default defineEventHandler(async (event) => {
 
   const project = await db.query.projects.findFirst({
     where: and(
-      eq(projects.id, projectId),
+      or(
+        eq(projects.id, projectId),
+        eq(projects.slug, projectId),
+      ),
       eq(projects.userId, user.id),
     ),
   })
@@ -60,7 +63,7 @@ export default defineEventHandler(async (event) => {
   const existingAssociation = await db.query.entryProjects.findFirst({
     where: and(
       eq(entryProjects.entryId, parsed.data.entryId),
-      eq(entryProjects.projectId, projectId),
+      eq(entryProjects.projectId, project.id),
     ),
   })
 
@@ -75,7 +78,7 @@ export default defineEventHandler(async (event) => {
     .insert(entryProjects)
     .values({
       entryId: parsed.data.entryId,
-      projectId,
+      projectId: project.id,
     })
     .returning()
 
