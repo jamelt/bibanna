@@ -207,6 +207,56 @@ async function addToLibrary() {
     resetAndClose()
   }
   catch (err: any) {
+    if (err.statusCode === 409) {
+      status.value = 'error'
+      errorMessage.value = `duplicate:${err.data?.message || 'A similar entry already exists.'}`
+      isCreating.value = false
+      return
+    }
+    status.value = 'error'
+    errorMessage.value = err.data?.message || 'Failed to create entry'
+    isCreating.value = false
+  }
+}
+
+async function forceAddToLibrary() {
+  if (!selectedSuggestion.value) return
+
+  isCreating.value = true
+  status.value = 'creating'
+
+  try {
+    const s = selectedSuggestion.value
+
+    const payload: Record<string, unknown> = {
+      entryType: s.entryType,
+      title: s.title,
+      authors: s.authors,
+      year: s.year,
+      metadata: s.metadata,
+    }
+
+    if (selectedProjectId.value) {
+      payload.projectIds = [selectedProjectId.value]
+    }
+
+    const entry = await $fetch('/api/entries?skipDedupe=true', {
+      method: 'POST',
+      body: payload,
+    })
+
+    status.value = 'success'
+    emit('created', entry)
+
+    toast.add({
+      title: 'Added to library',
+      description: s.title,
+      color: 'success',
+    })
+
+    resetAndClose()
+  }
+  catch (err: any) {
     status.value = 'error'
     errorMessage.value = err.data?.message || 'Failed to create entry'
     isCreating.value = false
@@ -602,6 +652,36 @@ onMounted(() => {
                   />
                 </UFormField>
               </div>
+            </div>
+          </div>
+
+          <!-- Duplicate warning -->
+          <div
+            v-else-if="status === 'error' && errorMessage?.startsWith('duplicate:')"
+            class="py-6 space-y-3"
+          >
+            <UAlert
+              icon="i-heroicons-document-duplicate"
+              color="warning"
+              :title="errorMessage.replace('duplicate:', '')"
+            />
+            <div class="flex justify-center gap-2">
+              <UButton
+                variant="outline"
+                color="neutral"
+                size="sm"
+                @click="clearPreview"
+              >
+                Go back
+              </UButton>
+              <UButton
+                color="primary"
+                size="sm"
+                :loading="isCreating"
+                @click="forceAddToLibrary"
+              >
+                Add anyway
+              </UButton>
             </div>
           </div>
 

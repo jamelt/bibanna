@@ -1,6 +1,6 @@
 import { db } from '~/server/database/client'
 import { entries, entryTags, entryProjects, tags, annotations } from '~/server/database/schema'
-import { eq, and, ilike, sql, desc, asc, inArray, gte, lte } from 'drizzle-orm'
+import { eq, and, or, ilike, sql, desc, asc, inArray, gte, lte } from 'drizzle-orm'
 import { searchQuerySchema } from '~/shared/validation'
 
 export default defineEventHandler(async (event) => {
@@ -33,7 +33,24 @@ export default defineEventHandler(async (event) => {
   const conditions = [eq(entries.userId, user.id)]
 
   if (q) {
-    conditions.push(ilike(entries.title, `%${q}%`))
+    const pattern = `%${q}%`
+    conditions.push(
+      or(
+        ilike(entries.title, pattern),
+        sql`EXISTS (
+          SELECT 1 FROM jsonb_array_elements(${entries.authors}) AS a
+          WHERE a->>'lastName' ILIKE ${pattern}
+            OR a->>'firstName' ILIKE ${pattern}
+        )`,
+        ilike(sql`${entries.metadata}->>'doi'`, pattern),
+        ilike(sql`${entries.metadata}->>'isbn'`, pattern),
+        ilike(sql`${entries.metadata}->>'url'`, pattern),
+        ilike(sql`${entries.metadata}->>'journal'`, pattern),
+        ilike(sql`${entries.metadata}->>'publisher'`, pattern),
+        ilike(sql`${entries.metadata}->>'abstract'`, pattern),
+        ilike(entries.notes, pattern),
+      )!,
+    )
   }
 
   if (entryTypes && entryTypes.length > 0) {

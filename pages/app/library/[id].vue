@@ -56,6 +56,64 @@ async function handleEntryUpdated() {
   await refresh()
 }
 
+const toast = useToast()
+const isCopying = ref(false)
+
+async function copyCitation() {
+  if (!entry.value) return
+
+  isCopying.value = true
+  try {
+    const result = await $fetch<{
+      entries: Array<{ bibliography: string; inText: string }>
+    }>('/api/citation/format', {
+      method: 'POST',
+      body: {
+        entryIds: [entryId.value],
+        styleId: 'apa-7th',
+      },
+    })
+
+    const citation = result.entries?.[0]
+    if (!citation?.bibliography) {
+      throw new Error('No citation returned')
+    }
+
+    const htmlText = citation.bibliography
+    const plainText = htmlText.replace(/<[^>]*>/g, '').trim()
+
+    if (navigator.clipboard?.write) {
+      const blob = new Blob([htmlText], { type: 'text/html' })
+      const textBlob = new Blob([plainText], { type: 'text/plain' })
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': blob,
+          'text/plain': textBlob,
+        }),
+      ])
+    }
+    else {
+      await navigator.clipboard.writeText(plainText)
+    }
+
+    toast.add({
+      title: 'Citation copied',
+      description: 'APA 7th edition format',
+      color: 'success',
+    })
+  }
+  catch (err: any) {
+    toast.add({
+      title: 'Failed to copy citation',
+      description: err.data?.message || err.message || 'Please try again.',
+      color: 'error',
+    })
+  }
+  finally {
+    isCopying.value = false
+  }
+}
+
 async function handleAnnotationCreated() {
   isAddAnnotationOpen.value = false
   await refresh()
@@ -129,9 +187,7 @@ async function handleAnnotationCreated() {
           <UDropdown
             :items="[
               [
-                { label: 'Export', icon: 'i-heroicons-arrow-down-tray', onClick: () => {} },
-                { label: 'Share', icon: 'i-heroicons-share', onClick: () => {} },
-                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onClick: () => {} },
+                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onClick: copyCitation },
               ],
               [
                 { label: 'Delete', icon: 'i-heroicons-trash', onClick: () => isDeleteModalOpen = true },

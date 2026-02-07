@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer'
-import type { Entry, Author } from '~/shared/types'
+import type { Entry } from '~/shared/types'
+import { formatEntriesWithStyle } from '~/server/services/citation'
 
 export interface PdfExportOptions {
   paperSize: 'letter' | 'a4' | 'legal'
@@ -44,7 +45,7 @@ export async function generatePdf(
 
   const sortedEntries = sortEntries(entries, opts.sortBy)
 
-  const html = generateBibliographyHtml(sortedEntries, opts)
+  const html = await generateBibliographyHtml(sortedEntries, opts)
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -106,8 +107,21 @@ function sortEntries(entries: Entry[], sortBy: string): Entry[] {
   return sorted
 }
 
-function generateBibliographyHtml(entries: Entry[], opts: PdfExportOptions): string {
+async function generateBibliographyHtml(entries: Entry[], opts: PdfExportOptions): Promise<string> {
   const lineHeight = opts.lineSpacing === 'single' ? 1.2 : opts.lineSpacing === 'oneAndHalf' ? 1.5 : 2
+
+  const styleId = opts.citationStyleId || 'apa-7th'
+  let cslMap: Record<string, string> = {}
+
+  try {
+    const result = await formatEntriesWithStyle(entries, styleId)
+    for (const fc of result.entries) {
+      cslMap[fc.entryId] = fc.bibliography
+    }
+  }
+  catch {
+    // CSL formatting failed — leave map empty, entries will use title fallback
+  }
 
   let html = `
 <!DOCTYPE html>
@@ -205,7 +219,7 @@ function generateBibliographyHtml(entries: Entry[], opts: PdfExportOptions): str
 `
 
   for (const entry of entries) {
-    const citation = formatCitation(entry)
+    const citation = cslMap[entry.id] || escapeHtml(entry.title)
 
     html += `
     <div class="entry">
@@ -252,89 +266,6 @@ function generateBibliographyHtml(entries: Entry[], opts: PdfExportOptions): str
 `
 
   return html
-}
-
-function formatCitation(entry: Entry): string {
-  const authors = formatAuthors(entry.authors || [])
-  const year = entry.year ? `(${entry.year})` : ''
-  const title = entry.title
-  const italicTitle = `<em>${escapeHtml(title)}</em>`
-
-  let citation = ''
-
-  switch (entry.entryType) {
-    case 'book':
-      citation = `${authors} ${year}. ${italicTitle}.`
-      if (entry.metadata?.publisher) {
-        citation += ` ${escapeHtml(entry.metadata.publisher)}.`
-      }
-      break
-
-    case 'journal_article':
-      citation = `${authors} ${year}. ${escapeHtml(title)}.`
-      if (entry.metadata?.journal) {
-        citation += ` <em>${escapeHtml(entry.metadata.journal)}</em>`
-        if (entry.metadata?.volume) {
-          citation += `, ${entry.metadata.volume}`
-          if (entry.metadata?.issue) {
-            citation += `(${entry.metadata.issue})`
-          }
-        }
-        if (entry.metadata?.pages) {
-          citation += `, ${entry.metadata.pages}`
-        }
-        citation += '.'
-      }
-      if (entry.metadata?.doi) {
-        citation += ` https://doi.org/${entry.metadata.doi}`
-      }
-      break
-
-    case 'website':
-      citation = `${authors} ${year}. ${escapeHtml(title)}.`
-      if (entry.metadata?.url) {
-        citation += ` Retrieved from ${escapeHtml(entry.metadata.url)}`
-      }
-      break
-
-    default:
-      citation = `${authors} ${year}. ${italicTitle}.`
-      if (entry.metadata?.publisher) {
-        citation += ` ${escapeHtml(entry.metadata.publisher)}.`
-      }
-  }
-
-  return citation
-}
-
-function formatAuthors(authors: Author[]): string {
-  if (!authors || authors.length === 0) return ''
-
-  if (authors.length === 1) {
-    const first = authors[0]
-    return first ? formatSingleAuthor(first) : ''
-  }
-
-  if (authors.length === 2) {
-    const a0 = authors[0]
-    const a1 = authors[1]
-    return a0 && a1 ? `${formatSingleAuthor(a0)} & ${formatSingleAuthor(a1)}` : ''
-  }
-
-  const firstAuthors = authors.slice(0, -1).map(formatSingleAuthor).join(', ')
-  const lastAuthor = authors[authors.length - 1]
-  return lastAuthor ? `${firstAuthors}, & ${formatSingleAuthor(lastAuthor)}` : firstAuthors
-}
-
-function formatSingleAuthor(author: Author): string {
-  let name = author.lastName
-  if (author.firstName) {
-    name += `, ${author.firstName.charAt(0)}.`
-    if (author.middleName) {
-      name += ` ${author.middleName.charAt(0)}.`
-    }
-  }
-  return escapeHtml(name)
 }
 
 function escapeHtml(text: string): string {

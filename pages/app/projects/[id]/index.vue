@@ -24,15 +24,15 @@ const isAddEntryModalOpen = ref(false)
 const isDeleting = ref(false)
 const isRemovingEntry = ref<string | null>(null)
 
-const { data: libraryEntries } = await useFetch<{ items: Entry[]; total: number }>('/api/entries', {
+const { data: libraryEntries } = await useFetch<{ data: Entry[]; total: number }>('/api/entries', {
   query: { pageSize: 100 },
   lazy: true,
 })
 
 const availableEntries = computed(() => {
-  if (!libraryEntries.value?.items) return []
+  if (!libraryEntries.value?.data) return []
   const projectEntryIds = new Set(entries.value.map((e: any) => e.id))
-  return libraryEntries.value.items.filter(e => !projectEntryIds.has(e.id))
+  return libraryEntries.value.data.filter(e => !projectEntryIds.has(e.id))
 })
 
 function projectSlugOrId(p: Project | null | undefined) {
