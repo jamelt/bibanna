@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1770177033718,
-      "tag": "0000_ancient_nighthawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1770483751267,
-      "tag": "0001_cloudy_nightshade",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1770570000000,
-      "tag": "0002_admin_operations",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1770656400000,
-      "tag": "0003_usage_tracking_grace_periods",
+      "when": 1770490776840,
+      "tag": "0000_stale_brother_voodoo",
       "breakpoints": true
     }
   ]
