@@ -198,57 +198,59 @@ const announcementBannerColors: Record<string, string> = {
     </div>
 
     <!-- Mobile sidebar overlay -->
-    <USlideover v-model:open="isMobileMenuOpen" side="left" class="lg:hidden">
-      <div class="flex h-full flex-col bg-white dark:bg-gray-800 p-4">
-        <div class="flex items-center justify-between mb-8">
-          <NuxtLink to="/app" class="flex items-center gap-2">
-            <UIcon
-              name="i-heroicons-book-open"
-              class="w-8 h-8 text-primary-500"
+    <USlideover v-model:open="isMobileMenuOpen" side="left" class="lg:hidden" :close="false">
+      <template #content="{ close }">
+        <div class="flex h-full flex-col bg-white dark:bg-gray-800 p-4">
+          <div class="flex items-center justify-between mb-8">
+            <NuxtLink to="/app" class="flex items-center gap-2" @click="close()">
+              <UIcon
+                name="i-heroicons-book-open"
+                class="w-8 h-8 text-primary-500"
+              />
+              <span class="text-xl font-bold text-gray-900 dark:text-white"
+                >Bibanna</span
+              >
+            </NuxtLink>
+            <UButton
+              icon="i-heroicons-x-mark"
+              variant="ghost"
+              color="neutral"
+              @click="close()"
             />
-            <span class="text-xl font-bold text-gray-900 dark:text-white"
-              >Bibanna</span
-            >
-          </NuxtLink>
-          <UButton
-            icon="i-heroicons-x-mark"
-            variant="ghost"
-            color="neutral"
-            @click="isMobileMenuOpen = false"
-          />
-        </div>
+          </div>
 
-        <nav class="flex-1 space-y-1">
-          <NuxtLink
-            v-for="item in navigation"
-            :key="item.name"
-            :to="item.to"
-            class="group flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            active-class="bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
-            @click="isMobileMenuOpen = false"
-          >
-            <UIcon :name="item.icon" class="w-5 h-5" />
-            {{ item.name }}
-          </NuxtLink>
-
-          <template v-if="isAdmin">
-            <div class="pt-4 pb-1">
-              <p class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Admin</p>
-            </div>
+          <nav class="flex-1 space-y-1">
             <NuxtLink
-              v-for="item in adminNavigation"
+              v-for="item in navigation"
               :key="item.name"
               :to="item.to"
               class="group flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               active-class="bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
-              @click="isMobileMenuOpen = false"
+              @click="close()"
             >
               <UIcon :name="item.icon" class="w-5 h-5" />
               {{ item.name }}
             </NuxtLink>
-          </template>
-        </nav>
-      </div>
+
+            <template v-if="isAdmin">
+              <div class="pt-4 pb-1">
+                <p class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Admin</p>
+              </div>
+              <NuxtLink
+                v-for="item in adminNavigation"
+                :key="item.name"
+                :to="item.to"
+                class="group flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                active-class="bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
+                @click="close()"
+              >
+                <UIcon :name="item.icon" class="w-5 h-5" />
+                {{ item.name }}
+              </NuxtLink>
+            </template>
+          </nav>
+        </div>
+      </template>
     </USlideover>
 
     <!-- Desktop sidebar -->
@@ -486,7 +488,7 @@ const announcementBannerColors: Record<string, string> = {
       </header>
 
       <!-- Page content -->
-      <main class="p-4 lg:p-6">
+      <main class="p-4 lg:p-6 pb-20 lg:pb-6">
         <slot />
       </main>
     </div>
