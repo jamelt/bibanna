@@ -630,16 +630,13 @@ const announcementBannerColors: Record<string, string> = {
           </Transition>
         </div>
 
-        <!-- Remaining nav items (Tags, Mind Maps) -->
         <NuxtLink
-          v-for="item in navigation.slice(3, 5)"
-          :key="item.name"
-          :to="item.to"
+          :to="navigation[3].to"
           class="flex flex-col items-center gap-1 px-3 py-1 text-gray-500 dark:text-gray-400"
           active-class="text-primary-500 dark:text-primary-400"
         >
-          <UIcon :name="item.icon" class="w-6 h-6" />
-          <span class="text-xs">{{ item.name }}</span>
+          <UIcon :name="navigation[3].icon" class="w-6 h-6" />
+          <span class="text-xs">{{ navigation[3].name }}</span>
         </NuxtLink>
       </div>
     </nav>
