@@ -124,7 +124,7 @@ terraform apply -var-file="environments/production.tfvars"
 ### Cloud SQL Configuration
 
 Terraform creates a Cloud SQL instance with:
-- PostgreSQL 16
+- PostgreSQL 18
 - Private IP only
 - Automated backups
 - Point-in-time recovery

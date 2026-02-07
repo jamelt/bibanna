@@ -28,7 +28,7 @@ Bibanna is a modern bibliography management application built for researchers, s
 ### Backend
 - **Nitro** - Nuxt's server engine (Node.js)
 - **Drizzle ORM** - Type-safe SQL query builder
-- **PostgreSQL 16** - Primary database with extensions:
+- **PostgreSQL 18** - Primary database with extensions:
   - `pgvector` - Vector similarity search for semantic features
   - `uuid-ossp` - UUID generation
 - **Zod** - Runtime schema validation

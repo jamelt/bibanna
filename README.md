@@ -30,7 +30,7 @@ A modern bibliography and annotation management platform for researchers, studen
 - Node.js 20+
 - pnpm 8+
 - Docker and Docker Compose
-- PostgreSQL 16+ (or use Docker)
+- PostgreSQL 18+ (or use Docker)
 
 ## Getting Started
 

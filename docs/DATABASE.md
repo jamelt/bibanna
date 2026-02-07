@@ -4,7 +4,7 @@ This document describes the PostgreSQL database schema used by Bibanna, includin
 
 ## Overview
 
-Bibanna uses PostgreSQL 16 with the following extensions:
+Bibanna uses PostgreSQL 18 with the following extensions:
 - **uuid-ossp** - UUID generation for primary keys
 - **pgvector** - Vector similarity search for semantic features
 

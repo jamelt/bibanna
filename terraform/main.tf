@@ -126,7 +126,7 @@ module "cloudsql" {
 
   project_id       = var.project_id
   name             = "${local.name}-db"
-  database_version = "POSTGRES_16"
+  database_version = "POSTGRES_18"
   region           = var.region
   zone             = var.zones[0]
   tier             = var.db_tier

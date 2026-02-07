@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg18
     container_name: bibanna-postgres
     environment:
       POSTGRES_USER: bibanna
@@ -18,7 +18,7 @@ services:
       retries: 5
 
   postgres-test:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg18
     container_name: bibanna-postgres-test
     environment:
       POSTGRES_USER: bibanna_test
