@@ -729,7 +729,7 @@ onMounted(() => {
       <div
         class="flex flex-col bg-white dark:bg-gray-900 overflow-hidden"
         :class="
-          isMobile ? 'h-full w-full' : 'max-h-[min(90vh,44rem)] rounded-lg'
+          isMobile ? 'h-full w-full' : 'min-h-112 max-h-[min(90vh,44rem)] rounded-lg'
         "
         @keydown="handleKeydown"
       >
@@ -762,18 +762,24 @@ onMounted(() => {
         <!-- Primary input -->
         <div class="px-4 sm:px-5 pt-4 pb-2">
           <div class="relative">
-            <div class="flex items-center gap-2">
-              <UBadge
+            <div class="flex items-stretch gap-2">
+              <button
                 v-if="activeQualifier !== 'any'"
-                :color="qualifierColorMap[activeQualifier]"
-                variant="subtle"
-                size="sm"
-                class="shrink-0 cursor-pointer"
+                type="button"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 rounded-lg text-sm font-medium transition-colors"
+                :class="{
+                  'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800': qualifierColorMap[activeQualifier] === 'blue',
+                  'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800': qualifierColorMap[activeQualifier] === 'violet',
+                  'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800': qualifierColorMap[activeQualifier] === 'green',
+                  'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800': qualifierColorMap[activeQualifier] === 'amber',
+                  'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800': qualifierColorMap[activeQualifier] === 'rose',
+                  'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700': qualifierColorMap[activeQualifier] === 'neutral',
+                }"
                 @click="clearQualifier"
               >
                 {{ qualifierLabelMap[activeQualifier] }}
-                <span class="ml-1 opacity-60">&times;</span>
-              </UBadge>
+                <UIcon name="i-heroicons-x-mark" class="w-3.5 h-3.5 opacity-60" />
+              </button>
               <UInput
                 ref="inputRef"
                 v-model="query"
@@ -826,12 +832,12 @@ onMounted(() => {
               v-if="showSlashDropdown"
               class="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
             >
-              <div class="py-1">
+              <div class="p-1.5 space-y-0.5">
                 <button
                   v-for="(opt, idx) in filteredQualifierOptions"
                   :key="opt.key"
                   type="button"
-                  class="w-full text-left px-3 py-2 text-sm flex items-center justify-between transition-colors"
+                  class="w-full text-left px-3 py-2.5 text-sm flex items-center justify-between transition-colors rounded-md"
                   :class="
                     idx === slashHighlightIndex
                       ? 'bg-primary-50 dark:bg-primary-900/20'
@@ -840,14 +846,17 @@ onMounted(() => {
                   @click="selectQualifier(opt.key)"
                   @mouseenter="slashHighlightIndex = idx"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2.5">
                     <UBadge
                       :color="opt.color"
                       variant="subtle"
-                      size="xs"
+                      size="sm"
                     >
                       {{ opt.label }}
                     </UBadge>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">
+                      Search by {{ opt.label.toLowerCase() }}
+                    </span>
                   </div>
                   <kbd
                     class="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
@@ -868,22 +877,20 @@ onMounted(() => {
           <!-- Field qualifier pills -->
           <div
             v-if="status !== 'preview'"
-            class="flex items-center gap-1.5 mt-2 flex-wrap"
+            class="flex items-center gap-1.5 mt-2.5 flex-wrap"
           >
-            <button
-              v-for="opt in [{ key: 'any' as FieldQualifier, label: 'Any', color: 'neutral' }, ...qualifierOptions]"
+            <UBadge
+              v-for="opt in [{ key: 'any' as FieldQualifier, label: 'Any', shortcut: '', color: 'neutral' }, ...qualifierOptions]"
               :key="opt.key"
-              type="button"
-              class="px-2 py-0.5 text-xs rounded-full border transition-colors"
-              :class="
-                activeQualifier === opt.key
-                  ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300'
-              "
+              :color="activeQualifier === opt.key ? opt.color : 'neutral'"
+              :variant="activeQualifier === opt.key ? 'subtle' : 'outline'"
+              size="sm"
+              class="cursor-pointer select-none transition-all"
+              :class="activeQualifier === opt.key ? 'ring-1 ring-current/20 font-medium' : 'opacity-70 hover:opacity-100'"
               @click="opt.key === 'any' ? clearQualifier() : selectQualifier(opt.key)"
             >
               {{ opt.label }}
-            </button>
+            </UBadge>
           </div>
 
           <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
@@ -892,7 +899,7 @@ onMounted(() => {
         </div>
 
         <!-- Scrollable body -->
-        <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 pb-4">
+        <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 pb-4 min-h-64">
           <!-- Loading skeleton -->
           <div
             v-if="status === 'loading' || status === 'typing'"
