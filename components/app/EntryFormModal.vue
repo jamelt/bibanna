@@ -53,6 +53,14 @@ const newAuthor = reactive({
 
 const isSubmitting = ref(false)
 const errors = ref<Record<string, string>>({})
+const scrollContainer = ref<HTMLElement | null>(null)
+const showScrollIndicator = ref(true)
+
+function handleScroll(event: Event) {
+  const target = event.target as HTMLElement
+  const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50
+  showScrollIndicator.value = !isAtBottom
+}
 
 const entryTypeOptions = Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => ({
   value,
@@ -168,11 +176,11 @@ async function handleSubmit() {
     v-model:open="isOpen"
     :ui="{
       container: 'items-start sm:items-center',
-      content: 'sm:max-w-3xl w-full max-h-[85vh]',
+      content: 'sm:max-w-3xl w-full max-h-[90vh]',
     }"
   >
     <template #content>
-      <UCard class="flex flex-col max-h-[85vh]">
+      <UCard class="flex flex-col max-h-[90vh]">
         <template #header>
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
@@ -188,7 +196,11 @@ async function handleSubmit() {
           </div>
         </template>
 
-        <div class="flex-1 overflow-y-auto px-1 -mx-1">
+        <div 
+          ref="scrollContainer"
+          class="flex-1 overflow-y-auto px-4 scroll-smooth relative"
+          @scroll="handleScroll"
+        >
           <form class="space-y-5 pb-2" @submit.prevent="handleSubmit">
             <UAlert
               v-if="errors.general"
@@ -286,6 +298,57 @@ async function handleSubmit() {
             />
           </UFormField>
 
+          <!-- Projects -->
+          <UFormField label="Projects" help="Assign this entry to projects">
+            <USelectMenu
+              v-model="form.projectIds"
+              :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
+              multiple
+              placeholder="Select projects..."
+              value-key="id"
+              label-key="name"
+              size="md"
+              :ui="{ trigger: 'w-full' }"
+            />
+          </UFormField>
+
+          <!-- Tags -->
+          <UFormField label="Tags" help="Organize your entry with tags">
+            <div class="space-y-3">
+              <USelectMenu
+                v-model="form.tagIds"
+                :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+                multiple
+                placeholder="Select tags..."
+                value-key="id"
+                label-key="name"
+                size="md"
+                :ui="{ trigger: 'w-full' }"
+              >
+                <template #item-leading="{ item }">
+                  <span
+                    class="w-3 h-3 rounded-full shrink-0"
+                    :style="{ backgroundColor: item.color ?? 'transparent' }"
+                  />
+                </template>
+              </USelectMenu>
+              
+              <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-2">
+                <span
+                  v-for="tagId in form.tagIds"
+                  :key="tagId"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                >
+                  <span
+                    class="w-2.5 h-2.5 rounded-full shrink-0"
+                    :style="{ backgroundColor: tags?.find(t => t.id === tagId)?.color ?? '#6B7280' }"
+                  />
+                  {{ tags?.find(t => t.id === tagId)?.name }}
+                </span>
+              </div>
+            </div>
+          </UFormField>
+
           <!-- Type-specific metadata -->
           <div v-if="['book', 'thesis', 'report'].includes(form.entryType)" class="grid grid-cols-2 gap-4">
             <UFormField label="Publisher">
@@ -331,42 +394,7 @@ async function handleSubmit() {
             />
           </UFormField>
 
-            <!-- Projects -->
-            <UFormField label="Projects">
-              <USelectMenu
-                v-model="form.projectIds"
-                :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
-                multiple
-                placeholder="Select projects..."
-                value-key="id"
-                label-key="name"
-                size="md"
-                :ui="{ trigger: 'w-full' }"
-              />
-            </UFormField>
-
-            <!-- Tags -->
-            <UFormField label="Tags">
-              <USelectMenu
-                v-model="form.tagIds"
-                :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
-                multiple
-                placeholder="Select tags..."
-                value-key="id"
-                label-key="name"
-                size="md"
-                :ui="{ trigger: 'w-full' }"
-              >
-                <template #item-leading="{ item }">
-                  <span
-                    class="w-3 h-3 rounded-full shrink-0"
-                    :style="{ backgroundColor: item.color ?? 'transparent' }"
-                  />
-                </template>
-              </USelectMenu>
-            </UFormField>
-
-            <!-- Notes -->
+          <!-- Notes -->
             <UFormField label="Notes">
               <UTextarea
                 v-model="form.notes"
@@ -381,6 +409,23 @@ async function handleSubmit() {
             <UCheckbox v-model="form.isFavorite" label="Mark as favorite" />
           </form>
         </div>
+
+        <Transition
+          enter-active-class="transition-opacity duration-200"
+          leave-active-class="transition-opacity duration-200"
+          enter-from-class="opacity-0"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="showScrollIndicator"
+            class="absolute bottom-20 left-1/2 -translate-x-1/2 pointer-events-none z-10"
+          >
+            <div class="flex items-center gap-2 px-4 py-2 bg-gray-900/80 dark:bg-gray-100/80 text-white dark:text-gray-900 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm">
+              <UIcon name="i-heroicons-chevron-down" class="w-4 h-4 animate-bounce" />
+              <span>Scroll for more fields</span>
+            </div>
+          </div>
+        </Transition>
 
         <template #footer>
           <div class="flex justify-end gap-3 pt-1">
