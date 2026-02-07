@@ -11,18 +11,38 @@ const isCreateProjectOpen = ref(false)
 const isExportModalOpen = ref(false)
 const isImportModalOpen = ref(false)
 
-const stats = ref([
-  { label: 'Total Entries', value: 0, icon: 'i-heroicons-book-open' },
-  { label: 'Projects', value: 0, icon: 'i-heroicons-folder' },
-  { label: 'Annotations', value: 0, icon: 'i-heroicons-pencil-square' },
-  { label: 'Tags', value: 0, icon: 'i-heroicons-tag' },
-])
+const { data: entriesData } = await useFetch('/api/entries', {
+  query: { page: 1, pageSize: 5, sortBy: 'createdAt', sortOrder: 'desc' },
+})
 
-const recentEntries = ref<any[]>([])
-const recentProjects = ref<any[]>([])
+const { data: projectsData } = await useFetch('/api/projects')
+
+const { data: tagsData } = await useFetch('/api/tags')
+
+const stats = computed(() => {
+  const totalEntries = entriesData.value?.total || 0
+  const totalProjects = projectsData.value?.length || 0
+  const totalAnnotations = entriesData.value?.data?.reduce((sum, entry) => sum + (entry.annotationCount || 0), 0) || 0
+  const totalTags = tagsData.value?.length || 0
+
+  return [
+    { label: 'Total Entries', value: totalEntries, icon: 'i-heroicons-book-open' },
+    { label: 'Projects', value: totalProjects, icon: 'i-heroicons-folder' },
+    { label: 'Annotations', value: totalAnnotations, icon: 'i-heroicons-pencil-square' },
+    { label: 'Tags', value: totalTags, icon: 'i-heroicons-tag' },
+  ]
+})
+
+const recentEntries = computed(() => entriesData.value?.data || [])
+const recentProjects = computed(() => (projectsData.value || []).slice(0, 5))
 
 function projectSlugOrId(project: any) {
   return project.slug || project.id
+}
+
+function formatAuthors(authors: any[]) {
+  if (!authors || authors.length === 0) return 'Unknown Author'
+  return authors.map((a: any) => `${a.lastName}, ${a.firstName}${a.middleName ? ` ${a.middleName}` : ''}`).join('; ')
 }
 
 async function handleProjectCreated() {
@@ -178,8 +198,8 @@ async function handleProjectCreated() {
               <p class="font-medium text-gray-900 dark:text-white truncate">
                 {{ entry.title }}
               </p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ entry.authors }} &middot; {{ entry.year }}
+              <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {{ formatAuthors(entry.authors) }}{{ entry.year ? ` · ${entry.year}` : '' }}
               </p>
             </NuxtLink>
           </li>

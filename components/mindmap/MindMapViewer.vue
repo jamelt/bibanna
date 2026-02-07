@@ -6,11 +6,25 @@ interface Props {
 const props = defineProps<Props>()
 
 const containerRef = ref<HTMLElement | null>(null)
+const isSidebarOpen = ref(false)
+const isMobile = ref(false)
 
 const showAuthors = ref(true)
 const showTags = ref(true)
 const showSameAuthorEdges = ref(true)
 const showSimilarEdges = ref(false)
+
+onMounted(() => {
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth < 1024
+    if (!isMobile.value) {
+      isSidebarOpen.value = false
+    }
+  }
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  onUnmounted(() => window.removeEventListener('resize', checkMobile))
+})
 
 const queryParams = computed(() => ({
   showAuthors: showAuthors.value,
@@ -112,20 +126,29 @@ const stats = computed(() => {
 <template>
   <div class="flex flex-col h-full">
     <!-- Toolbar -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-gray-500">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <UButton
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-adjustments-horizontal"
+          class="lg:hidden"
+          @click="isSidebarOpen = true"
+        />
+        <span class="text-xs sm:text-sm text-gray-500 truncate">
           {{ stats.entries }} entries, {{ stats.authors }} authors, {{ stats.tags }} tags
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
-        <UButton variant="ghost" size="sm" icon="i-heroicons-arrow-path" @click="refresh">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+        <UButton variant="ghost" size="sm" icon="i-heroicons-arrow-path" class="hidden sm:flex" @click="refresh">
           Refresh
         </UButton>
-        <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" @click="zoomToFit">
+        <UButton variant="ghost" size="sm" icon="i-heroicons-arrow-path" class="sm:hidden" @click="refresh" />
+        <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" class="hidden sm:flex" @click="zoomToFit">
           Fit
         </UButton>
+        <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" class="sm:hidden" @click="zoomToFit" />
         <UDropdown
           :items="[
             [
@@ -140,8 +163,8 @@ const stats = computed(() => {
     </div>
 
     <div class="flex-1 flex">
-      <!-- Filters sidebar -->
-      <div class="w-56 border-r border-gray-200 dark:border-gray-700 p-4 space-y-6">
+      <!-- Filters sidebar - Desktop -->
+      <div class="hidden lg:block w-56 border-r border-gray-200 dark:border-gray-700 p-4 space-y-6">
         <div>
           <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Show Nodes
@@ -289,11 +312,76 @@ const stats = computed(() => {
 
           <div v-if="selectedNode.type === 'entry'" class="pt-4">
             <NuxtLink
-              :to="`/app/library/${selectedNode.id}`"
+              :to="`/app/library/${selectedNode.slug || selectedNode.id}`"
               class="text-primary-600 hover:text-primary-700 text-sm"
             >
               View full entry →
             </NuxtLink>
+          </div>
+        </div>
+      </UCard>
+    </USlideover>
+
+    <!-- Filters sidebar - Mobile (only render on mobile) -->
+    <USlideover v-if="isMobile" v-model:open="isSidebarOpen" side="left">
+      <UCard :ui="{ body: { padding: 'p-4' } }">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold text-gray-900 dark:text-white">
+              Filters & Legend
+            </h3>
+          </div>
+        </template>
+
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Show Nodes
+            </h3>
+            <div class="space-y-2">
+              <UCheckbox v-model="showAuthors" label="Authors" />
+              <UCheckbox v-model="showTags" label="Tags" />
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Show Connections
+            </h3>
+            <div class="space-y-2">
+              <UCheckbox v-model="showSameAuthorEdges" label="Same author" />
+              <UCheckbox v-model="showSimilarEdges" label="Similar topics" />
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Node Legend
+            </h3>
+            <div class="space-y-2">
+              <div v-for="item in legend" :key="item.type" class="flex items-center gap-2">
+                <div
+                  class="w-3 h-3 rounded-full"
+                  :style="{ backgroundColor: item.color }"
+                />
+                <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Edge Legend
+            </h3>
+            <div class="space-y-2">
+              <div v-for="item in edgeLegend" :key="item.type" class="flex items-center gap-2">
+                <div
+                  class="w-4 h-0.5"
+                  :style="{ backgroundColor: item.color }"
+                />
+                <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </UCard>
