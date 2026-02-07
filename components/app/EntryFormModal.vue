@@ -168,27 +168,28 @@ async function handleSubmit() {
     v-model:open="isOpen"
     :ui="{
       container: 'items-start sm:items-center',
-      content: 'sm:max-w-2xl w-full max-h-[min(90vh,40rem)]',
+      content: 'sm:max-w-3xl w-full max-h-[85vh]',
     }"
   >
     <template #content>
-      <UCard class="flex flex-col max-h-[min(90vh,40rem)]">
+      <UCard class="flex flex-col max-h-[85vh]">
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {{ isEditing ? 'Edit Entry' : 'Add Entry' }}
             </h2>
             <UButton
               icon="i-heroicons-x-mark"
               variant="ghost"
               color="neutral"
+              size="lg"
               @click="isOpen = false"
             />
           </div>
         </template>
 
-        <div class="flex-1 overflow-y-auto pr-1 -mr-1">
-          <form class="space-y-4 pb-4" @submit.prevent="handleSubmit">
+        <div class="flex-1 overflow-y-auto px-1 -mx-1">
+          <form class="space-y-5 pb-2" @submit.prevent="handleSubmit">
             <UAlert
               v-if="errors.general"
               color="error"
@@ -202,6 +203,7 @@ async function handleSubmit() {
                 v-model="form.entryType"
                 :items="entryTypeOptions"
                 value-key="value"
+                size="lg"
                 :ui="{ trigger: 'w-full' }"
               />
             </UFormField>
@@ -211,6 +213,8 @@ async function handleSubmit() {
               <UInput
                 v-model="form.title"
                 placeholder="Enter the title"
+                size="lg"
+                class="w-full"
                 autofocus
               />
             </UFormField>
@@ -240,18 +244,21 @@ async function handleSubmit() {
                 <UInput
                   v-model="newAuthor.firstName"
                   placeholder="First name"
+                  size="md"
                   class="flex-1"
                   @keyup.enter.prevent="addAuthor"
                 />
                 <UInput
                   v-model="newAuthor.middleName"
                   placeholder="Middle"
+                  size="md"
                   class="w-24"
                   @keyup.enter.prevent="addAuthor"
                 />
                 <UInput
                   v-model="newAuthor.lastName"
                   placeholder="Last name"
+                  size="md"
                   class="flex-1"
                   @keyup.enter.prevent="addAuthor"
                 />
@@ -259,6 +266,7 @@ async function handleSubmit() {
                   icon="i-heroicons-plus"
                   variant="outline"
                   color="neutral"
+                  size="md"
                   @click="addAuthor"
                 />
               </div>
@@ -272,41 +280,43 @@ async function handleSubmit() {
               type="number"
               :min="1"
               :max="9999"
+              size="md"
               placeholder="Publication year"
+              class="w-full"
             />
           </UFormField>
 
           <!-- Type-specific metadata -->
           <div v-if="['book', 'thesis', 'report'].includes(form.entryType)" class="grid grid-cols-2 gap-4">
             <UFormField label="Publisher">
-              <UInput v-model="form.metadata.publisher" placeholder="Publisher name" />
+              <UInput v-model="form.metadata.publisher" placeholder="Publisher name" size="md" class="w-full" />
             </UFormField>
             <UFormField label="ISBN">
-              <UInput v-model="form.metadata.isbn" placeholder="ISBN" />
+              <UInput v-model="form.metadata.isbn" placeholder="ISBN" size="md" class="w-full" />
             </UFormField>
           </div>
 
           <div v-if="form.entryType === 'journal_article'" class="grid grid-cols-2 gap-4">
             <UFormField label="Journal" class="col-span-2">
-              <UInput v-model="form.metadata.journal" placeholder="Journal name" />
+              <UInput v-model="form.metadata.journal" placeholder="Journal name" size="md" class="w-full" />
             </UFormField>
             <UFormField label="Volume">
-              <UInput v-model="form.metadata.volume" placeholder="Volume" />
+              <UInput v-model="form.metadata.volume" placeholder="Volume" size="md" class="w-full" />
             </UFormField>
             <UFormField label="Issue">
-              <UInput v-model="form.metadata.issue" placeholder="Issue" />
+              <UInput v-model="form.metadata.issue" placeholder="Issue" size="md" class="w-full" />
             </UFormField>
             <UFormField label="Pages">
-              <UInput v-model="form.metadata.pages" placeholder="e.g., 123-145" />
+              <UInput v-model="form.metadata.pages" placeholder="e.g., 123-145" size="md" class="w-full" />
             </UFormField>
             <UFormField label="DOI">
-              <UInput v-model="form.metadata.doi" placeholder="DOI" />
+              <UInput v-model="form.metadata.doi" placeholder="DOI" size="md" class="w-full" />
             </UFormField>
           </div>
 
           <div v-if="form.entryType === 'website'" class="space-y-4">
             <UFormField label="URL">
-              <UInput v-model="form.metadata.url" type="url" placeholder="https://..." />
+              <UInput v-model="form.metadata.url" type="url" placeholder="https://..." size="md" class="w-full" />
             </UFormField>
           </div>
 
@@ -315,7 +325,9 @@ async function handleSubmit() {
             <UTextarea
               v-model="form.metadata.abstract"
               :rows="3"
+              size="md"
               placeholder="Enter the abstract..."
+              class="w-full"
             />
           </UFormField>
 
@@ -328,6 +340,7 @@ async function handleSubmit() {
                 placeholder="Select projects..."
                 value-key="id"
                 label-key="name"
+                size="md"
                 :ui="{ trigger: 'w-full' }"
               />
             </UFormField>
@@ -341,6 +354,7 @@ async function handleSubmit() {
                 placeholder="Select tags..."
                 value-key="id"
                 label-key="name"
+                size="md"
                 :ui="{ trigger: 'w-full' }"
               >
                 <template #item-leading="{ item }">
@@ -357,7 +371,9 @@ async function handleSubmit() {
               <UTextarea
                 v-model="form.notes"
                 :rows="2"
+                size="md"
                 placeholder="Personal notes..."
+                class="w-full"
               />
             </UFormField>
 
@@ -367,16 +383,18 @@ async function handleSubmit() {
         </div>
 
         <template #footer>
-          <div class="flex justify-end gap-3">
+          <div class="flex justify-end gap-3 pt-1">
             <UButton
               variant="outline"
               color="neutral"
+              size="lg"
               @click="isOpen = false"
             >
               Cancel
             </UButton>
             <UButton
               color="primary"
+              size="lg"
               :loading="isSubmitting"
               @click="handleSubmit"
             >
