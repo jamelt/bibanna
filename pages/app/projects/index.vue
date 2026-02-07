@@ -32,14 +32,14 @@ const archivedProjects = computed(() =>
 )
 
 async function handleProjectCreated() {
-  isCreateModalOpen.value = false
   await refresh()
+  isCreateModalOpen.value = false
 }
 
 async function handleProjectUpdated() {
+  await refresh()
   isEditModalOpen.value = false
   selectedProject.value = undefined
-  await refresh()
 }
 
 function projectSlugOrId(project: Project) {

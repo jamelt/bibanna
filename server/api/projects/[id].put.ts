@@ -1,7 +1,8 @@
 import { db } from '~/server/database/client'
 import { projects } from '~/server/database/schema'
 import { updateProjectSchema } from '~/shared/validation'
-import { eq, and, or } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
+import { buildProjectWhere } from '~/server/utils/project-query'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -26,13 +27,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingProject = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, user.id),
-    ),
+    where: buildProjectWhere(projectId, user.id),
   })
 
   if (!existingProject) {

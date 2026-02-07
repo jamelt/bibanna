@@ -165,13 +165,13 @@ async function bulkAction(action: string, extra: Record<string, unknown> = {}) {
 }
 
 async function handleEntryCreated() {
-  isAddModalOpen.value = false
   await refresh()
+  isAddModalOpen.value = false
 }
 
 async function handleImported() {
-  isImportModalOpen.value = false
   await refresh()
+  isImportModalOpen.value = false
 }
 
 const focusedEntryIndex = ref(-1)

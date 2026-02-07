@@ -1,7 +1,8 @@
 import { db } from '~/server/database/client'
 import { projects, entries, entryProjects } from '~/server/database/schema'
-import { eq, and, or } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { buildProjectWhere } from '~/server/utils/project-query'
 
 const addEntrySchema = z.object({
   entryId: z.string().uuid('Invalid entry ID'),
@@ -30,13 +31,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const project = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, user.id),
-    ),
+    where: buildProjectWhere(projectId, user.id),
   })
 
   if (!project) {

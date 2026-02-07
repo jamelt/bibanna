@@ -3,6 +3,7 @@ import { projectShares, projects, users } from '~/server/database/schema'
 import { eq, and, or, isNotNull } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import type { SharePermission } from '~/shared/types'
+import { buildProjectWhere } from '~/server/utils/project-query'
 
 export interface ShareInfo {
   id: string
@@ -23,13 +24,7 @@ export async function shareProjectWithUser(
   permission: SharePermission,
 ): Promise<ShareInfo> {
   const project = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, ownerUserId),
-    ),
+    where: buildProjectWhere(projectId, ownerUserId),
   })
 
   if (!project) {
@@ -103,13 +98,7 @@ export async function createPublicLink(
   permission: 'view' | 'comment' = 'view',
 ): Promise<{ token: string; url: string }> {
   const project = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, ownerUserId),
-    ),
+    where: buildProjectWhere(projectId, ownerUserId),
   })
 
   if (!project) {
@@ -163,13 +152,7 @@ export async function createPublicLink(
 
 export async function revokePublicLink(projectId: string, ownerUserId: string): Promise<void> {
   const project = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, ownerUserId),
-    ),
+    where: buildProjectWhere(projectId, ownerUserId),
   })
 
   if (!project) {
@@ -211,13 +194,7 @@ export async function removeShare(shareId: string, ownerUserId: string): Promise
 
 export async function getProjectShares(projectId: string, ownerUserId: string): Promise<ShareInfo[]> {
   const project = await db.query.projects.findFirst({
-    where: and(
-      or(
-        eq(projects.id, projectId),
-        eq(projects.slug, projectId),
-      ),
-      eq(projects.userId, ownerUserId),
-    ),
+    where: buildProjectWhere(projectId, ownerUserId),
   })
 
   if (!project) {
