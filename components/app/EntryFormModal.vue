@@ -180,25 +180,23 @@ async function handleSubmit() {
     }"
   >
     <template #content>
-      <UCard class="flex flex-col max-h-[90vh]">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-              {{ isEditing ? 'Edit Entry' : 'Add Entry' }}
-            </h2>
-            <UButton
-              icon="i-heroicons-x-mark"
-              variant="ghost"
-              color="neutral"
-              size="lg"
-              @click="isOpen = false"
-            />
-          </div>
-        </template>
+      <div class="flex flex-col max-h-[90vh] bg-white dark:bg-gray-900 rounded-lg ring ring-gray-200 dark:ring-gray-800 shadow-lg divide-y divide-gray-200 dark:divide-gray-800">
+        <div class="flex items-center justify-between px-6 py-4 shrink-0">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            {{ isEditing ? 'Edit Entry' : 'Add Entry' }}
+          </h2>
+          <UButton
+            icon="i-heroicons-x-mark"
+            variant="ghost"
+            color="neutral"
+            size="lg"
+            @click="isOpen = false"
+          />
+        </div>
 
         <div 
           ref="scrollContainer"
-          class="flex-1 overflow-y-auto px-4 scroll-smooth relative"
+          class="flex-1 overflow-y-scroll px-6 py-4 min-h-0 scroll-smooth scrollbar-visible"
           @scroll="handleScroll"
         >
           <form class="space-y-5 pb-2" @submit.prevent="handleSubmit">
@@ -427,27 +425,63 @@ async function handleSubmit() {
           </div>
         </Transition>
 
-        <template #footer>
-          <div class="flex justify-end gap-3 pt-1">
-            <UButton
-              variant="outline"
-              color="neutral"
-              size="lg"
-              @click="isOpen = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="primary"
-              size="lg"
-              :loading="isSubmitting"
-              @click="handleSubmit"
-            >
-              {{ isEditing ? 'Save Changes' : 'Add Entry' }}
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+        <div class="flex justify-end gap-3 px-6 py-4 shrink-0">
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="lg"
+            @click="isOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="primary"
+            size="lg"
+            :loading="isSubmitting"
+            @click="handleSubmit"
+          >
+            {{ isEditing ? 'Save Changes' : 'Add Entry' }}
+          </UButton>
+        </div>
+      </div>
     </template>
   </UModal>
 </template>
+
+<style scoped>
+.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(156 163 175) transparent;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 12px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgb(156 163 175);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(107 114 128);
+}
+
+.dark .scrollbar-visible {
+  scrollbar-color: rgb(75 85 99) transparent;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgb(75 85 99);
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(107 114 128);
+}
+</style>

@@ -16,9 +16,12 @@ Users reported difficulty seeing the full edit entry page and figuring out how t
 - Provides more vertical space for form content
 
 ### 2. Improved Scrolling
+- Changed from `overflow-y-auto` to `overflow-y-scroll` to always show scrollbar
+- Added custom scrollbar styling for better visibility
 - Added smooth scrolling: `scroll-smooth`
 - Fixed padding issues: Changed from `px-1 -mx-1` to `px-4`
 - Added scroll event tracking to detect when user reaches bottom
+- Added `min-h-0` to ensure proper flex behavior and scrollbar display
 
 ### 3. Scroll Indicator
 - Added animated "Scroll for more fields" indicator
@@ -52,6 +55,8 @@ Users reported difficulty seeing the full edit entry page and figuring out how t
 - Tags display with larger, more visible badges (text-sm instead of text-xs)
 - Added borders to tag badges for better definition
 - Color indicators are more prominent (2.5px instead of 2px)
+- Custom scrollbar styling with visible thumb and hover effects
+- Scrollbar always visible (not just on hover) for better discoverability
 
 ## User Experience Impact
 
@@ -83,6 +88,11 @@ Users reported difficulty seeing the full edit entry page and figuring out how t
 - Scroll indicator styling with backdrop blur
 - Animated bounce effect for chevron icon
 - Enhanced tag badge styling
+- Custom scrollbar styles (`.scrollbar-visible`)
+  - Webkit scrollbar styling for Chrome/Safari/Edge
+  - Firefox scrollbar styling with `scrollbar-width` and `scrollbar-color`
+  - Dark mode support for scrollbar colors
+  - Hover effects for better interactivity
 
 ## Testing Recommendations
 
