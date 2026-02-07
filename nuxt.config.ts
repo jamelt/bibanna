@@ -1,23 +1,22 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
-  css: ['~/assets/css/main.css'],
+  css: ["~/assets/css/main.css"],
 
   modules: [
-    '@nuxt/ui',
-    '@nuxt/icon',
-    '@nuxt/image',
-    '@pinia/nuxt',
-    '@vueuse/nuxt',
-    'nuxt-auth-utils',
+    "@nuxt/ui",
+    "@nuxt/icon",
+    "@nuxt/image",
+    "@pinia/nuxt",
+    "@vueuse/nuxt",
+    "nuxt-auth-utils",
   ],
-
 
   runtimeConfig: {
     session: {
       maxAge: 60 * 60 * 24 * 7,
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === "production",
       },
     },
     databaseUrl: process.env.DATABASE_URL,
@@ -28,22 +27,27 @@ export default defineNuxtConfig({
     stripeWebhookSecret: process.env.NUXT_STRIPE_WEBHOOK_SECRET,
     openaiApiKey: process.env.NUXT_OPENAI_API_KEY,
     public: {
-      appName: 'Bibanna',
+      appName: "Bibanna",
       stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     },
   },
 
   app: {
     head: {
-      title: 'Bibanna - Bibliography & Annotation Management',
+      title: "Bibanna - Bibliography & Annotation Management",
       meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Manage your bibliographies, annotations, and research sources with ease.' },
+        { charset: "utf-8" },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1, maximum-scale=1",
+        },
+        {
+          name: "description",
+          content:
+            "Manage your bibliographies, annotations, and research sources with ease.",
+        },
       ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      ],
+      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
     },
   },
 
@@ -52,7 +56,7 @@ export default defineNuxtConfig({
   },
 
   image: {
-    provider: 'ipx',
+    provider: "ipx",
     quality: 80,
     screens: {
       xs: 320,
@@ -65,52 +69,55 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true },
-    '/app/**': { ssr: false },
+    "/": { prerender: true },
+    "/app/**": { ssr: false },
   },
 
   nitro: {
-    preset: 'node-server',
+    preset: "node-server",
     experimental: {
       openAPI: true,
     },
     externals: {
-      inline: ['pdf-parse', 'mammoth', 'citeproc'],
+      inline: ["pdf-parse", "mammoth", "citeproc"],
     },
     esbuild: {
       options: {
-        target: 'esnext',
+        target: "esnext",
         logOverride: {
-          'this-is-undefined-in-esm': 'silent',
+          "this-is-undefined-in-esm": "silent",
         },
       },
     },
     rollupConfig: {
       external: (id: string) => {
-        if (id.startsWith('@opentelemetry/') || id.startsWith('@google-cloud/opentelemetry-')) {
-          return true
+        if (
+          id.startsWith("@opentelemetry/") ||
+          id.startsWith("@google-cloud/opentelemetry-")
+        ) {
+          return true;
         }
-        if (id === 'pino' || id.startsWith('pino/') || id === 'pino-pretty') {
-          return true
+        if (id === "pino" || id.startsWith("pino/") || id === "pino-pretty") {
+          return true;
         }
-        return false
+        return false;
       },
       onwarn(warning, warn) {
         if (
-          warning.code === 'THIS_IS_UNDEFINED' &&
-          warning.id?.includes('@opentelemetry')
+          warning.code === "THIS_IS_UNDEFINED" &&
+          warning.id?.includes("@opentelemetry")
         ) {
-          return
+          return;
         }
         if (
-          warning.code === 'CIRCULAR_DEPENDENCY' &&
-          (warning.message?.includes('node_modules') ||
-            warning.id?.includes('node_modules') ||
-            warning.ids?.some((id: string) => id.includes('node_modules')))
+          warning.code === "CIRCULAR_DEPENDENCY" &&
+          (warning.message?.includes("node_modules") ||
+            warning.id?.includes("node_modules") ||
+            warning.ids?.some((id: string) => id.includes("node_modules")))
         ) {
-          return
+          return;
         }
-        warn(warning)
+        warn(warning);
       },
     },
   },
@@ -118,14 +125,14 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
-        'pdf-parse',
-        'mammoth',
-        'citeproc',
-        '@nuxt/ui > prosemirror-state',
-        '@nuxt/ui > prosemirror-transform',
-        '@nuxt/ui > prosemirror-model',
-        '@nuxt/ui > prosemirror-view',
-        '@nuxt/ui > prosemirror-gapcursor',
+        "pdf-parse",
+        "mammoth",
+        "citeproc",
+        "@nuxt/ui > prosemirror-state",
+        "@nuxt/ui > prosemirror-transform",
+        "@nuxt/ui > prosemirror-model",
+        "@nuxt/ui > prosemirror-view",
+        "@nuxt/ui > prosemirror-gapcursor",
       ],
     },
     build: {
@@ -133,20 +140,20 @@ export default defineNuxtConfig({
       rollupOptions: {
         onwarn(warning, warn) {
           if (
-            warning.code === 'THIS_IS_UNDEFINED' &&
-            warning.id?.includes('@opentelemetry')
+            warning.code === "THIS_IS_UNDEFINED" &&
+            warning.id?.includes("@opentelemetry")
           ) {
-            return
+            return;
           }
           if (
-            warning.code === 'CIRCULAR_DEPENDENCY' &&
-            (warning.message?.includes('node_modules') ||
-              warning.id?.includes('node_modules') ||
-              warning.ids?.some((id: string) => id.includes('node_modules')))
+            warning.code === "CIRCULAR_DEPENDENCY" &&
+            (warning.message?.includes("node_modules") ||
+              warning.id?.includes("node_modules") ||
+              warning.ids?.some((id: string) => id.includes("node_modules")))
           ) {
-            return
+            return;
           }
-          warn(warning)
+          warn(warning);
         },
       },
     },
@@ -157,5 +164,5 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
 
-  compatibilityDate: '2024-01-29',
-})
+  compatibilityDate: "2024-01-29",
+});
