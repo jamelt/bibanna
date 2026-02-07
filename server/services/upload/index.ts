@@ -102,11 +102,11 @@ export async function uploadFile(
   if (extractedText) {
     try {
       if (file.type === 'application/pdf') {
-        await ingestPDF(file.data, projectId, userId, upload.id)
+        await ingestPDF(file.data, file.filename, projectId, upload.id, userId)
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        await ingestDOCX(file.data, projectId, userId, upload.id)
+        await ingestDOCX(file.data, file.filename, projectId, upload.id, userId)
       } else {
-        await ingestPlainText(extractedText, projectId, userId, upload.id)
+        await ingestPlainText(extractedText, file.filename, projectId, upload.id, userId)
       }
     } catch (error) {
       console.error('Document ingestion failed:', error)

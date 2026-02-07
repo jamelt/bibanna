@@ -31,10 +31,10 @@ export function addSummarySheet(
   const minYear = yearRange.length > 0 ? Math.min(...yearRange) : 'N/A'
   const maxYear = yearRange.length > 0 ? Math.max(...yearRange) : 'N/A'
 
-  const avgVeritas = entries
-    .filter(e => e.veritasScore)
-    .reduce((acc, e) => acc + (e.veritasScore?.overallScore || 0), 0) / 
-    entries.filter(e => e.veritasScore).length || 0
+  const entriesWithVeritas = entries.filter(e => e.veritasScore)
+  const avgVeritas = entriesWithVeritas.length > 0
+    ? entriesWithVeritas.reduce((acc, e) => acc + (e.veritasScore?.overallScore || 0), 0) / entriesWithVeritas.length
+    : 0
 
   const summaryData = [
     { metric: 'Total Entries', value: entries.length },

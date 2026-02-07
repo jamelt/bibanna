@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai'
 import { db } from '~/server/database/client'
 import { researchPersonas, entries, entryProjects, tags, entryTags } from '~/server/database/schema'
-import { eq, inArray, sql } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 const openai = new OpenAI({
   apiKey: process.env.NUXT_OPENAI_API_KEY,
@@ -9,11 +9,14 @@ const openai = new OpenAI({
 
 export interface ResearchPersona {
   name: string
-  description: string
+  title?: string
   expertise: string[]
-  researchFocus: string
-  communicationStyle: string
-  suggestedQuestions: string[]
+  personality?: string
+  dominantTopics: string[]
+  timeRange?: { start: number; end: number }
+  sourceCount?: number
+  identifiedGaps: string[]
+  systemPrompt: string
 }
 
 export async function generateResearchPersona(
@@ -74,14 +77,15 @@ Based on the project context, create a specialized research persona that would b
 Return a JSON object with these fields:
 {
   "name": "A creative name for the persona (e.g., 'Dr. Neural Navigator', 'The Methodology Maven')",
-  "description": "A 2-3 sentence description of the persona's expertise and approach",
+  "title": "A brief title/role for the persona",
   "expertise": ["Area 1", "Area 2", "Area 3", "Area 4", "Area 5"],
-  "researchFocus": "A concise description of the primary research focus this persona can help with",
-  "communicationStyle": "Description of how this persona communicates (e.g., 'Socratic questioning', 'Data-driven analysis')",
-  "suggestedQuestions": ["Question 1", "Question 2", "Question 3", "Question 4", "Question 5"]
+  "personality": "Description of how this persona communicates (e.g., 'Socratic questioning', 'Data-driven analysis')",
+  "dominantTopics": ["Topic 1", "Topic 2", "Topic 3"],
+  "identifiedGaps": ["Gap 1", "Gap 2", "Gap 3"],
+  "systemPrompt": "A detailed system prompt for the AI to adopt this persona when answering questions"
 }
 
-The suggested questions should be substantive research questions that would help advance this project.`,
+The identifiedGaps should be research gaps that the persona has identified based on the project sources.`,
       },
       {
         role: 'user',
@@ -99,26 +103,44 @@ The suggested questions should be substantive research questions that would help
       return getDefaultPersona()
     }
 
-    const persona = JSON.parse(content) as ResearchPersona
+    const parsed = JSON.parse(content)
+
+    const persona: ResearchPersona = {
+      name: parsed.name || 'Research Assistant',
+      title: parsed.title,
+      expertise: parsed.expertise || [],
+      personality: parsed.personality,
+      dominantTopics: parsed.dominantTopics || tagNames,
+      timeRange: minYear && maxYear ? { start: minYear, end: maxYear } : undefined,
+      sourceCount: projectEntries.length,
+      identifiedGaps: parsed.identifiedGaps || [],
+      systemPrompt: parsed.systemPrompt || getDefaultSystemPrompt(parsed.name),
+    }
 
     await db.insert(researchPersonas).values({
       projectId,
       userId,
       name: persona.name,
-      description: persona.description,
+      title: persona.title,
       expertise: persona.expertise,
-      researchFocus: persona.researchFocus,
-      communicationStyle: persona.communicationStyle,
-      suggestedQuestions: persona.suggestedQuestions,
+      personality: persona.personality,
+      dominantTopics: persona.dominantTopics,
+      timeRange: persona.timeRange,
+      sourceCount: persona.sourceCount,
+      identifiedGaps: persona.identifiedGaps,
+      systemPrompt: persona.systemPrompt,
     }).onConflictDoUpdate({
       target: [researchPersonas.projectId],
       set: {
         name: persona.name,
-        description: persona.description,
+        title: persona.title,
         expertise: persona.expertise,
-        researchFocus: persona.researchFocus,
-        communicationStyle: persona.communicationStyle,
-        suggestedQuestions: persona.suggestedQuestions,
+        personality: persona.personality,
+        dominantTopics: persona.dominantTopics,
+        timeRange: persona.timeRange,
+        sourceCount: persona.sourceCount,
+        identifiedGaps: persona.identifiedGaps,
+        systemPrompt: persona.systemPrompt,
         updatedAt: new Date(),
       },
     })
@@ -131,20 +153,19 @@ The suggested questions should be substantive research questions that would help
   }
 }
 
+function getDefaultSystemPrompt(name: string = 'Research Assistant'): string {
+  return `You are ${name}, a knowledgeable and helpful research assistant. You help researchers understand their sources, identify patterns, and develop their arguments. Be clear, supportive, and academically rigorous in your responses.`
+}
+
 function getDefaultPersona(): ResearchPersona {
   return {
     name: 'Research Assistant',
-    description: 'A general-purpose research assistant ready to help with your academic work. Add more sources to develop a specialized persona.',
+    title: 'General Research Companion',
     expertise: ['Literature Review', 'Source Analysis', 'Academic Writing', 'Research Methods', 'Citation Management'],
-    researchFocus: 'General academic research support',
-    communicationStyle: 'Clear, supportive, and academically rigorous',
-    suggestedQuestions: [
-      'What are the main themes across your sources?',
-      'How do your sources relate to each other?',
-      'What gaps exist in your current research?',
-      'What methodological approaches are represented in your sources?',
-      'How might you synthesize these sources into a coherent argument?',
-    ],
+    personality: 'Clear, supportive, and academically rigorous',
+    dominantTopics: [],
+    identifiedGaps: [],
+    systemPrompt: getDefaultSystemPrompt(),
   }
 }
 
@@ -159,11 +180,14 @@ export async function getOrCreatePersona(
   if (existing) {
     return {
       name: existing.name,
-      description: existing.description || '',
+      title: existing.title || undefined,
       expertise: existing.expertise || [],
-      researchFocus: existing.researchFocus || '',
-      communicationStyle: existing.communicationStyle || '',
-      suggestedQuestions: existing.suggestedQuestions || [],
+      personality: existing.personality || undefined,
+      dominantTopics: existing.dominantTopics || [],
+      timeRange: existing.timeRange || undefined,
+      sourceCount: existing.sourceCount || undefined,
+      identifiedGaps: existing.identifiedGaps || [],
+      systemPrompt: existing.systemPrompt,
     }
   }
 

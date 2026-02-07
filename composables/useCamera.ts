@@ -81,11 +81,11 @@ export function useCamera(options: CameraOptions = {}) {
     
     ctx.drawImage(video, 0, 0)
     
-    return new Promise((resolve) => {
+    return new Promise<Blob | null>((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob)
       }, 'image/jpeg', 0.9)
-    }) as unknown as Blob
+    })
   }
 
   async function captureAsBase64(): Promise<string | null> {
