@@ -12,6 +12,13 @@ const isDark = computed({
 
 const isSidebarOpen = ref(true)
 const isMobileMenuOpen = ref(false)
+const isFeedbackOpen = ref(false)
+const isUserMenuOpen = ref(false)
+const userMenuRef = ref(null)
+
+onClickOutside(userMenuRef, () => {
+  isUserMenuOpen.value = false
+})
 
 const navigation = [
   { name: 'Dashboard', to: '/app', icon: 'i-heroicons-home', exact: true },
@@ -21,14 +28,79 @@ const navigation = [
   { name: 'Mind Maps', to: '/app/mindmaps', icon: 'i-heroicons-share' },
 ]
 
-const userNavigation = [
-  { name: 'Settings', to: '/app/settings', icon: 'i-heroicons-cog-6-tooth' },
-  { name: 'Subscription', to: '/app/subscription', icon: 'i-heroicons-credit-card' },
-]
+const { data: activeAnnouncements } = useFetch('/api/announcements/active', {
+  default: () => [],
+})
+
+const dismissedAnnouncements = ref<Set<string>>(new Set())
+
+const visibleAnnouncements = computed(() =>
+  (activeAnnouncements.value || []).filter((a: any) => !dismissedAnnouncements.value.has(a.id)),
+)
+
+function dismissAnnouncement(id: string) {
+  dismissedAnnouncements.value.add(id)
+}
+
+const { data: adminCheck } = useFetch('/api/admin/me', {
+  default: () => null,
+  onResponseError() { /* silently fail for non-admins */ },
+})
+
+const isAdmin = computed(() => adminCheck.value?.role === 'admin' || adminCheck.value?.role === 'support')
+
+const feedbackForm = ref({ type: 'general', subject: '', content: '' })
+const feedbackSubmitting = ref(false)
+const feedbackSuccess = ref(false)
+
+async function submitFeedback() {
+  feedbackSubmitting.value = true
+  try {
+    await $fetch('/api/feedback', {
+      method: 'POST',
+      body: feedbackForm.value,
+    })
+    feedbackSuccess.value = true
+    feedbackForm.value = { type: 'general', subject: '', content: '' }
+    setTimeout(() => {
+      isFeedbackOpen.value = false
+      feedbackSuccess.value = false
+    }, 2000)
+  }
+  finally {
+    feedbackSubmitting.value = false
+  }
+}
+
+const announcementBannerColors: Record<string, string> = {
+  info: 'bg-blue-600',
+  warning: 'bg-amber-600',
+  maintenance: 'bg-gray-600',
+  release: 'bg-green-600',
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Global Announcement Banners -->
+    <div v-if="visibleAnnouncements.length" class="relative z-50">
+      <div
+        v-for="announcement in visibleAnnouncements"
+        :key="announcement.id"
+        :class="announcementBannerColors[announcement.type] || 'bg-blue-600'"
+        class="px-4 py-2 text-white text-sm flex items-center justify-center gap-3"
+      >
+        <span class="font-medium">{{ announcement.title }}</span>
+        <span class="hidden sm:inline opacity-90">&mdash; {{ announcement.content }}</span>
+        <button
+          class="ml-2 opacity-70 hover:opacity-100"
+          @click="dismissAnnouncement(announcement.id)"
+        >
+          <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+
     <!-- Mobile sidebar overlay -->
     <USlideover v-model="isMobileMenuOpen" side="left" class="lg:hidden">
       <div class="flex h-full flex-col bg-white dark:bg-gray-800 p-4">
@@ -93,22 +165,6 @@ const userNavigation = [
       </nav>
 
       <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
-        <UTooltip
-          v-for="item in userNavigation"
-          :key="item.name"
-          :text="item.name"
-          :content="{ side: 'right' }"
-        >
-          <NuxtLink
-            :to="item.to"
-            class="group flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            active-class="bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
-          >
-            <UIcon :name="item.icon" class="w-5 h-5 shrink-0" />
-            <span v-if="isSidebarOpen" class="truncate">{{ item.name }}</span>
-          </NuxtLink>
-        </UTooltip>
-
         <UButton
           :icon="isSidebarOpen ? 'i-heroicons-chevron-double-left' : 'i-heroicons-chevron-double-right'"
           variant="ghost"
@@ -178,26 +234,87 @@ const userNavigation = [
             color="neutral"
           />
 
+          <!-- Feedback -->
+          <UButton
+            icon="i-heroicons-chat-bubble-left-ellipsis"
+            variant="ghost"
+            color="neutral"
+            @click="isFeedbackOpen = true"
+          />
+
           <!-- User menu -->
-          <UDropdown
-            :items="[
-              [
-                { label: 'Profile', icon: 'i-heroicons-user', to: '/app/settings/profile' },
-                { label: 'Settings', icon: 'i-heroicons-cog-6-tooth', to: '/app/settings' },
-              ],
-              [
-                { label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle', onClick: () => logout() },
-              ],
-            ]"
-            :content="{ side: 'bottom', align: 'end' }"
-          >
-            <UAvatar
+          <!-- User menu -->
+          <div ref="userMenuRef" class="relative">
+            <UButton
+              color="white"
+              variant="ghost"
+              class="p-0 rounded-full"
               data-testid="user-menu-trigger"
-              :text="(user as { email?: string })?.email?.slice(0, 2).toUpperCase() || 'U'"
-              size="sm"
-              class="cursor-pointer"
-            />
-          </UDropdown>
+              @click="isUserMenuOpen = !isUserMenuOpen"
+            >
+              <UAvatar
+                :text="(user as { email?: string })?.email?.slice(0, 2).toUpperCase() || 'U'"
+                size="sm"
+                class="cursor-pointer"
+              />
+            </UButton>
+
+            <div
+              v-if="isUserMenuOpen"
+              class="absolute right-0 top-full mt-2 w-56 z-50"
+            >
+              <UCard :ui="{ body: { padding: 'p-1' } }">
+                <div class="space-y-1">
+                  <NuxtLink
+                    to="/app/settings/profile"
+                    class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="isUserMenuOpen = false"
+                  >
+                    <UIcon name="i-heroicons-user" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Profile
+                  </NuxtLink>
+                  <NuxtLink
+                    to="/app/settings"
+                    class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="isUserMenuOpen = false"
+                  >
+                    <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Settings
+                  </NuxtLink>
+                  <NuxtLink
+                    to="/app/subscription"
+                    class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="isUserMenuOpen = false"
+                  >
+                    <UIcon name="i-heroicons-credit-card" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Subscription
+                  </NuxtLink>
+                  
+                  <div v-if="isAdmin" class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  
+                  <NuxtLink
+                    v-if="isAdmin"
+                    to="/admin"
+                    class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="isUserMenuOpen = false"
+                  >
+                    <UIcon name="i-heroicons-shield-check" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Admin Panel
+                  </NuxtLink>
+
+                  <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                  <button
+                    class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                    @click="logout"
+                  >
+                    <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Sign out
+                  </button>
+                </div>
+              </UCard>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -249,6 +366,54 @@ const userNavigation = [
       v-model:open="isQuickAddOpen"
       @update:open="(val: boolean) => { if (!val) closeQuickAdd() }"
     />
+
+    <!-- Feedback Modal -->
+    <UModal v-model:open="isFeedbackOpen">
+      <template #content>
+        <div class="p-6 space-y-4">
+          <h3 class="text-lg font-semibold">Send Feedback</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Found a bug? Have a suggestion? We'd love to hear from you.
+          </p>
+
+          <div v-if="feedbackSuccess" class="text-center py-4">
+            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500 mx-auto mb-2" />
+            <p class="text-green-600 dark:text-green-400 font-medium">Thank you for your feedback!</p>
+          </div>
+
+          <template v-else>
+            <USelect
+              v-model="feedbackForm.type"
+              :items="[
+                { label: 'General Feedback', value: 'general' },
+                { label: 'Bug Report', value: 'bug' },
+                { label: 'Feature Request', value: 'feature_request' },
+                { label: 'Complaint', value: 'complaint' },
+              ]"
+            />
+            <UInput
+              v-model="feedbackForm.subject"
+              placeholder="Subject"
+            />
+            <UTextarea
+              v-model="feedbackForm.content"
+              placeholder="Describe your feedback in detail..."
+              :rows="4"
+            />
+            <div class="flex gap-2 justify-end">
+              <UButton label="Cancel" variant="ghost" color="neutral" @click="isFeedbackOpen = false" />
+              <UButton
+                label="Submit"
+                color="primary"
+                :loading="feedbackSubmitting"
+                :disabled="!feedbackForm.subject || !feedbackForm.content"
+                @click="submitFeedback"
+              />
+            </div>
+          </template>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
