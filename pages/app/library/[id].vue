@@ -187,13 +187,12 @@ async function handleAnnotationCreated() {
           <UDropdown
             :items="[
               [
-                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onClick: copyCitation },
+                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', click: copyCitation },
               ],
               [
-                { label: 'Delete', icon: 'i-heroicons-trash', onClick: () => isDeleteModalOpen = true },
+                { label: 'Delete', icon: 'i-heroicons-trash', click: () => isDeleteModalOpen = true },
               ],
             ]"
-            :content="{ side: 'bottom', align: 'end' }"
           >
             <UButton
               icon="i-heroicons-ellipsis-vertical"
