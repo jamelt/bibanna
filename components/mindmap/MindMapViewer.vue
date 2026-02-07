@@ -7,24 +7,11 @@ const props = defineProps<Props>()
 
 const containerRef = ref<HTMLElement | null>(null)
 const isSidebarOpen = ref(false)
-const isMobile = ref(false)
 
 const showAuthors = ref(true)
 const showTags = ref(true)
 const showSameAuthorEdges = ref(true)
 const showSimilarEdges = ref(false)
-
-onMounted(() => {
-  const checkMobile = () => {
-    isMobile.value = window.innerWidth < 1024
-    if (!isMobile.value) {
-      isSidebarOpen.value = false
-    }
-  }
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  onUnmounted(() => window.removeEventListener('resize', checkMobile))
-})
 
 const queryParams = computed(() => ({
   showAuthors: showAuthors.value,
@@ -265,20 +252,26 @@ const stats = computed(() => {
 
     <!-- Node details slideover -->
     <USlideover v-model:open="showNodeDetails">
-      <UCard v-if="selectedNode" :ui="{ body: { padding: 'p-4' } }">
-        <template #header>
-          <div class="flex items-center gap-2">
-            <div
-              class="w-4 h-4 rounded-full"
-              :style="{ backgroundColor: legend.find(l => l.type === selectedNode.type)?.color }"
+      <template #content="{ close }">
+        <div v-if="selectedNode" class="p-6 space-y-4 h-full overflow-y-auto bg-white dark:bg-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-4 h-4 rounded-full"
+                :style="{ backgroundColor: legend.find(l => l.type === selectedNode.type)?.color }"
+              />
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ selectedNode.label }}
+              </h3>
+            </div>
+            <UButton
+              icon="i-heroicons-x-mark"
+              variant="ghost"
+              size="sm"
+              @click="close"
             />
-            <h3 class="font-semibold text-gray-900 dark:text-white">
-              {{ selectedNode.label }}
-            </h3>
           </div>
-        </template>
 
-        <div class="space-y-4">
           <div>
             <span class="text-xs text-gray-500 uppercase">Type</span>
             <p class="text-gray-900 dark:text-white capitalize">{{ selectedNode.type }}</p>
@@ -319,21 +312,25 @@ const stats = computed(() => {
             </NuxtLink>
           </div>
         </div>
-      </UCard>
+      </template>
     </USlideover>
 
-    <!-- Filters sidebar - Mobile (only render on mobile) -->
-    <USlideover v-if="isMobile" v-model:open="isSidebarOpen" side="left">
-      <UCard :ui="{ body: { padding: 'p-4' } }">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold text-gray-900 dark:text-white">
+    <!-- Filters sidebar - Mobile -->
+    <USlideover v-model:open="isSidebarOpen" side="left" class="lg:hidden">
+      <template #content="{ close }">
+        <div class="p-6 space-y-6 h-full overflow-y-auto bg-white dark:bg-gray-900">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
               Filters & Legend
             </h3>
+            <UButton
+              icon="i-heroicons-x-mark"
+              variant="ghost"
+              size="sm"
+              @click="close"
+            />
           </div>
-        </template>
 
-        <div class="space-y-6">
           <div>
             <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Show Nodes
@@ -384,7 +381,7 @@ const stats = computed(() => {
             </div>
           </div>
         </div>
-      </UCard>
+      </template>
     </USlideover>
   </div>
 </template>
