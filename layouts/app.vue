@@ -383,24 +383,8 @@ const announcementBannerColors: Record<string, string> = {
         />
 
         <div class="flex items-center gap-4 ml-auto">
-          <!-- Theme toggle -->
-          <UButton
-            :icon="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'"
-            variant="ghost"
-            color="neutral"
-            @click="isDark = !isDark"
-          />
-
           <!-- Notifications -->
           <UButton icon="i-heroicons-bell" variant="ghost" color="neutral" />
-
-          <!-- Feedback -->
-          <UButton
-            icon="i-heroicons-chat-bubble-left-ellipsis"
-            variant="ghost"
-            color="neutral"
-            @click="isFeedbackOpen = true"
-          />
 
           <!-- User menu -->
           <div ref="userMenuRef" class="relative">
@@ -470,6 +454,25 @@ const announcementBannerColors: Record<string, string> = {
                     <UIcon name="i-heroicons-shield-check" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
                     Admin Panel
                   </NuxtLink>
+
+                  <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                  <button
+                    type="button"
+                    class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                    @click="isDark = !isDark; isUserMenuOpen = false"
+                  >
+                    <UIcon :name="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    {{ isDark ? 'Light mode' : 'Dark mode' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                    @click="isFeedbackOpen = true; isUserMenuOpen = false"
+                  >
+                    <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    Send Feedback
+                  </button>
 
                   <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
