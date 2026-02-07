@@ -398,7 +398,7 @@ onUnmounted(() => {
         </span>
       </div>
       <div class="flex flex-wrap gap-1.5">
-        <UDropdown
+        <UDropdownMenu
           :items="[
             (tags || []).map(t => ({
               label: t.name,
@@ -416,8 +416,8 @@ onUnmounted(() => {
           >
             Add Tag
           </UButton>
-        </UDropdown>
-        <UDropdown
+        </UDropdownMenu>
+        <UDropdownMenu
           :items="[
             (projects || []).map(p => ({
               label: p.name,
@@ -435,7 +435,7 @@ onUnmounted(() => {
           >
             Add to Project
           </UButton>
-        </UDropdown>
+        </UDropdownMenu>
         <UButton
           icon="i-heroicons-star"
           variant="outline"

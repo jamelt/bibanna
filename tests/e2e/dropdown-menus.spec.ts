@@ -79,12 +79,16 @@ test.describe('Dropdown Menus', () => {
   test('library entry detail page - dropdown menu opens and works', async ({ page }) => {
     await page.goto(`/app/library/${entryId}`)
     
-    const menuButton = page.locator('button[aria-label="Options menu"], button').filter({ 
+    await page.waitForLoadState('networkidle')
+    
+    const menuButton = page.locator('button').filter({ 
       has: page.locator('svg[class*="i-heroicons-ellipsis-vertical"]') 
     }).first()
     
     await expect(menuButton).toBeVisible()
     await menuButton.click()
+    
+    await page.waitForTimeout(500)
     
     await expect(page.getByRole('menuitem', { name: /copy citation/i })).toBeVisible({ timeout: 5000 })
     await expect(page.getByRole('menuitem', { name: /delete/i })).toBeVisible()

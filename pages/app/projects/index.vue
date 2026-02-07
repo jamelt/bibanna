@@ -199,7 +199,7 @@ function getDropdownItems(project: Project) {
                 {{ project.entryCount }} {{ project.entryCount === 1 ? 'entry' : 'entries' }}
               </p>
             </div>
-            <UDropdown
+            <UDropdownMenu
               :items="getDropdownItems(project)"
               :content="{ side: 'bottom', align: 'end' }"
             >
@@ -211,7 +211,7 @@ function getDropdownItems(project: Project) {
                 class="opacity-0 group-hover:opacity-100 transition-opacity"
                 @click.stop
               />
-            </UDropdown>
+            </UDropdownMenu>
           </div>
         </UCard>
       </div>
@@ -247,7 +247,7 @@ function getDropdownItems(project: Project) {
                   {{ project.entryCount }} entries
                 </p>
               </div>
-              <UDropdown
+              <UDropdownMenu
                 :items="getDropdownItems(project)"
                 :content="{ side: 'bottom', align: 'end' }"
               >
@@ -259,7 +259,7 @@ function getDropdownItems(project: Project) {
                   class="opacity-0 group-hover:opacity-100 transition-opacity"
                   @click.stop
                 />
-              </UDropdown>
+              </UDropdownMenu>
             </div>
           </UCard>
         </div>

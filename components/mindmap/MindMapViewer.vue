@@ -136,7 +136,7 @@ const stats = computed(() => {
           Fit
         </UButton>
         <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" class="sm:hidden" @click="zoomToFit" />
-        <UDropdown
+        <UDropdownMenu
           :items="[
             [
               { label: 'Export SVG', icon: 'i-heroicons-arrow-down-tray', onSelect: handleExportSVG },
@@ -145,7 +145,7 @@ const stats = computed(() => {
           ]"
         >
           <UButton variant="ghost" size="sm" icon="i-heroicons-ellipsis-vertical" />
-        </UDropdown>
+        </UDropdownMenu>
       </div>
     </div>
 

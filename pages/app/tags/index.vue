@@ -156,7 +156,7 @@ function getDropdownItems(tag: Tag) {
               {{ tag.entryCount ?? 0 }} {{ (tag.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}
             </p>
           </div>
-          <UDropdown
+          <UDropdownMenu
             :items="getDropdownItems(tag)"
             :content="{ side: 'bottom', align: 'end' }"
           >
@@ -168,7 +168,7 @@ function getDropdownItems(tag: Tag) {
               class="opacity-0 group-hover:opacity-100 transition-opacity"
               @click.stop
             />
-          </UDropdown>
+          </UDropdownMenu>
         </div>
       </UCard>
     </div>
