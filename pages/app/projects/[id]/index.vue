@@ -351,28 +351,22 @@ onEntryCreated(() => {
               >
                 Refresh
               </UButton>
-              <UFieldGroup size="sm">
-                <UButton
-                  icon="i-heroicons-plus"
-                  @click="quickAddToProject"
-                >
-                  Add Entry
-                </UButton>
-                <UDropdown
-                  :items="[
-                    [
-                      { label: 'New Entry', icon: 'i-heroicons-plus-circle', onSelect: quickAddToProject },
-                      { label: 'From Library', icon: 'i-heroicons-book-open', onSelect: openAddEntryModal },
-                    ],
-                  ]"
-                  :popper="{ placement: 'bottom-end' }"
-                >
-                  <UButton
-                    icon="i-heroicons-chevron-down"
-                    square
-                  />
-                </UDropdown>
-              </UFieldGroup>
+              <UButton
+                icon="i-heroicons-plus"
+                size="sm"
+                @click="quickAddToProject"
+              >
+                New Entry
+              </UButton>
+              <UButton
+                icon="i-heroicons-book-open"
+                size="sm"
+                variant="outline"
+                color="neutral"
+                @click="openAddEntryModal"
+              >
+                From Library
+              </UButton>
             </div>
           </div>
         </template>
