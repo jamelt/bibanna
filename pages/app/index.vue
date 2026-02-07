@@ -9,6 +9,7 @@ const { open: openQuickAdd } = useQuickAdd()
 
 const isCreateProjectOpen = ref(false)
 const isExportModalOpen = ref(false)
+const isImportModalOpen = ref(false)
 
 const stats = ref([
   { label: 'Total Entries', value: 0, icon: 'i-heroicons-book-open' },
@@ -98,7 +99,7 @@ async function handleProjectCreated() {
           color="neutral"
           block
           data-testid="dashboard-quick-action-import"
-          @click="router.push('/app/library')"
+          @click="isImportModalOpen = true"
         />
         <UButton
           icon="i-heroicons-arrow-down-tray"
@@ -132,19 +133,36 @@ async function handleProjectCreated() {
           </div>
         </template>
 
-        <div v-if="recentEntries.length === 0" class="text-center py-8">
+        <div v-if="recentEntries.length === 0" class="text-center py-8 space-y-3">
           <UIcon name="i-heroicons-book-open" class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" />
-          <p class="mt-2 text-gray-500 dark:text-gray-400">
-            No entries yet
-          </p>
-          <UButton
-            to="/app/library"
-            variant="soft"
-            color="primary"
-            class="mt-4"
-          >
-            Add Your First Entry
-          </UButton>
+          <div>
+            <p class="font-medium text-gray-700 dark:text-gray-300">
+              No entries yet
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Use Quick Add (<kbd class="px-1 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">{{ navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl' }}+K</kbd>) to add your first source.
+            </p>
+          </div>
+          <div class="flex justify-center gap-2">
+            <UButton
+              icon="i-heroicons-plus"
+              variant="soft"
+              color="primary"
+              size="sm"
+              @click="openQuickAdd()"
+            >
+              Quick Add
+            </UButton>
+            <UButton
+              icon="i-heroicons-arrow-up-tray"
+              variant="soft"
+              color="neutral"
+              size="sm"
+              @click="isImportModalOpen = true"
+            >
+              Import
+            </UButton>
+          </div>
         </div>
 
         <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -187,18 +205,24 @@ async function handleProjectCreated() {
           </div>
         </template>
 
-        <div v-if="recentProjects.length === 0" class="text-center py-8">
+        <div v-if="recentProjects.length === 0" class="text-center py-8 space-y-3">
           <UIcon name="i-heroicons-folder" class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" />
-          <p class="mt-2 text-gray-500 dark:text-gray-400">
-            No projects yet
-          </p>
+          <div>
+            <p class="font-medium text-gray-700 dark:text-gray-300">
+              No projects yet
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Projects let you group related entries for a class, paper, or research topic.
+            </p>
+          </div>
           <UButton
-            to="/app/projects"
+            icon="i-heroicons-folder-plus"
             variant="soft"
             color="primary"
-            class="mt-4"
+            size="sm"
+            @click="isCreateProjectOpen = true"
           >
-            Create Your First Project
+            Create a project
           </UButton>
         </div>
 
@@ -231,6 +255,11 @@ async function handleProjectCreated() {
 
     <LazyAppExportModal
       v-model:open="isExportModalOpen"
+    />
+
+    <LazyAppImportModal
+      v-model:open="isImportModalOpen"
+      @imported="router.push('/app/library')"
     />
   </div>
 </template>

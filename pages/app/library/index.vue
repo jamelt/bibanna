@@ -27,6 +27,7 @@ const pageSize = ref(20)
 
 const isAddModalOpen = ref(false)
 const isExportModalOpen = ref(false)
+const isImportModalOpen = ref(false)
 const viewMode = ref<'list' | 'grid'>('list')
 const selectedEntryIds = ref<string[]>([])
 const isSelectionMode = ref(false)
@@ -167,6 +168,81 @@ async function handleEntryCreated() {
   isAddModalOpen.value = false
   await refresh()
 }
+
+async function handleImported() {
+  isImportModalOpen.value = false
+  await refresh()
+}
+
+const focusedEntryIndex = ref(-1)
+
+function isAnyModalOpen() {
+  return isAddModalOpen.value || isExportModalOpen.value || isImportModalOpen.value
+}
+
+function handleLibraryKeydown(e: KeyboardEvent) {
+  if (isAnyModalOpen()) return
+
+  const target = e.target as HTMLElement
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+
+  const list = entries.value
+  if (list.length === 0) return
+
+  switch (e.key) {
+    case 'j':
+    case 'ArrowDown':
+      e.preventDefault()
+      focusedEntryIndex.value = Math.min(focusedEntryIndex.value + 1, list.length - 1)
+      scrollToFocused()
+      break
+    case 'k':
+    case 'ArrowUp':
+      e.preventDefault()
+      focusedEntryIndex.value = Math.max(focusedEntryIndex.value - 1, 0)
+      scrollToFocused()
+      break
+    case 'Enter': {
+      e.preventDefault()
+      const entry = list[focusedEntryIndex.value]
+      if (entry) {
+        if (isSelectionMode.value) {
+          toggleEntrySelection(entry.id)
+        }
+        else {
+          router.push(`/app/library/${entry.id}`)
+        }
+      }
+      break
+    }
+    case 'x':
+      if (isSelectionMode.value && focusedEntryIndex.value >= 0) {
+        const entry = list[focusedEntryIndex.value]
+        if (entry) toggleEntrySelection(entry.id)
+      }
+      break
+    case 'Escape':
+      if (isSelectionMode.value) {
+        exitSelectionMode()
+      }
+      break
+  }
+}
+
+function scrollToFocused() {
+  nextTick(() => {
+    const el = document.querySelector(`[data-entry-index="${focusedEntryIndex.value}"]`)
+    el?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleLibraryKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleLibraryKeydown)
+})
 </script>
 
 <template>
@@ -197,6 +273,13 @@ async function handleEntryCreated() {
           variant="ghost"
           color="neutral"
           @click="exitSelectionMode"
+        />
+        <UButton
+          icon="i-heroicons-arrow-up-tray"
+          label="Import"
+          variant="outline"
+          color="neutral"
+          @click="isImportModalOpen = true"
         />
         <UButton
           icon="i-heroicons-arrow-down-tray"
@@ -385,35 +468,91 @@ async function handleEntryCreated() {
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
     </div>
 
-    <!-- Empty state -->
-    <UCard v-else-if="entries.length === 0" class="text-center py-12">
-      <UIcon name="i-heroicons-book-open" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+    <!-- Empty state: search has results but filters excluded all -->
+    <UCard v-else-if="entries.length === 0 && (searchQuery || selectedTypes.length || selectedTags.length)" class="text-center py-12">
+      <UIcon name="i-heroicons-magnifying-glass" class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600" />
       <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        No entries found
+        No matching entries
       </h3>
-      <p class="mt-2 text-gray-500 dark:text-gray-400">
-        {{ searchQuery || selectedTypes.length || selectedTags.length
-          ? 'Try adjusting your filters'
-          : 'Get started by adding your first entry'
-        }}
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+        Try broadening your search, or remove some filters to see more results.
       </p>
       <UButton
-        v-if="!searchQuery && !selectedTypes.length && !selectedTags.length"
-        icon="i-heroicons-plus"
-        label="Add Entry"
-        color="primary"
+        icon="i-heroicons-x-mark"
+        label="Clear filters"
+        variant="outline"
+        color="neutral"
         class="mt-4"
-        @click="isAddModalOpen = true"
+        @click="clearFilters"
       />
+    </UCard>
+
+    <!-- Empty state: library is genuinely empty -->
+    <UCard v-else-if="entries.length === 0" class="py-12">
+      <div class="text-center max-w-md mx-auto space-y-5">
+        <UIcon name="i-heroicons-book-open" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+        <div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+            Your library is empty
+          </h3>
+          <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+            Add your first source to start building your bibliography.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+          <UButton
+            icon="i-heroicons-plus"
+            label="Quick Add"
+            color="primary"
+            @click="isAddModalOpen = true"
+          />
+          <UButton
+            icon="i-heroicons-arrow-up-tray"
+            label="Import BibTeX"
+            variant="outline"
+            color="neutral"
+            @click="isImportModalOpen = true"
+          />
+        </div>
+
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+          <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+            Quick start tips
+          </p>
+          <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1.5 text-left inline-block">
+            <li class="flex items-start gap-2">
+              <kbd class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">{{ navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl' }}+K</kbd>
+              <span>Open Quick Add from anywhere</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">DOI</span>
+              <span>Paste a DOI like <code class="text-xs">10.1234/example</code> for instant metadata</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">ISBN</span>
+              <span>Paste an ISBN like <code class="text-xs">978-0-13-468599-1</code> for books</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">j/k</span>
+              <span>Navigate entries with your keyboard</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </UCard>
 
     <!-- List view -->
     <div v-else-if="viewMode === 'list'" class="space-y-2">
       <UCard
-        v-for="entry in entries"
+        v-for="(entry, index) in entries"
         :key="entry.id"
+        :data-entry-index="index"
         class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
-        :class="{ 'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id) }"
+        :class="{
+          'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id),
+          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10': focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
+        }"
         @click="handleEntryClick(entry.id)"
       >
         <div class="flex items-start gap-4">
@@ -472,10 +611,14 @@ async function handleEntryCreated() {
     <!-- Grid view -->
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <UCard
-        v-for="entry in entries"
+        v-for="(entry, index) in entries"
         :key="entry.id"
+        :data-entry-index="index"
         class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
-        :class="{ 'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id) }"
+        :class="{
+          'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id),
+          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10': focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
+        }"
         @click="handleEntryClick(entry.id)"
       >
         <div class="space-y-2">
@@ -529,6 +672,12 @@ async function handleEntryCreated() {
     <LazyAppExportModal
       v-model:open="isExportModalOpen"
       :entry-ids="selectedEntryIds.length > 0 ? selectedEntryIds : undefined"
+    />
+
+    <!-- Import Modal -->
+    <LazyAppImportModal
+      v-model:open="isImportModalOpen"
+      @imported="handleImported"
     />
   </div>
 </template>
