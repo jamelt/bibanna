@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { h, resolveComponent } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
 import type { Project } from '~/shared/types'
 
 definePageMeta({
@@ -16,6 +18,7 @@ const isDeleteModalOpen = ref(false)
 const selectedProject = ref<Project | undefined>()
 const showArchived = ref(false)
 const isDeleting = ref(false)
+const viewMode = useViewPreferences<'grid' | 'table'>('projects', 'grid')
 
 const { data: projects, pending, refresh } = await useFetch<Project[]>('/api/projects', {
   query: computed(() => ({
@@ -145,6 +148,116 @@ function getDropdownItems(project: Project) {
     ],
   ]
 }
+
+const UButton = resolveComponent('UButton')
+const UIcon = resolveComponent('UIcon')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+
+function formatProjectDate(date: Date | string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+const projectColumns = computed<TableColumn<Project>[]>(() => [
+  {
+    id: 'color',
+    header: '',
+    cell: ({ row }) => {
+      const project = row.original
+      return h('div', {
+        class: 'w-8 h-8 rounded-lg flex items-center justify-center',
+        style: { backgroundColor: (project.color || '#4F46E5') + '20' },
+      }, [
+        h(UIcon, {
+          name: project.isArchived ? 'i-heroicons-archive-box' : 'i-heroicons-folder',
+          class: 'w-4 h-4',
+          style: { color: project.isArchived ? '#9ca3af' : (project.color || '#4F46E5') },
+        }),
+      ])
+    },
+    meta: { class: { th: 'w-12', td: 'w-12' } },
+  },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: ({ row }) => {
+      const project = row.original
+      return h('div', { class: 'min-w-0' }, [
+        h('p', {
+          class: 'font-medium text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600 dark:hover:text-primary-400',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            router.push(`/app/projects/${projectSlugOrId(project)}`)
+          },
+        }, project.name),
+        project.description
+          ? h('p', { class: 'text-xs text-gray-500 dark:text-gray-400 truncate max-w-sm mt-0.5' }, project.description)
+          : null,
+      ])
+    },
+  },
+  {
+    id: 'star',
+    header: '',
+    cell: ({ row }) => {
+      const project = row.original
+      return h(UButton, {
+        icon: project.isStarred ? 'i-heroicons-star-solid' : 'i-heroicons-star',
+        variant: 'ghost',
+        color: 'neutral',
+        size: 'xs',
+        class: project.isStarred ? 'text-amber-400' : 'text-gray-400 hover:text-amber-300',
+        onClick: (e: Event) => {
+          e.stopPropagation()
+          handleToggleStar(project)
+        },
+      })
+    },
+    meta: { class: { th: 'w-10', td: 'w-10' } },
+  },
+  {
+    id: 'entryCount',
+    header: 'Entries',
+    cell: ({ row }) => {
+      return h('span', {
+        class: 'text-sm text-gray-600 dark:text-gray-400 tabular-nums',
+      }, String(row.original.entryCount ?? 0))
+    },
+    meta: { class: { th: 'w-20', td: 'w-20' } },
+  },
+  {
+    id: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => {
+      return h('span', {
+        class: 'text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap',
+      }, formatProjectDate(row.original.createdAt))
+    },
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => {
+      return h(UDropdownMenu, {
+        content: { align: 'end' },
+        items: getDropdownItems(row.original),
+        'aria-label': 'Project actions',
+      }, () =>
+        h(UButton, {
+          icon: 'i-heroicons-ellipsis-vertical',
+          color: 'neutral',
+          variant: 'ghost',
+          size: 'xs',
+          onClick: (e: Event) => e.stopPropagation(),
+        }),
+      )
+    },
+    meta: { class: { th: 'w-10', td: 'w-10 text-right' } },
+  },
+])
 </script>
 
 <template>
@@ -160,12 +273,28 @@ function getDropdownItems(project: Project) {
         </p>
       </div>
 
-      <UButton
-        icon="i-heroicons-plus"
-        label="New Project"
-        color="primary"
-        @click="isCreateModalOpen = true"
-      />
+      <div class="flex gap-2">
+        <UFieldGroup>
+          <UButton
+            icon="i-heroicons-squares-2x2"
+            :variant="viewMode === 'grid' ? 'solid' : 'outline'"
+            color="neutral"
+            @click="viewMode = 'grid'"
+          />
+          <UButton
+            icon="i-heroicons-table-cells"
+            :variant="viewMode === 'table' ? 'solid' : 'outline'"
+            color="neutral"
+            @click="viewMode = 'table'"
+          />
+        </UFieldGroup>
+        <UButton
+          icon="i-heroicons-plus"
+          label="New Project"
+          color="primary"
+          @click="isCreateModalOpen = true"
+        />
+      </div>
     </div>
 
     <!-- Loading state -->
@@ -191,7 +320,55 @@ function getDropdownItems(project: Project) {
       />
     </UCard>
 
-    <!-- Projects grid -->
+    <!-- Projects table view -->
+    <template v-else-if="viewMode === 'table'">
+      <UTable
+        :data="activeProjects"
+        :columns="projectColumns"
+        :loading="pending"
+        sticky
+        class="w-full"
+        :ui="{
+          root: 'min-w-full',
+          tr: 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors',
+          td: 'py-2.5 px-3 text-sm',
+          th: 'py-2.5 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
+        }"
+      >
+        <template #empty>
+          <div class="text-center py-6 text-sm text-gray-500">
+            No active projects
+          </div>
+        </template>
+      </UTable>
+
+      <div v-if="archivedProjects.length > 0" class="mt-6">
+        <UButton
+          :icon="showArchived ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          @click="showArchived = !showArchived"
+        >
+          Archived ({{ archivedProjects.length }})
+        </UButton>
+
+        <UTable
+          v-if="showArchived"
+          :data="archivedProjects"
+          :columns="projectColumns"
+          class="w-full mt-3 opacity-70"
+          :ui="{
+            root: 'min-w-full',
+            tr: 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors',
+            td: 'py-2.5 px-3 text-sm',
+            th: 'py-2.5 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
+          }"
+        />
+      </div>
+    </template>
+
+    <!-- Projects grid view -->
     <template v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <UCard
@@ -200,7 +377,7 @@ function getDropdownItems(project: Project) {
           class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer group"
           @click="router.push(`/app/projects/${projectSlugOrId(project)}`)"
         >
-            <div class="flex items-start gap-3">
+          <div class="flex items-start gap-3">
             <div
               class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               :style="{ backgroundColor: project.color + '20' }"

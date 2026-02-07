@@ -1,9 +1,12 @@
 <script setup lang="ts">
 interface Props {
-  projectId: string
+  projectId?: string
+  scope?: 'project' | 'library'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  scope: 'project',
+})
 
 const containerRef = ref<HTMLElement | null>(null)
 const isSidebarOpen = ref(false)
@@ -13,6 +16,13 @@ const showTags = ref(true)
 const showSameAuthorEdges = ref(true)
 const showSimilarEdges = ref(false)
 
+const graphEndpoint = computed(() => {
+  if (props.scope === 'library') {
+    return '/api/entries/graph'
+  }
+  return `/api/projects/${props.projectId}/graph`
+})
+
 const queryParams = computed(() => ({
   showAuthors: showAuthors.value,
   showTags: showTags.value,
@@ -21,10 +31,10 @@ const queryParams = computed(() => ({
 }))
 
 const { data: graphData, pending, refresh } = await useFetch(
-  `/api/projects/${props.projectId}/graph`,
+  graphEndpoint,
   {
     query: queryParams,
-    watch: [queryParams],
+    watch: [queryParams, graphEndpoint],
     lazy: true,
   },
 )
@@ -69,7 +79,7 @@ function handleExportSVG() {
 
   const link = document.createElement('a')
   link.href = url
-  link.download = `mindmap-${props.projectId}.svg`
+  link.download = `mindmap-${props.projectId || 'library'}.svg`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -211,7 +221,9 @@ const stats = computed(() => {
 
         <div v-else-if="!graphData?.nodes?.length" class="absolute inset-0 flex flex-col items-center justify-center">
           <UIcon name="i-heroicons-share" class="w-16 h-16 text-gray-300" />
-          <p class="mt-4 text-gray-500">No entries in this project yet</p>
+          <p class="mt-4 text-gray-500">
+            {{ scope === 'library' ? 'No entries in your library yet' : 'No entries in this project yet' }}
+          </p>
           <p class="text-sm text-gray-400">Add entries to visualize their relationships</p>
         </div>
 

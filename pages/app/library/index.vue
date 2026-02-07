@@ -20,6 +20,9 @@ const selectedTags = ref<string[]>(
     return Array.isArray(tagIds) ? tagIds : [tagIds]
   })(),
 )
+const selectedProject = ref<string | null>(
+  (route.query.projectId as string) || null,
+)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const page = ref(1)
@@ -28,15 +31,19 @@ const pageSize = ref(20)
 const isAddModalOpen = ref(false)
 const isExportModalOpen = ref(false)
 const isImportModalOpen = ref(false)
-const viewMode = ref<'list' | 'grid'>('list')
+const viewMode = useViewPreferences<'list' | 'grid' | 'table'>('library', 'list')
 const selectedEntryIds = ref<string[]>([])
 const isSelectionMode = ref(false)
 const isBulkProcessing = ref(false)
+const bulkTagIds = ref<string[]>([])
+const isBulkTagPickerOpen = ref(false)
+const bulkTagMode = ref<'add' | 'remove'>('add')
 
 const queryParams = computed(() => ({
   q: searchQuery.value || undefined,
   entryTypes: selectedTypes.value.length > 0 ? selectedTypes.value : undefined,
   tagIds: selectedTags.value.length > 0 ? selectedTags.value : undefined,
+  projectId: selectedProject.value || undefined,
   sortBy: sortBy.value,
   sortOrder: sortOrder.value,
   page: page.value,
@@ -97,6 +104,7 @@ function clearFilters() {
   searchQuery.value = ''
   selectedTypes.value = []
   selectedTags.value = []
+  selectedProject.value = null
   page.value = 1
 }
 
@@ -166,6 +174,34 @@ async function bulkAction(action: string, extra: Record<string, unknown> = {}) {
   }
   finally {
     isBulkProcessing.value = false
+  }
+}
+
+async function applyBulkTags() {
+  if (bulkTagIds.value.length === 0) return
+  const action = bulkTagMode.value === 'add' ? 'addTags' : 'removeTags'
+  await bulkAction(action, { tagIds: bulkTagIds.value })
+  bulkTagIds.value = []
+  isBulkTagPickerOpen.value = false
+}
+
+function openBulkTagPicker(mode: 'add' | 'remove') {
+  bulkTagMode.value = mode
+  bulkTagIds.value = []
+  isBulkTagPickerOpen.value = true
+}
+
+function handleTableSelectionChange(ids: string[]) {
+  selectedEntryIds.value = ids
+  if (ids.length > 0) {
+    isSelectionMode.value = true
+  }
+}
+
+function handleTagFilterFromTable(tagId: string) {
+  if (!selectedTags.value.includes(tagId)) {
+    selectedTags.value.push(tagId)
+    page.value = 1
   }
 }
 
@@ -265,6 +301,13 @@ onUnmounted(() => {
 
       <div class="flex gap-2">
         <UButton
+          icon="i-heroicons-share"
+          label="Mind Map"
+          variant="outline"
+          color="neutral"
+          to="/app/library/mindmap"
+        />
+        <UButton
           v-if="!isSelectionMode"
           icon="i-heroicons-check-circle"
           label="Select"
@@ -335,13 +378,23 @@ onUnmounted(() => {
           label-key="name"
           class="w-full lg:w-48"
         >
-            <template #item-leading="{ item }">
+          <template #item-leading="{ item }">
             <span
               class="w-3 h-3 rounded-full shrink-0"
               :style="{ backgroundColor: item.color ?? 'transparent' }"
             />
           </template>
         </USelectMenu>
+
+        <!-- Project filter -->
+        <USelectMenu
+          v-model="selectedProject"
+          :items="[{ id: null, name: 'All projects' }, ...(projects || []).map(p => ({ id: p.id, name: p.name }))]"
+          placeholder="All projects"
+          value-key="id"
+          label-key="name"
+          class="w-full lg:w-48"
+        />
 
         <!-- Sort -->
         <USelectMenu
@@ -373,11 +426,17 @@ onUnmounted(() => {
             color="neutral"
             @click="viewMode = 'grid'"
           />
+          <UButton
+            icon="i-heroicons-table-cells"
+            :variant="viewMode === 'table' ? 'solid' : 'outline'"
+            color="neutral"
+            @click="viewMode = 'table'"
+          />
         </UFieldGroup>
 
         <!-- Clear filters -->
         <UButton
-          v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0"
+          v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject"
           icon="i-heroicons-x-mark"
           variant="ghost"
           color="neutral"
@@ -389,81 +448,124 @@ onUnmounted(() => {
     <!-- Bulk action bar -->
     <div
       v-if="isSelectionMode && selectedEntryIds.length > 0"
-      class="sticky top-0 z-10 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 flex flex-wrap items-center gap-2"
+      class="sticky top-0 z-10 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 space-y-2"
     >
-      <div class="flex items-center gap-2 mr-2">
-        <UCheckbox :model-value="allSelected" @update:model-value="toggleSelectAll" />
-        <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
-          {{ selectedEntryIds.length }} selected
-        </span>
-      </div>
-      <div class="flex flex-wrap gap-1.5">
-        <UDropdownMenu
-          :items="[
-            (tags || []).map(t => ({
-              label: t.name,
-              onSelect: () => bulkAction('addTags', { tagIds: [t.id] }),
-            })),
-          ]"
-          :content="{ align: 'start' }"
-        >
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-2 mr-2">
+          <UCheckbox :model-value="allSelected" @update:model-value="toggleSelectAll" />
+          <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
+            {{ selectedEntryIds.length }} selected
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
           <UButton
             icon="i-heroicons-tag"
             variant="outline"
             color="neutral"
             size="xs"
             :loading="isBulkProcessing"
+            @click="openBulkTagPicker('add')"
           >
-            Add Tag
+            Add Tags
           </UButton>
-        </UDropdownMenu>
-        <UDropdownMenu
-          :items="[
-            (projects || []).map(p => ({
-              label: p.name,
-              onSelect: () => bulkAction('addToProject', { projectId: p.id }),
-            })),
-          ]"
-          :content="{ align: 'start' }"
-        >
           <UButton
-            icon="i-heroicons-folder-plus"
+            icon="i-heroicons-tag"
             variant="outline"
             color="neutral"
             size="xs"
             :loading="isBulkProcessing"
+            @click="openBulkTagPicker('remove')"
           >
-            Add to Project
+            Remove Tags
           </UButton>
-        </UDropdownMenu>
-        <UButton
-          icon="i-heroicons-star"
-          variant="outline"
-          color="neutral"
-          size="xs"
-          :loading="isBulkProcessing"
-          @click="bulkAction('favorite')"
+          <UDropdownMenu
+            :items="[
+              (projects || []).map(p => ({
+                label: p.name,
+                onSelect: () => bulkAction('addToProject', { projectId: p.id }),
+              })),
+            ]"
+            :content="{ align: 'start' }"
+          >
+            <UButton
+              icon="i-heroicons-folder-plus"
+              variant="outline"
+              color="neutral"
+              size="xs"
+              :loading="isBulkProcessing"
+            >
+              Add to Project
+            </UButton>
+          </UDropdownMenu>
+          <UButton
+            icon="i-heroicons-star"
+            variant="outline"
+            color="neutral"
+            size="xs"
+            :loading="isBulkProcessing"
+            @click="bulkAction('favorite')"
+          >
+            Favorite
+          </UButton>
+          <UButton
+            icon="i-heroicons-arrow-down-tray"
+            variant="outline"
+            color="neutral"
+            size="xs"
+            @click="isExportModalOpen = true"
+          >
+            Export
+          </UButton>
+          <UButton
+            icon="i-heroicons-trash"
+            variant="outline"
+            color="error"
+            size="xs"
+            :loading="isBulkProcessing"
+            @click="bulkAction('delete')"
+          >
+            Delete
+          </UButton>
+        </div>
+      </div>
+
+      <!-- Bulk tag picker (multi-select) -->
+      <div v-if="isBulkTagPickerOpen" class="flex items-center gap-2 pt-1 border-t border-primary-200 dark:border-primary-700">
+        <span class="text-xs font-medium text-primary-600 dark:text-primary-400">
+          {{ bulkTagMode === 'add' ? 'Add' : 'Remove' }} tags:
+        </span>
+        <USelectMenu
+          v-model="bulkTagIds"
+          :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+          multiple
+          placeholder="Select tags..."
+          value-key="id"
+          label-key="name"
+          class="flex-1 max-w-xs"
         >
-          Favorite
+          <template #item-leading="{ item }">
+            <span
+              class="w-3 h-3 rounded-full shrink-0"
+              :style="{ backgroundColor: item.color ?? 'transparent' }"
+            />
+          </template>
+        </USelectMenu>
+        <UButton
+          size="xs"
+          color="primary"
+          :disabled="bulkTagIds.length === 0"
+          :loading="isBulkProcessing"
+          @click="applyBulkTags"
+        >
+          Apply ({{ bulkTagIds.length }})
         </UButton>
         <UButton
-          icon="i-heroicons-arrow-down-tray"
-          variant="outline"
+          size="xs"
+          variant="ghost"
           color="neutral"
-          size="xs"
-          @click="isExportModalOpen = true"
+          @click="isBulkTagPickerOpen = false"
         >
-          Export
-        </UButton>
-        <UButton
-          icon="i-heroicons-trash"
-          variant="outline"
-          color="error"
-          size="xs"
-          :loading="isBulkProcessing"
-          @click="bulkAction('delete')"
-        >
-          Delete
+          Cancel
         </UButton>
       </div>
     </div>
@@ -474,7 +576,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Empty state: search has results but filters excluded all -->
-    <UCard v-else-if="entries.length === 0 && (searchQuery || selectedTypes.length || selectedTags.length)" class="text-center py-12">
+    <UCard v-else-if="entries.length === 0 && (searchQuery || selectedTypes.length || selectedTags.length || selectedProject)" class="text-center py-12">
       <UIcon name="i-heroicons-magnifying-glass" class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600" />
       <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
         No matching entries
@@ -613,8 +715,25 @@ onUnmounted(() => {
       </UCard>
     </div>
 
+    <!-- Table view -->
+    <AppEntryTable
+      v-else-if="viewMode === 'table'"
+      :data="entries"
+      :loading="pending"
+      :selectable="true"
+      :show-project-column="true"
+      :tags="tags ?? []"
+      :sort-by="sortBy"
+      :sort-order="sortOrder"
+      @update:selected-ids="handleTableSelectionChange"
+      @update:sort-by="(v) => { sortBy = v; page = 1 }"
+      @update:sort-order="(v) => sortOrder = v"
+      @tag-click="handleTagFilterFromTable"
+      @refresh="refresh"
+    />
+
     <!-- Grid view -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <UCard
         v-for="(entry, index) in entries"
         :key="entry.id"
