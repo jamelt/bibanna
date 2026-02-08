@@ -215,6 +215,38 @@ async function handleImported() {
   isImportModalOpen.value = false
 }
 
+const mobileOverflowItems = computed(() => {
+  const items: { label: string; icon: string; onSelect: () => void }[] = []
+
+  if (!isSelectionMode.value) {
+    items.push({
+      label: 'Select',
+      icon: 'i-heroicons-check-circle',
+      onSelect: () => { isSelectionMode.value = true },
+    })
+  }
+
+  items.push(
+    {
+      label: 'Import',
+      icon: 'i-heroicons-arrow-up-tray',
+      onSelect: () => { isImportModalOpen.value = true },
+    },
+    {
+      label: 'Export',
+      icon: 'i-heroicons-arrow-down-tray',
+      onSelect: () => { isExportModalOpen.value = true },
+    },
+    {
+      label: 'Mind Map',
+      icon: 'i-heroicons-share',
+      onSelect: () => { navigateTo('/app/library/mindmap') },
+    },
+  )
+
+  return [items]
+})
+
 const focusedEntryIndex = ref(-1)
 
 function isAnyModalOpen() {
@@ -301,22 +333,41 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-2">
         <UButton
-          icon="i-heroicons-share"
-          label="Mind Map"
-          variant="outline"
-          color="neutral"
+          icon="i-heroicons-plus"
+          label="Add Entry"
+          color="primary"
           size="sm"
-          to="/app/library/mindmap"
+          class="mobile-touch-target"
+          @click="isAddModalOpen = true"
         />
-        <UButton
-          v-if="!isSelectionMode"
-          icon="i-heroicons-check-circle"
-          label="Select"
-          variant="outline"
-          color="neutral"
-          size="sm"
-          @click="isSelectionMode = true"
-        />
+
+        <UFieldGroup>
+          <UButton
+            icon="i-heroicons-list-bullet"
+            :variant="viewMode === 'list' ? 'solid' : 'outline'"
+            color="neutral"
+            size="xs"
+            class="mobile-touch-target-icon"
+            @click="viewMode = 'list'"
+          />
+          <UButton
+            icon="i-heroicons-squares-2x2"
+            :variant="viewMode === 'grid' ? 'solid' : 'outline'"
+            color="neutral"
+            size="xs"
+            class="mobile-touch-target-icon"
+            @click="viewMode = 'grid'"
+          />
+          <UButton
+            icon="i-heroicons-table-cells"
+            :variant="viewMode === 'table' ? 'solid' : 'outline'"
+            color="neutral"
+            size="xs"
+            class="mobile-touch-target-icon"
+            @click="viewMode = 'table'"
+          />
+        </UFieldGroup>
+
         <UButton
           v-if="isSelectionMode"
           label="Cancel"
@@ -325,12 +376,25 @@ onUnmounted(() => {
           size="sm"
           @click="exitSelectionMode"
         />
+
+        <!-- Desktop-only buttons -->
+        <UButton
+          v-if="!isSelectionMode"
+          icon="i-heroicons-check-circle"
+          label="Select"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          class="hidden sm:flex"
+          @click="isSelectionMode = true"
+        />
         <UButton
           icon="i-heroicons-arrow-up-tray"
           label="Import"
           variant="outline"
           color="neutral"
           size="sm"
+          class="hidden sm:flex"
           @click="isImportModalOpen = true"
         />
         <UButton
@@ -339,39 +403,33 @@ onUnmounted(() => {
           variant="outline"
           color="neutral"
           size="sm"
+          class="hidden sm:flex"
           @click="isExportModalOpen = true"
         />
         <UButton
-          icon="i-heroicons-plus"
-          label="Add Entry"
-          color="primary"
+          icon="i-heroicons-share"
+          label="Mind Map"
+          variant="outline"
+          color="neutral"
           size="sm"
-          @click="isAddModalOpen = true"
+          class="hidden sm:flex"
+          to="/app/library/mindmap"
         />
-        <div class="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-        <UFieldGroup>
+
+        <!-- Mobile overflow menu -->
+        <UDropdownMenu
+          :items="mobileOverflowItems"
+          :content="{ align: 'end' }"
+          class="sm:hidden"
+        >
           <UButton
-            icon="i-heroicons-list-bullet"
-            :variant="viewMode === 'list' ? 'solid' : 'outline'"
+            icon="i-heroicons-ellipsis-vertical"
+            variant="outline"
             color="neutral"
-            size="xs"
-            @click="viewMode = 'list'"
+            size="sm"
+            class="mobile-touch-target-icon"
           />
-          <UButton
-            icon="i-heroicons-squares-2x2"
-            :variant="viewMode === 'grid' ? 'solid' : 'outline'"
-            color="neutral"
-            size="xs"
-            @click="viewMode = 'grid'"
-          />
-          <UButton
-            icon="i-heroicons-table-cells"
-            :variant="viewMode === 'table' ? 'solid' : 'outline'"
-            color="neutral"
-            size="xs"
-            @click="viewMode = 'table'"
-          />
-        </UFieldGroup>
+        </UDropdownMenu>
       </div>
     </div>
 
@@ -794,3 +852,19 @@ onUnmounted(() => {
     />
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 639px) {
+  .mobile-touch-target {
+    min-height: 2.5rem;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .mobile-touch-target-icon {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+}
+</style>

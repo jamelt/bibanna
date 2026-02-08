@@ -26,10 +26,10 @@ const stats = computed(() => {
   const totalTags = tagsData.value?.length || 0
 
   return [
-    { label: 'Total Entries', value: totalEntries, icon: 'i-heroicons-book-open' },
-    { label: 'Projects', value: totalProjects, icon: 'i-heroicons-folder' },
-    { label: 'Annotations', value: totalAnnotations, icon: 'i-heroicons-pencil-square' },
-    { label: 'Tags', value: totalTags, icon: 'i-heroicons-tag' },
+    { label: 'Total Entries', value: totalEntries, icon: 'i-heroicons-book-open', to: '/app/library' },
+    { label: 'Projects', value: totalProjects, icon: 'i-heroicons-folder', to: '/app/projects' },
+    { label: 'Annotations', value: totalAnnotations, icon: 'i-heroicons-pencil-square', to: '/app/annotations' },
+    { label: 'Tags', value: totalTags, icon: 'i-heroicons-tag', to: '/app/tags' },
   ]
 })
 
@@ -63,26 +63,29 @@ async function handleProjectCreated() {
     </div>
 
     <!-- Stats grid -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <UCard
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <NuxtLink
         v-for="stat in stats"
         :key="stat.label"
-        class="p-4"
+        :to="stat.to"
+        class="group"
       >
-        <div class="flex items-center gap-4">
-          <div class="shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
-            <UIcon :name="stat.icon" class="w-6 h-6 text-primary-500" />
+        <UCard class="p-4 transition-shadow duration-200 group-hover:shadow-md group-hover:ring-1 group-hover:ring-primary-200 dark:group-hover:ring-primary-800 cursor-pointer">
+          <div class="flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+              <UIcon :name="stat.icon" class="w-6 h-6 text-primary-500" />
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ stat.value }}
+              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ stat.label }}
+              </p>
+            </div>
           </div>
-          <div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {{ stat.value }}
-            </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {{ stat.label }}
-            </p>
-          </div>
-        </div>
-      </UCard>
+        </UCard>
+      </NuxtLink>
     </div>
 
     <!-- Quick actions -->
