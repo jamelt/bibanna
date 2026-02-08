@@ -40,14 +40,17 @@ const entryQueryParams = computed(() => ({
   pageSize: pageSize.value,
 }))
 
-const { data: entriesData, pending: entriesPending, refresh: refreshEntries } = await useFetch('/api/entries', {
+const { data: entriesData, pending: entriesPending, refresh: refreshEntries } = useFetch('/api/entries', {
   query: entryQueryParams,
-  watch: [entryQueryParams],
 })
 
 const entries = computed(() => entriesData.value?.data ?? [])
 const totalEntries = computed(() => entriesData.value?.total ?? 0)
 const totalPages = computed(() => entriesData.value?.totalPages ?? 1)
+
+watch([entrySearchQuery, selectedTypes, selectedTags], () => {
+  page.value = 1
+})
 
 const { data: userTags } = await useFetch<Tag[]>('/api/tags', { lazy: true })
 
@@ -66,9 +69,59 @@ const isAddingEntries = ref(false)
 const selectedEntryIds = ref<Set<string>>(new Set())
 const tableSelectedIds = ref<string[]>([])
 const modalSearchQuery = ref('')
+const isBulkProcessing = ref(false)
+const bulkTagIds = ref<string[]>([])
+const isBulkTagPickerOpen = ref(false)
+const bulkTagMode = ref<'add' | 'remove'>('add')
 
 async function refresh() {
   await Promise.all([refreshProject(), refreshEntries()])
+}
+
+async function bulkAction(action: string, extra: Record<string, unknown> = {}) {
+  if (tableSelectedIds.value.length === 0) return
+  isBulkProcessing.value = true
+  try {
+    const result = await $fetch<{ affected: number; action: string }>('/api/entries/bulk', {
+      method: 'POST',
+      body: {
+        entryIds: tableSelectedIds.value,
+        action,
+        ...extra,
+      },
+    })
+    toast.add({
+      title: `${result.action} completed`,
+      description: `${result.affected} entries affected.`,
+      color: 'success',
+    })
+    tableSelectedIds.value = []
+    await refreshEntries()
+  }
+  catch (err: any) {
+    toast.add({
+      title: 'Bulk action failed',
+      description: err.data?.message || 'Please try again.',
+      color: 'error',
+    })
+  }
+  finally {
+    isBulkProcessing.value = false
+  }
+}
+
+async function applyBulkTags() {
+  if (bulkTagIds.value.length === 0) return
+  const action = bulkTagMode.value === 'add' ? 'addTags' : 'removeTags'
+  await bulkAction(action, { tagIds: bulkTagIds.value })
+  bulkTagIds.value = []
+  isBulkTagPickerOpen.value = false
+}
+
+function openBulkTagPicker(mode: 'add' | 'remove') {
+  bulkTagMode.value = mode
+  bulkTagIds.value = []
+  isBulkTagPickerOpen.value = true
 }
 
 function clearFilters() {
@@ -419,7 +472,7 @@ onEntryCreated(() => {
       </div>
 
       <!-- Entries section -->
-      <div class="space-y-4">
+      <div class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
             Entries
@@ -427,7 +480,24 @@ onEntryCreated(() => {
               ({{ totalEntries }})
             </span>
           </h2>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
+            <UButton
+              icon="i-heroicons-plus"
+              size="xs"
+              @click="quickAddToProject"
+            >
+              New Entry
+            </UButton>
+            <UButton
+              icon="i-heroicons-book-open"
+              size="xs"
+              variant="outline"
+              color="neutral"
+              @click="openAddEntryModal"
+            >
+              From Library
+            </UButton>
+            <div class="w-px h-5 bg-gray-200 dark:bg-gray-700" />
             <UFieldGroup>
               <UButton
                 icon="i-heroicons-list-bullet"
@@ -444,52 +514,130 @@ onEntryCreated(() => {
                 @click="viewMode = 'table'"
               />
             </UFieldGroup>
-            <UButton
-              icon="i-heroicons-plus"
-              size="sm"
-              @click="quickAddToProject"
-            >
-              New Entry
-            </UButton>
-            <UButton
-              icon="i-heroicons-book-open"
-              size="sm"
-              variant="outline"
-              color="neutral"
-              @click="openAddEntryModal"
-            >
-              From Library
-            </UButton>
           </div>
         </div>
 
         <!-- Filter bar -->
-        <UCard class="p-3">
-          <div class="flex flex-col lg:flex-row gap-3">
-            <div class="flex-1">
-              <UInput
-                v-model="entrySearchQuery"
-                icon="i-heroicons-magnifying-glass"
-                placeholder="Search entries..."
-                size="sm"
-              />
-            </div>
-            <USelectMenu
-              v-model="selectedTypes"
-              :items="entryTypeOptions"
-              multiple
-              placeholder="All types"
-              value-key="value"
-              class="w-full lg:w-40"
+        <div class="flex flex-col lg:flex-row gap-2 items-stretch lg:items-center">
+          <div class="flex-1">
+            <UInput
+              v-model="entrySearchQuery"
+              icon="i-heroicons-magnifying-glass"
+              placeholder="Search entries..."
+              size="sm"
             />
+          </div>
+          <USelectMenu
+            v-model="selectedTypes"
+            :items="entryTypeOptions"
+            multiple
+            placeholder="All types"
+            value-key="value"
+            size="sm"
+            class="w-full lg:w-36"
+          />
+          <USelectMenu
+            v-model="selectedTags"
+            :items="(userTags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+            multiple
+            placeholder="All tags"
+            value-key="id"
+            label-key="name"
+            size="sm"
+            class="w-full lg:w-36"
+          >
+            <template #item-leading="{ item }">
+              <span
+                class="w-3 h-3 rounded-full shrink-0"
+                :style="{ backgroundColor: item.color ?? 'transparent' }"
+              />
+            </template>
+          </USelectMenu>
+          <UButton
+            v-if="hasActiveFilters"
+            icon="i-heroicons-x-mark"
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            @click="clearFilters"
+          />
+        </div>
+
+        <!-- Bulk action bar -->
+        <div
+          v-if="tableSelectedIds.length > 0 && viewMode === 'table'"
+          class="sticky top-0 z-10 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 space-y-2"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-medium text-primary-700 dark:text-primary-300 mr-2">
+              {{ tableSelectedIds.length }} selected
+            </span>
+            <div class="flex flex-wrap gap-1.5">
+              <UButton
+                icon="i-heroicons-tag"
+                variant="outline"
+                color="neutral"
+                size="xs"
+                :loading="isBulkProcessing"
+                @click="openBulkTagPicker('add')"
+              >
+                Add Tags
+              </UButton>
+              <UButton
+                icon="i-heroicons-tag"
+                variant="outline"
+                color="neutral"
+                size="xs"
+                :loading="isBulkProcessing"
+                @click="openBulkTagPicker('remove')"
+              >
+                Remove Tags
+              </UButton>
+              <UButton
+                icon="i-heroicons-star"
+                variant="outline"
+                color="neutral"
+                size="xs"
+                :loading="isBulkProcessing"
+                @click="bulkAction('favorite')"
+              >
+                Favorite
+              </UButton>
+              <UButton
+                icon="i-heroicons-x-mark"
+                variant="outline"
+                color="error"
+                size="xs"
+                :loading="isBulkProcessing"
+                @click="bulkAction('removeFromProject', { projectId: project?.id })"
+              >
+                Remove from Project
+              </UButton>
+              <UButton
+                icon="i-heroicons-trash"
+                variant="outline"
+                color="error"
+                size="xs"
+                :loading="isBulkProcessing"
+                @click="bulkAction('delete')"
+              >
+                Delete
+              </UButton>
+            </div>
+          </div>
+
+          <div v-if="isBulkTagPickerOpen" class="flex items-center gap-2 pt-1 border-t border-primary-200 dark:border-primary-700">
+            <span class="text-xs font-medium text-primary-600 dark:text-primary-400">
+              {{ bulkTagMode === 'add' ? 'Add' : 'Remove' }} tags:
+            </span>
             <USelectMenu
-              v-model="selectedTags"
+              v-model="bulkTagIds"
               :items="(userTags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
               multiple
-              placeholder="All tags"
+              placeholder="Select tags..."
               value-key="id"
               label-key="name"
-              class="w-full lg:w-40"
+              class="flex-1 max-w-xs"
             >
               <template #item-leading="{ item }">
                 <span
@@ -499,15 +647,24 @@ onEntryCreated(() => {
               </template>
             </USelectMenu>
             <UButton
-              v-if="hasActiveFilters"
-              icon="i-heroicons-x-mark"
+              size="xs"
+              color="primary"
+              :disabled="bulkTagIds.length === 0"
+              :loading="isBulkProcessing"
+              @click="applyBulkTags"
+            >
+              Apply ({{ bulkTagIds.length }})
+            </UButton>
+            <UButton
+              size="xs"
               variant="ghost"
               color="neutral"
-              size="sm"
-              @click="clearFilters"
-            />
+              @click="isBulkTagPickerOpen = false"
+            >
+              Cancel
+            </UButton>
           </div>
-        </UCard>
+        </div>
 
         <!-- Empty state -->
         <UCard v-if="entries.length === 0 && !entriesPending && !hasActiveFilters" class="py-10">

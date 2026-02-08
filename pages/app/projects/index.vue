@@ -273,27 +273,31 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
         </p>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
+        <UButton
+          icon="i-heroicons-plus"
+          label="New Project"
+          color="primary"
+          size="sm"
+          @click="isCreateModalOpen = true"
+        />
+        <div class="w-px h-5 bg-gray-200 dark:bg-gray-700" />
         <UFieldGroup>
           <UButton
             icon="i-heroicons-squares-2x2"
             :variant="viewMode === 'grid' ? 'solid' : 'outline'"
             color="neutral"
+            size="xs"
             @click="viewMode = 'grid'"
           />
           <UButton
             icon="i-heroicons-table-cells"
             :variant="viewMode === 'table' ? 'solid' : 'outline'"
             color="neutral"
+            size="xs"
             @click="viewMode = 'table'"
           />
         </UFieldGroup>
-        <UButton
-          icon="i-heroicons-plus"
-          label="New Project"
-          color="primary"
-          @click="isCreateModalOpen = true"
-        />
       </div>
     </div>
 
