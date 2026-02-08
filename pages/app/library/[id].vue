@@ -337,7 +337,7 @@ async function handleAnnotationCreated() {
           </UCard>
 
           <!-- Tags -->
-          <UCard :ui="{ body: 'overflow-visible' }">
+          <UCard :ui="{ root: 'overflow-visible' }">
             <template #header>
               <h2 class="font-semibold text-gray-900 dark:text-white">Tags</h2>
             </template>
