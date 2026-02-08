@@ -659,6 +659,26 @@ async function handleExport() {
               </template>
             </div>
 
+            <!-- Mobile scroll hint (just above preview) -->
+            <Transition
+              enter-active-class="transition duration-200 ease-out"
+              leave-active-class="transition duration-300 ease-in"
+              enter-from-class="opacity-0"
+              enter-to-class="opacity-100"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <div
+                v-if="showScrollHint"
+                class="sm:hidden flex items-center justify-center py-1.5 pointer-events-none border-t-0! bg-transparent"
+              >
+                <div class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 animate-bounce bg-transparent">
+                  <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5" />
+                  <span>Scroll for more options</span>
+                </div>
+              </div>
+            </Transition>
+
             <!-- Preview panel (PDF / DOCX only) -->
             <div
               v-if="showPreview"
