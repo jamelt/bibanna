@@ -331,27 +331,16 @@ function getFallbackLocale(): string {
 </locale>`
 }
 
-export async function fetchStyleXml(styleId: string): Promise<string> {
-  const cached = styleCache.get(styleId)
-  if (cached) return cached
-
-  const style = DEFAULT_STYLES.find(s => s.id === styleId)
-  if (!style) {
-    throw new Error(`Style not found: ${styleId}`)
-  }
-
+async function fetchCslXmlWithRetry(url: string, label: string): Promise<string> {
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await fetchWithTimeout(style.cslUrl, FETCH_TIMEOUT_MS)
+      const response = await fetchWithTimeout(url, FETCH_TIMEOUT_MS)
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status} fetching CSL style "${style.shortName}" from ${style.cslUrl}`)
+        throw new Error(`HTTP ${response.status} fetching CSL style "${label}" from ${url}`)
       }
-
-      const xml = await response.text()
-      styleCache.set(styleId, xml)
-      return xml
+      return await response.text()
     }
     catch (err: any) {
       lastError = err
@@ -362,8 +351,41 @@ export async function fetchStyleXml(styleId: string): Promise<string> {
   }
 
   throw new Error(
-    `Failed to fetch CSL style "${style.shortName}" after ${MAX_RETRIES + 1} attempts: ${lastError?.message}`,
+    `Failed to fetch CSL style "${label}" after ${MAX_RETRIES + 1} attempts: ${lastError?.message}`,
   )
+}
+
+function extractParentStyleUrl(xml: string): string | null {
+  const match = xml.match(/<link[^>]+rel\s*=\s*"independent-parent"[^>]+href\s*=\s*"([^"]+)"/)
+    || xml.match(/<link[^>]+href\s*=\s*"([^"]+)"[^>]+rel\s*=\s*"independent-parent"/)
+  if (!match) return null
+
+  const href = match[1]
+  if (href.startsWith('http://www.zotero.org/styles/') || href.startsWith('https://www.zotero.org/styles/')) {
+    const styleName = href.replace(/^https?:\/\/www\.zotero\.org\/styles\//, '')
+    return `https://www.zotero.org/styles/${styleName}?source=1`
+  }
+  return null
+}
+
+export async function fetchStyleXml(styleId: string): Promise<string> {
+  const cached = styleCache.get(styleId)
+  if (cached) return cached
+
+  const style = DEFAULT_STYLES.find(s => s.id === styleId)
+  if (!style) {
+    throw new Error(`Style not found: ${styleId}`)
+  }
+
+  let xml = await fetchCslXmlWithRetry(style.cslUrl, style.shortName)
+
+  const parentUrl = extractParentStyleUrl(xml)
+  if (parentUrl) {
+    xml = await fetchCslXmlWithRetry(parentUrl, `${style.shortName} (parent)`)
+  }
+
+  styleCache.set(styleId, xml)
+  return xml
 }
 
 export function getDefaultStyles(): DefaultStyle[] {

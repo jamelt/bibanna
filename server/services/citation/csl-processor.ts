@@ -137,7 +137,13 @@ export function formatBibliography(
   itemIds: string[],
 ): string[] {
   engine.updateItems(itemIds)
-  const [params, entries] = engine.makeBibliography()
+  const result = engine.makeBibliography()
+
+  if (!result || result === false) {
+    return []
+  }
+
+  const [, entries] = result
 
   if (!entries || !Array.isArray(entries)) {
     return []

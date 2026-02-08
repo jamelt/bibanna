@@ -14,6 +14,8 @@ const entryId = computed(() => route.params.id as string)
 
 const { data: entry, pending, refresh } = await useFetch<Entry>(`/api/entries/${entryId.value}`)
 
+const { data: veritasScore } = await useFetch(`/api/entries/${entryId.value}/veritas`, { lazy: true })
+
 const isEditModalOpen = ref(false)
 const isAddAnnotationOpen = ref(false)
 const isDeleteModalOpen = ref(false)

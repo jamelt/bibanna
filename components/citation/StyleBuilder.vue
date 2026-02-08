@@ -1,145 +1,148 @@
 <script setup lang="ts">
 interface StyleConfig {
-  name: string
-  description: string
-  category: 'author-date' | 'numeric' | 'note'
+  name: string;
+  description: string;
+  category: "author-date" | "numeric" | "note";
   authorFormat: {
-    order: 'first-last' | 'last-first'
-    separator: string
-    lastSeparator: string
-    etAlThreshold: number
-    etAlUseFirst: number
-  }
+    order: "first-last" | "last-first";
+    separator: string;
+    lastSeparator: string;
+    etAlThreshold: number;
+    etAlUseFirst: number;
+  };
   titleFormat: {
-    case: 'sentence' | 'title' | 'none'
-    fontStyle: 'normal' | 'italic'
-    quotes: boolean
-  }
+    case: "sentence" | "title" | "none";
+    fontStyle: "normal" | "italic";
+    quotes: boolean;
+  };
   dateFormat: {
-    form: 'text' | 'numeric'
-    parts: ('year' | 'month' | 'day')[]
-    yearSuffix: string
-  }
+    form: "text" | "numeric";
+    parts: ("year" | "month" | "day")[];
+    yearSuffix: string;
+  };
   publisherFormat: {
-    includeLocation: boolean
-    locationFirst: boolean
-  }
+    includeLocation: boolean;
+    locationFirst: boolean;
+  };
   punctuation: {
-    titleDelimiter: string
-    groupDelimiter: string
-    finalPunctuation: string
-  }
+    titleDelimiter: string;
+    groupDelimiter: string;
+    finalPunctuation: string;
+  };
 }
 
 const emit = defineEmits<{
-  (e: 'save', cslXml: string, config: StyleConfig): void
-  (e: 'cancel'): void
-}>()
+  (e: "save", cslXml: string, config: StyleConfig): void;
+  (e: "cancel"): void;
+}>();
 
 const config = ref<StyleConfig>({
-  name: '',
-  description: '',
-  category: 'author-date',
+  name: "",
+  description: "",
+  category: "author-date",
   authorFormat: {
-    order: 'last-first',
-    separator: ', ',
-    lastSeparator: ', & ',
+    order: "last-first",
+    separator: ", ",
+    lastSeparator: ", & ",
     etAlThreshold: 7,
     etAlUseFirst: 6,
   },
   titleFormat: {
-    case: 'sentence',
-    fontStyle: 'italic',
+    case: "sentence",
+    fontStyle: "italic",
     quotes: false,
   },
   dateFormat: {
-    form: 'text',
-    parts: ['year'],
-    yearSuffix: '',
+    form: "text",
+    parts: ["year"],
+    yearSuffix: "",
   },
   publisherFormat: {
     includeLocation: true,
     locationFirst: true,
   },
   punctuation: {
-    titleDelimiter: '. ',
-    groupDelimiter: '. ',
-    finalPunctuation: '.',
+    titleDelimiter: ". ",
+    groupDelimiter: ". ",
+    finalPunctuation: ".",
   },
-})
+});
 
-const currentStep = ref(1)
+const currentStep = ref(1);
 const steps = [
-  { id: 1, name: 'Basic Info', icon: 'i-heroicons-document-text' },
-  { id: 2, name: 'Authors', icon: 'i-heroicons-users' },
-  { id: 3, name: 'Titles', icon: 'i-heroicons-bookmark' },
-  { id: 4, name: 'Dates', icon: 'i-heroicons-calendar' },
-  { id: 5, name: 'Publisher', icon: 'i-heroicons-building-office' },
-  { id: 6, name: 'Punctuation', icon: 'i-heroicons-ellipsis-horizontal' },
-]
+  { id: 1, name: "Basic Info", icon: "i-heroicons-document-text" },
+  { id: 2, name: "Authors", icon: "i-heroicons-users" },
+  { id: 3, name: "Titles", icon: "i-heroicons-bookmark" },
+  { id: 4, name: "Dates", icon: "i-heroicons-calendar" },
+  { id: 5, name: "Publisher", icon: "i-heroicons-building-office" },
+  { id: 6, name: "Punctuation", icon: "i-heroicons-ellipsis-horizontal" },
+];
 
 const previewEntry = {
-  title: 'The Structure of Scientific Revolutions',
-  authors: [
-    { firstName: 'Thomas S.', lastName: 'Kuhn' },
-  ],
+  title: "The Structure of Scientific Revolutions",
+  authors: [{ firstName: "Thomas S.", lastName: "Kuhn" }],
   year: 1962,
-  entryType: 'book',
+  entryType: "book",
   metadata: {
-    publisher: 'University of Chicago Press',
-    publisherLocation: 'Chicago',
+    publisher: "University of Chicago Press",
+    publisherLocation: "Chicago",
   },
-}
+};
 
 const livePreview = computed(() => {
-  const c = config.value
+  const c = config.value;
 
-  let authors = ''
-  const authorList = previewEntry.authors
-  if (c.authorFormat.order === 'last-first') {
-    authors = authorList.map(a => `${a.lastName}, ${a.firstName}`).join(c.authorFormat.separator)
-  }
-  else {
-    authors = authorList.map(a => `${a.firstName} ${a.lastName}`).join(c.authorFormat.separator)
+  let authors = "";
+  const authorList = previewEntry.authors;
+  if (c.authorFormat.order === "last-first") {
+    authors = authorList
+      .map((a) => `${a.lastName}, ${a.firstName}`)
+      .join(c.authorFormat.separator);
+  } else {
+    authors = authorList
+      .map((a) => `${a.firstName} ${a.lastName}`)
+      .join(c.authorFormat.separator);
   }
 
-  let title = previewEntry.title
-  if (c.titleFormat.case === 'sentence') {
-    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+  let title = previewEntry.title;
+  if (c.titleFormat.case === "sentence") {
+    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
   }
-  if (c.titleFormat.fontStyle === 'italic') {
-    title = `<i>${title}</i>`
+  if (c.titleFormat.fontStyle === "italic") {
+    title = `<i>${title}</i>`;
   }
   if (c.titleFormat.quotes) {
-    title = `"${title}"`
+    title = `"${title}"`;
   }
 
-  const year = `(${previewEntry.year}${c.dateFormat.yearSuffix})`
+  const year = `(${previewEntry.year}${c.dateFormat.yearSuffix})`;
 
-  let publisher = ''
-  if (c.publisherFormat.includeLocation && previewEntry.metadata.publisherLocation) {
+  let publisher = "";
+  if (
+    c.publisherFormat.includeLocation &&
+    previewEntry.metadata.publisherLocation
+  ) {
     if (c.publisherFormat.locationFirst) {
-      publisher = `${previewEntry.metadata.publisherLocation}: ${previewEntry.metadata.publisher}`
+      publisher = `${previewEntry.metadata.publisherLocation}: ${previewEntry.metadata.publisher}`;
+    } else {
+      publisher = `${previewEntry.metadata.publisher}, ${previewEntry.metadata.publisherLocation}`;
     }
-    else {
-      publisher = `${previewEntry.metadata.publisher}, ${previewEntry.metadata.publisherLocation}`
-    }
-  }
-  else {
-    publisher = previewEntry.metadata.publisher
+  } else {
+    publisher = previewEntry.metadata.publisher;
   }
 
-  const d = c.punctuation.groupDelimiter
+  const d = c.punctuation.groupDelimiter;
 
-  return `${authors} ${year}${d}${title}${d}${publisher}${c.punctuation.finalPunctuation}`
-})
+  return `${authors} ${year}${d}${title}${d}${publisher}${c.punctuation.finalPunctuation}`;
+});
 
 function generateCSL(): string {
-  const c = config.value
+  const c = config.value;
 
-  const namePartOrder = c.authorFormat.order === 'last-first'
-    ? '<name-part name="family"/><name-part name="given"/>'
-    : '<name-part name="given"/><name-part name="family"/>'
+  const namePartOrder =
+    c.authorFormat.order === "last-first"
+      ? '<name-part name="family"/><name-part name="given"/>'
+      : '<name-part name="given"/><name-part name="family"/>';
 
   const authorMacro = `
     <macro name="author">
@@ -149,23 +152,29 @@ function generateCSL(): string {
         </name>
         <et-al font-style="italic"/>
       </names>
-    </macro>`
+    </macro>`;
 
-  const titleFont = c.titleFormat.fontStyle === 'italic' ? 'font-style="italic"' : ''
-  const titleQuotes = c.titleFormat.quotes ? 'quotes="true"' : ''
-  const titleCase = c.titleFormat.case === 'sentence' ? 'text-case="sentence"' : c.titleFormat.case === 'title' ? 'text-case="title"' : ''
+  const titleFont =
+    c.titleFormat.fontStyle === "italic" ? 'font-style="italic"' : "";
+  const titleQuotes = c.titleFormat.quotes ? 'quotes="true"' : "";
+  const titleCase =
+    c.titleFormat.case === "sentence"
+      ? 'text-case="sentence"'
+      : c.titleFormat.case === "title"
+        ? 'text-case="title"'
+        : "";
 
   const titleMacro = `
     <macro name="title">
       <text variable="title" ${titleFont} ${titleQuotes} ${titleCase}/>
-    </macro>`
+    </macro>`;
 
   const dateMacro = `
     <macro name="issued">
       <date variable="issued" prefix="(" suffix=")">
         <date-part name="year" suffix="${escapeXml(c.dateFormat.yearSuffix)}"/>
       </date>
-    </macro>`
+    </macro>`;
 
   const publisherMacro = c.publisherFormat.locationFirst
     ? `
@@ -181,10 +190,10 @@ function generateCSL(): string {
         <text variable="publisher"/>
         <text variable="publisher-place"/>
       </group>
-    </macro>`
+    </macro>`;
 
   const csl = `<?xml version="1.0" encoding="utf-8"?>
-<style xmlns="http://purl.org/net/xbiblio/csl" class="${c.category === 'note' ? 'note' : 'in-text'}" version="1.0">
+<style xmlns="http://purl.org/net/xbiblio/csl" class="${c.category === "note" ? "note" : "in-text"}" version="1.0">
   <info>
     <title>${escapeXml(c.name)}</title>
     <id>custom-${Date.now()}</id>
@@ -222,35 +231,35 @@ function generateCSL(): string {
       </group>
     </layout>
   </bibliography>
-</style>`
+</style>`;
 
-  return csl
+  return csl;
 }
 
 function escapeXml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function nextStep() {
   if (currentStep.value < steps.length) {
-    currentStep.value++
+    currentStep.value++;
   }
 }
 
 function prevStep() {
   if (currentStep.value > 1) {
-    currentStep.value--
+    currentStep.value--;
   }
 }
 
 function handleSave() {
-  const cslXml = generateCSL()
-  emit('save', cslXml, config.value)
+  const cslXml = generateCSL();
+  emit("save", cslXml, config.value);
 }
 </script>
 
@@ -259,7 +268,11 @@ function handleSave() {
     <!-- Progress steps -->
     <nav class="flex items-center justify-center overflow-x-auto">
       <ol class="flex items-center space-x-2 min-w-0">
-        <li v-for="step in steps" :key="step.id" class="flex items-center shrink-0">
+        <li
+          v-for="step in steps"
+          :key="step.id"
+          class="flex items-center shrink-0"
+        >
           <button
             type="button"
             class="flex items-center justify-center w-8 h-8 rounded-full transition-colors"
@@ -278,14 +291,20 @@ function handleSave() {
           <div
             v-if="step.id < steps.length"
             class="w-6 sm:w-8 h-0.5 mx-0.5 sm:mx-1"
-            :class="currentStep > step.id ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'"
+            :class="
+              currentStep > step.id
+                ? 'bg-primary-500'
+                : 'bg-gray-200 dark:bg-gray-700'
+            "
           />
         </li>
       </ol>
     </nav>
 
     <!-- Current step label (mobile) -->
-    <p class="text-center text-sm font-medium text-gray-600 dark:text-gray-400 sm:hidden">
+    <p
+      class="text-center text-sm font-medium text-gray-600 dark:text-gray-400 sm:hidden"
+    >
       Step {{ currentStep }}: {{ steps[currentStep - 1]?.name }}
     </p>
 
@@ -294,62 +313,88 @@ function handleSave() {
       <!-- Step 1: Basic Info -->
       <div v-show="currentStep === 1" class="space-y-4">
         <h3 class="text-lg font-medium">Basic Information</h3>
-        <UFormGroup label="Style Name" required>
+        <UFormField label="Style Name" required>
           <UInput v-model="config.name" placeholder="My Custom Style" />
-        </UFormGroup>
-        <UFormGroup label="Description">
-          <UTextarea v-model="config.description" placeholder="Describe your citation style..." :rows="2" />
-        </UFormGroup>
-        <UFormGroup label="Style Category">
+        </UFormField>
+        <UFormField label="Description">
+          <UTextarea
+            v-model="config.description"
+            placeholder="Describe your citation style..."
+            :rows="2"
+          />
+        </UFormField>
+        <UFormField label="Style Category">
           <USelectMenu
             v-model="config.category"
             :options="[
-              { value: 'author-date', label: 'Author-Date (e.g., Smith, 2024)' },
+              {
+                value: 'author-date',
+                label: 'Author-Date (e.g., Smith, 2024)',
+              },
               { value: 'numeric', label: 'Numeric (e.g., [1])' },
               { value: 'note', label: 'Notes/Footnotes' },
             ]"
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
+        </UFormField>
       </div>
 
       <!-- Step 2: Authors -->
       <div v-show="currentStep === 2" class="space-y-4">
         <h3 class="text-lg font-medium">Author Formatting</h3>
-        <UFormGroup label="Name Order">
+        <UFormField label="Name Order">
           <USelectMenu
             v-model="config.authorFormat.order"
             :options="[
-              { value: 'last-first', label: 'Last, First (e.g., Kuhn, Thomas S.)' },
-              { value: 'first-last', label: 'First Last (e.g., Thomas S. Kuhn)' },
+              {
+                value: 'last-first',
+                label: 'Last, First (e.g., Kuhn, Thomas S.)',
+              },
+              {
+                value: 'first-last',
+                label: 'First Last (e.g., Thomas S. Kuhn)',
+              },
             ]"
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
+        </UFormField>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Author Separator">
+          <UFormField label="Author Separator">
             <UInput v-model="config.authorFormat.separator" placeholder=", " />
-          </UFormGroup>
-          <UFormGroup label="Last Author Separator">
-            <UInput v-model="config.authorFormat.lastSeparator" placeholder=", & " />
-          </UFormGroup>
+          </UFormField>
+          <UFormField label="Last Author Separator">
+            <UInput
+              v-model="config.authorFormat.lastSeparator"
+              placeholder=", & "
+            />
+          </UFormField>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <UFormGroup label="Et al. Threshold">
-            <UInput v-model.number="config.authorFormat.etAlThreshold" type="number" :min="1" :max="20" />
-          </UFormGroup>
-          <UFormGroup label="Et al. Show First">
-            <UInput v-model.number="config.authorFormat.etAlUseFirst" type="number" :min="1" :max="20" />
-          </UFormGroup>
+          <UFormField label="Et al. Threshold">
+            <UInput
+              v-model.number="config.authorFormat.etAlThreshold"
+              type="number"
+              :min="1"
+              :max="20"
+            />
+          </UFormField>
+          <UFormField label="Et al. Show First">
+            <UInput
+              v-model.number="config.authorFormat.etAlUseFirst"
+              type="number"
+              :min="1"
+              :max="20"
+            />
+          </UFormField>
         </div>
       </div>
 
       <!-- Step 3: Titles -->
       <div v-show="currentStep === 3" class="space-y-4">
         <h3 class="text-lg font-medium">Title Formatting</h3>
-        <UFormGroup label="Title Case">
+        <UFormField label="Title Case">
           <USelectMenu
             v-model="config.titleFormat.case"
             :options="[
@@ -360,8 +405,8 @@ function handleSave() {
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
-        <UFormGroup label="Title Font Style">
+        </UFormField>
+        <UFormField label="Title Font Style">
           <USelectMenu
             v-model="config.titleFormat.fontStyle"
             :options="[
@@ -371,16 +416,19 @@ function handleSave() {
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
-        <UFormGroup>
-          <UCheckbox v-model="config.titleFormat.quotes" label="Wrap title in quotation marks" />
-        </UFormGroup>
+        </UFormField>
+        <UFormField>
+          <UCheckbox
+            v-model="config.titleFormat.quotes"
+            label="Wrap title in quotation marks"
+          />
+        </UFormField>
       </div>
 
       <!-- Step 4: Dates -->
       <div v-show="currentStep === 4" class="space-y-4">
         <h3 class="text-lg font-medium">Date Formatting</h3>
-        <UFormGroup label="Date Format">
+        <UFormField label="Date Format">
           <USelectMenu
             v-model="config.dateFormat.form"
             :options="[
@@ -390,41 +438,61 @@ function handleSave() {
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
-        <UFormGroup label="Year Suffix (for disambiguation)">
-          <UInput v-model="config.dateFormat.yearSuffix" placeholder="a, b, c..." />
-        </UFormGroup>
+        </UFormField>
+        <UFormField label="Year Suffix (for disambiguation)">
+          <UInput
+            v-model="config.dateFormat.yearSuffix"
+            placeholder="a, b, c..."
+          />
+        </UFormField>
       </div>
 
       <!-- Step 5: Publisher -->
       <div v-show="currentStep === 5" class="space-y-4">
         <h3 class="text-lg font-medium">Publisher Formatting</h3>
-        <UFormGroup>
-          <UCheckbox v-model="config.publisherFormat.includeLocation" label="Include publication location" />
-        </UFormGroup>
-        <UFormGroup v-if="config.publisherFormat.includeLocation" label="Order">
+        <UFormField>
+          <UCheckbox
+            v-model="config.publisherFormat.includeLocation"
+            label="Include publication location"
+          />
+        </UFormField>
+        <UFormField v-if="config.publisherFormat.includeLocation" label="Order">
           <USelectMenu
             v-model="config.publisherFormat.locationFirst"
             :options="[
-              { value: true, label: 'Location: Publisher (Chicago: U of Chicago Press)' },
-              { value: false, label: 'Publisher, Location (U of Chicago Press, Chicago)' },
+              {
+                value: true,
+                label: 'Location: Publisher (Chicago: U of Chicago Press)',
+              },
+              {
+                value: false,
+                label: 'Publisher, Location (U of Chicago Press, Chicago)',
+              },
             ]"
             value-attribute="value"
             option-attribute="label"
           />
-        </UFormGroup>
+        </UFormField>
       </div>
 
       <!-- Step 6: Punctuation -->
       <div v-show="currentStep === 6" class="space-y-4">
         <h3 class="text-lg font-medium">Punctuation</h3>
-        <UFormGroup label="Group Delimiter">
-          <UInput v-model="config.punctuation.groupDelimiter" placeholder=". " />
-          <template #hint>Separates major groups (author, title, publisher)</template>
-        </UFormGroup>
-        <UFormGroup label="Final Punctuation">
-          <UInput v-model="config.punctuation.finalPunctuation" placeholder="." />
-        </UFormGroup>
+        <UFormField label="Group Delimiter">
+          <UInput
+            v-model="config.punctuation.groupDelimiter"
+            placeholder=". "
+          />
+          <template #hint
+            >Separates major groups (author, title, publisher)</template
+          >
+        </UFormField>
+        <UFormField label="Final Punctuation">
+          <UInput
+            v-model="config.punctuation.finalPunctuation"
+            placeholder="."
+          />
+        </UFormField>
       </div>
     </div>
 

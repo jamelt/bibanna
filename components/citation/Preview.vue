@@ -2,12 +2,9 @@
 interface Props {
   styleId: string
   entryId?: string
-  compact?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  compact: false,
-})
+const props = defineProps<Props>()
 
 const { data: preview, pending, error, refresh } = await useFetch('/api/citation/preview', {
   method: 'POST',
@@ -22,6 +19,10 @@ const copiedIndex = ref<number | null>(null)
 
 const isNoteStyle = computed(() => preview.value?.category === 'note')
 const citationLabel = computed(() => isNoteStyle.value ? 'Footnote' : 'In-text')
+
+const hasBibliography = computed(() =>
+  preview.value?.samples?.some((s: any) => s.bibliography && stripHtml(s.bibliography).trim()),
+)
 
 async function copyToClipboard(text: string, index: number) {
   await navigator.clipboard.writeText(stripHtml(text))
@@ -92,25 +93,25 @@ function stripHtml(html: string): string {
       <!-- Document-style preview -->
       <div v-else-if="preview?.samples" class="p-5 lg:p-8">
         <!-- Paper surface -->
-        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mx-auto max-w-2xl">
+        <div class="citation-paper bg-white dark:bg-gray-900 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mx-auto max-w-2xl">
           <!-- Page header -->
           <div class="px-8 pt-8 pb-4 border-b border-gray-100 dark:border-gray-800">
             <p class="text-xs font-medium tracking-widest uppercase text-gray-400">
-              Bibliography
+              {{ hasBibliography ? 'Bibliography' : 'Footnotes' }}
             </p>
           </div>
 
-          <!-- Bibliography entries -->
+          <!-- Entries -->
           <div class="px-8 py-6 space-y-5">
             <div
               v-for="(sample, index) in preview.samples"
               :key="sample.type"
               class="group"
             >
-              <!-- Bibliography entry -->
-              <div class="relative">
+              <!-- Bibliography entry (when available) -->
+              <div v-if="sample.bibliography && stripHtml(sample.bibliography).trim()" class="relative">
                 <div
-                  class="text-sm leading-relaxed text-gray-800 dark:text-gray-200 prose prose-sm dark:prose-invert max-w-none [&_.csl-entry]:pl-8 [&_.csl-entry]:-indent-8"
+                  class="bib-entry text-sm leading-relaxed text-gray-800 dark:text-gray-200 max-w-none"
                   v-html="sample.bibliography"
                 />
                 <button
@@ -125,20 +126,41 @@ function stripHtml(html: string): string {
                 </button>
               </div>
 
-              <!-- Citation annotation -->
+              <!-- Footnote-only: show the first citation as primary display -->
+              <div v-else-if="sample.inText" class="relative">
+                <div
+                  class="bib-entry text-sm leading-relaxed text-gray-800 dark:text-gray-200 max-w-none"
+                  v-html="sample.inText"
+                />
+                <button
+                  class="absolute -right-2 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  @click="copyToClipboard(sample.inText, index)"
+                >
+                  <UIcon
+                    :name="copiedIndex === index ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+                    class="w-3.5 h-3.5"
+                    :class="copiedIndex === index ? 'text-green-500' : 'text-gray-400'"
+                  />
+                </button>
+              </div>
+
+              <!-- Citation annotations -->
               <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <!-- Only show in-text label when we have a bibliography (otherwise in-text is the main display) -->
+                <span v-if="hasBibliography && sample.inText" class="inline-flex items-center gap-1.5 text-xs text-gray-500">
                   <span class="font-medium text-gray-400">{{ citationLabel }}:</span>
-                  <code class="px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono">
-                    {{ sample.inText }}
-                  </code>
+                  <code
+                    class="inline-cite px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"
+                    v-html="sample.inText"
+                  />
                 </span>
 
                 <span v-if="sample.subsequentNote" class="inline-flex items-center gap-1.5 text-xs text-gray-500">
                   <span class="font-medium text-gray-400">Subsequent:</span>
-                  <code class="px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono">
-                    {{ sample.subsequentNote }}
-                  </code>
+                  <code
+                    class="inline-cite px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"
+                    v-html="sample.subsequentNote"
+                  />
                 </span>
               </div>
 
@@ -167,3 +189,60 @@ function stripHtml(html: string): string {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* CSL bibliography: numbered styles use csl-left-margin + csl-right-inline */
+.bib-entry :deep(.csl-left-margin) {
+  display: inline;
+  padding-right: 0.5em;
+}
+
+.bib-entry :deep(.csl-right-inline) {
+  display: inline;
+}
+
+/* Author-date styles: hanging indent (entries with no csl-left-margin child) */
+.bib-entry :deep(.csl-entry) {
+  padding-left: 2em;
+  text-indent: -2em;
+}
+
+/* Reset hanging indent for numbered styles that use left-margin layout */
+.bib-entry :deep(.csl-entry:has(.csl-left-margin)) {
+  padding-left: 0;
+  text-indent: 0;
+}
+
+/* Fallback for browsers without :has() support - use csl-bib-body second-field-align */
+.bib-entry :deep(.csl-bib-body[data-second-field-align]) .csl-entry {
+  padding-left: 0;
+  text-indent: 0;
+}
+
+/* In-text citation: render inline HTML */
+.inline-cite :deep(sup) {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+.inline-cite :deep(i),
+.inline-cite :deep(em) {
+  font-style: italic;
+}
+
+.inline-cite :deep(b),
+.inline-cite :deep(strong) {
+  font-weight: 600;
+}
+
+/* Inline HTML in footnote-only primary display */
+.bib-entry :deep(i),
+.bib-entry :deep(em) {
+  font-style: italic;
+}
+
+.bib-entry :deep(span[style*="small-caps"]) {
+  font-variant: small-caps;
+}
+</style>
