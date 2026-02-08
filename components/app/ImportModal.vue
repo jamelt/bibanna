@@ -223,23 +223,11 @@ watch(isOpen, (open) => {
               />
             </UFormField>
 
-            <UFormField label="Apply tags">
-              <USelectMenu
+            <UFormField label="Apply tags" help="Type to create new tags on the fly">
+              <AppInlineTagInput
                 v-model="selectedTagIds"
-                :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
-                multiple
-                placeholder="No tags"
-                value-key="id"
-                label-key="name"
-                :ui="{ trigger: 'w-full' }"
-              >
-                <template #item-leading="{ item }">
-                  <span
-                    class="w-3 h-3 rounded-full shrink-0"
-                    :style="{ backgroundColor: item.color ?? 'transparent' }"
-                  />
-                </template>
-              </USelectMenu>
+                placeholder="Add or create tags..."
+              />
             </UFormField>
           </div>
         </div>

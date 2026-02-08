@@ -42,25 +42,7 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UIcon = resolveComponent('UIcon')
 const UCheckbox = resolveComponent('UCheckbox')
-const UTooltip = resolveComponent('UTooltip')
-const UPopover = resolveComponent('UPopover')
-
-const inlineTagEntryId = ref<string | null>(null)
-const inlineTagSelection = ref<string[]>([])
-
-async function saveInlineTags(entryId: string, tagIds: string[]) {
-  try {
-    await $fetch(`/api/entries/${entryId}`, {
-      method: 'PUT',
-      body: { tagIds },
-    })
-    emit('refresh')
-  } catch {
-    toast.add({ title: 'Failed to update tags', color: 'error' })
-  }
-  inlineTagEntryId.value = null
-  inlineTagSelection.value = []
-}
+const AppEntryTagCell = resolveComponent('AppEntryTagCell')
 
 const rowSelection = ref<Record<string, boolean>>({})
 
@@ -307,67 +289,12 @@ const columns = computed(() => {
     id: 'tags',
     header: 'Tags',
     cell: ({ row }) => {
-      const entryTags = row.original.tags ?? []
-      const visible = entryTags.slice(0, 3)
-      const overflow = entryTags.length - 3
-
-      const children: any[] = visible.map(tag =>
-        h('button', {
-          key: tag.id,
-          class: 'inline-flex items-center text-xs px-1.5 py-0.5 rounded-full transition-opacity hover:opacity-80',
-          style: {
-            backgroundColor: `${tag.color ?? '#6b7280'}20`,
-            color: tag.color ?? '#6b7280',
-          },
-          onClick: (e: Event) => {
-            e.stopPropagation()
-            emit('tag-click', tag.id)
-          },
-        }, tag.name),
-      )
-
-      if (overflow > 0) {
-        children.push(
-          h('span', {
-            class: 'text-xs text-gray-400',
-          }, `+${overflow}`),
-        )
-      }
-
-      if (entryTags.length === 0) {
-        children.push(
-          h('span', { class: 'text-xs text-gray-400' }, '—'),
-        )
-      }
-
-      children.push(
-        h(UDropdownMenu, {
-          content: { align: 'start' },
-          items: [(props.tags ?? []).map(t => ({
-            label: t.name,
-            icon: entryTags.some((et: any) => et.id === t.id) ? 'i-heroicons-check' : undefined,
-            onSelect: () => {
-              const currentTagIds = entryTags.map((et: any) => et.id)
-              const hasTag = currentTagIds.includes(t.id)
-              const newTagIds = hasTag
-                ? currentTagIds.filter((id: string) => id !== t.id)
-                : [...currentTagIds, t.id]
-              saveInlineTags(row.original.id, newTagIds)
-            },
-          }))],
-        }, () =>
-          h(UButton, {
-            icon: 'i-heroicons-plus',
-            variant: 'ghost',
-            color: 'neutral',
-            size: '2xs',
-            class: 'opacity-0 group-hover/row:opacity-100 transition-opacity',
-            onClick: (e: Event) => e.stopPropagation(),
-          }),
-        ),
-      )
-
-      return h('div', { class: 'flex items-center gap-1 flex-wrap' }, children)
+      return h(AppEntryTagCell, {
+        entryId: row.original.id,
+        entryTags: row.original.tags ?? [],
+        'onTag-click': (tagId: string) => emit('tag-click', tagId),
+        onUpdated: () => emit('refresh'),
+      })
     },
   })
 

@@ -319,48 +319,11 @@ async function handleSubmit() {
             </UFormField>
 
             <!-- Tags -->
-            <UFormField label="Tags" help="Organize your entry with tags">
-              <div class="space-y-3">
-                <USelectMenu
-                  v-model="form.tagIds"
-                  :items="
-                    (tags || []).map((t) => ({
-                      ...t,
-                      description: t.description ?? undefined,
-                    }))
-                  "
-                  multiple
-                  placeholder="Select tags..."
-                  value-key="id"
-                  label-key="name"
-                  size="md"
-                  :ui="{ trigger: 'w-full' }"
-                >
-                  <template #item-leading="{ item }">
-                    <span
-                      class="w-3 h-3 rounded-full shrink-0"
-                      :style="{ backgroundColor: item.color ?? 'transparent' }"
-                    />
-                  </template>
-                </USelectMenu>
-
-                <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-2">
-                  <span
-                    v-for="tagId in form.tagIds"
-                    :key="tagId"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-                  >
-                    <span
-                      class="w-2.5 h-2.5 rounded-full shrink-0"
-                      :style="{
-                        backgroundColor:
-                          tags?.find((t) => t.id === tagId)?.color ?? '#6B7280',
-                      }"
-                    />
-                    {{ tags?.find((t) => t.id === tagId)?.name }}
-                  </span>
-                </div>
-              </div>
+            <UFormField label="Tags" help="Type to search or create tags. Use commas for multiple.">
+              <AppInlineTagInput
+                v-model="form.tagIds"
+                placeholder="Add or create tags..."
+              />
             </UFormField>
 
             <!-- Type-specific metadata -->

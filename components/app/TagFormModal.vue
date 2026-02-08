@@ -12,6 +12,8 @@ const emit = defineEmits<{
   updated: [tag: Tag]
 }>()
 
+const { updateTag, createTag: createNewTag, TAG_COLORS } = useTags()
+
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value),
@@ -24,20 +26,6 @@ const form = reactive({
   description: '',
   color: '#6B7280',
 })
-
-const colors = [
-  '#4F46E5',
-  '#7C3AED',
-  '#EC4899',
-  '#EF4444',
-  '#F97316',
-  '#EAB308',
-  '#22C55E',
-  '#14B8A6',
-  '#06B6D4',
-  '#3B82F6',
-  '#6B7280',
-]
 
 const isSubmitting = ref(false)
 const error = ref('')
@@ -69,17 +57,11 @@ async function handleSubmit() {
 
   try {
     if (isEditing.value) {
-      const updated = await $fetch<Tag>(`/api/tags/${props.tag!.id}`, {
-        method: 'PUT',
-        body: form,
-      })
+      const updated = await updateTag(props.tag!.id, form)
       emit('updated', updated)
     }
     else {
-      const created = await $fetch<Tag>('/api/tags', {
-        method: 'POST',
-        body: form,
-      })
+      const created = await createNewTag(form.name, form.color)
       emit('created', created)
     }
 
@@ -140,7 +122,7 @@ async function handleSubmit() {
           <UFormField label="Color">
             <div class="flex flex-wrap gap-2">
               <button
-                v-for="color in colors"
+                v-for="color in TAG_COLORS"
                 :key="color"
                 type="button"
                 class="w-8 h-8 rounded-lg transition-transform hover:scale-110"

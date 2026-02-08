@@ -299,12 +299,13 @@ onUnmounted(() => {
         </p>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
         <UButton
           icon="i-heroicons-share"
           label="Mind Map"
           variant="outline"
           color="neutral"
+          size="sm"
           to="/app/library/mindmap"
         />
         <UButton
@@ -313,6 +314,7 @@ onUnmounted(() => {
           label="Select"
           variant="outline"
           color="neutral"
+          size="sm"
           @click="isSelectionMode = true"
         />
         <UButton
@@ -320,6 +322,7 @@ onUnmounted(() => {
           label="Cancel"
           variant="ghost"
           color="neutral"
+          size="sm"
           @click="exitSelectionMode"
         />
         <UButton
@@ -327,6 +330,7 @@ onUnmounted(() => {
           label="Import"
           variant="outline"
           color="neutral"
+          size="sm"
           @click="isImportModalOpen = true"
         />
         <UButton
@@ -334,116 +338,118 @@ onUnmounted(() => {
           label="Export"
           variant="outline"
           color="neutral"
+          size="sm"
           @click="isExportModalOpen = true"
         />
         <UButton
           icon="i-heroicons-plus"
           label="Add Entry"
           color="primary"
+          size="sm"
           @click="isAddModalOpen = true"
         />
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <UCard class="p-4">
-      <div class="flex flex-col lg:flex-row gap-4">
-        <!-- Search -->
-        <div class="flex-1">
-          <UInput
-            v-model="searchQuery"
-            icon="i-heroicons-magnifying-glass"
-            placeholder="Search entries..."
-            @keyup.enter="handleSearch"
-          />
-        </div>
-
-        <!-- Type filter -->
-        <USelectMenu
-          v-model="selectedTypes"
-          :items="entryTypeOptions"
-          multiple
-          placeholder="All types"
-          value-key="value"
-          class="w-full lg:w-48"
-        />
-
-        <!-- Tag filter -->
-        <USelectMenu
-          v-model="selectedTags"
-          :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
-          multiple
-          placeholder="All tags"
-          value-key="id"
-          label-key="name"
-          class="w-full lg:w-48"
-        >
-          <template #item-leading="{ item }">
-            <span
-              class="w-3 h-3 rounded-full shrink-0"
-              :style="{ backgroundColor: item.color ?? 'transparent' }"
-            />
-          </template>
-        </USelectMenu>
-
-        <!-- Project filter -->
-        <USelectMenu
-          v-model="selectedProject"
-          :items="[{ id: null, name: 'All projects' }, ...(projects || []).map(p => ({ id: p.id, name: p.name }))]"
-          placeholder="All projects"
-          value-key="id"
-          label-key="name"
-          class="w-full lg:w-48"
-        />
-
-        <!-- Sort -->
-        <USelectMenu
-          v-model="sortBy"
-          :items="sortOptions"
-          value-key="value"
-          class="w-full lg:w-40"
-        />
-
-        <!-- Sort order toggle -->
-        <UButton
-          :icon="sortOrder === 'asc' ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'"
-          variant="outline"
-          color="neutral"
-          @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
-        />
-
-        <!-- View mode toggle -->
+        <div class="w-px h-5 bg-gray-200 dark:bg-gray-700" />
         <UFieldGroup>
           <UButton
             icon="i-heroicons-list-bullet"
             :variant="viewMode === 'list' ? 'solid' : 'outline'"
             color="neutral"
+            size="xs"
             @click="viewMode = 'list'"
           />
           <UButton
             icon="i-heroicons-squares-2x2"
             :variant="viewMode === 'grid' ? 'solid' : 'outline'"
             color="neutral"
+            size="xs"
             @click="viewMode = 'grid'"
           />
           <UButton
             icon="i-heroicons-table-cells"
             :variant="viewMode === 'table' ? 'solid' : 'outline'"
             color="neutral"
+            size="xs"
             @click="viewMode = 'table'"
           />
         </UFieldGroup>
+      </div>
+    </div>
 
-        <!-- Clear filters -->
-        <UButton
-          v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject"
-          icon="i-heroicons-x-mark"
-          variant="ghost"
-          color="neutral"
-          @click="clearFilters"
+    <!-- Filters -->
+    <div class="flex flex-col lg:flex-row gap-2 items-stretch lg:items-center">
+      <div class="flex-1">
+        <UInput
+          v-model="searchQuery"
+          icon="i-heroicons-magnifying-glass"
+          placeholder="Search entries..."
+          size="sm"
+          @keyup.enter="handleSearch"
         />
       </div>
-    </UCard>
+
+      <USelectMenu
+        v-model="selectedTypes"
+        :items="entryTypeOptions"
+        multiple
+        placeholder="All types"
+        value-key="value"
+        size="sm"
+        class="w-full lg:w-36"
+      />
+
+      <USelectMenu
+        v-model="selectedTags"
+        :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+        multiple
+        placeholder="All tags"
+        value-key="id"
+        label-key="name"
+        size="sm"
+        class="w-full lg:w-36"
+      >
+        <template #item-leading="{ item }">
+          <span
+            class="w-3 h-3 rounded-full shrink-0"
+            :style="{ backgroundColor: item.color ?? 'transparent' }"
+          />
+        </template>
+      </USelectMenu>
+
+      <USelectMenu
+        v-model="selectedProject"
+        :items="[{ id: null, name: 'All projects' }, ...(projects || []).map(p => ({ id: p.id, name: p.name }))]"
+        placeholder="All projects"
+        value-key="id"
+        label-key="name"
+        size="sm"
+        class="w-full lg:w-36"
+      />
+
+      <USelectMenu
+        v-model="sortBy"
+        :items="sortOptions"
+        value-key="value"
+        size="sm"
+        class="w-full lg:w-32"
+      />
+
+      <UButton
+        :icon="sortOrder === 'asc' ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'"
+        variant="outline"
+        color="neutral"
+        size="xs"
+        @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+      />
+
+      <UButton
+        v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject"
+        icon="i-heroicons-x-mark"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        @click="clearFilters"
+      />
+    </div>
 
     <!-- Bulk action bar -->
     <div
@@ -531,25 +537,16 @@ onUnmounted(() => {
 
       <!-- Bulk tag picker (multi-select) -->
       <div v-if="isBulkTagPickerOpen" class="flex items-center gap-2 pt-1 border-t border-primary-200 dark:border-primary-700">
-        <span class="text-xs font-medium text-primary-600 dark:text-primary-400">
+        <span class="text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0">
           {{ bulkTagMode === 'add' ? 'Add' : 'Remove' }} tags:
         </span>
-        <USelectMenu
-          v-model="bulkTagIds"
-          :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
-          multiple
-          placeholder="Select tags..."
-          value-key="id"
-          label-key="name"
-          class="flex-1 max-w-xs"
-        >
-          <template #item-leading="{ item }">
-            <span
-              class="w-3 h-3 rounded-full shrink-0"
-              :style="{ backgroundColor: item.color ?? 'transparent' }"
-            />
-          </template>
-        </USelectMenu>
+        <div class="flex-1 max-w-sm">
+          <AppInlineTagInput
+            v-model="bulkTagIds"
+            size="xs"
+            :placeholder="bulkTagMode === 'add' ? 'Select or create tags...' : 'Select tags to remove...'"
+          />
+        </div>
         <UButton
           size="xs"
           color="primary"
@@ -689,20 +686,12 @@ onUnmounted(() => {
               <UBadge variant="subtle" size="xs">
                 {{ ENTRY_TYPE_LABELS[entry.entryType as keyof typeof ENTRY_TYPE_LABELS] }}
               </UBadge>
-              <span
-                v-for="tag in entry.tags?.slice(0, 3)"
-                :key="tag.id"
-                class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                :style="{ backgroundColor: `${tag.color ?? ''}20`, color: tag.color ?? undefined }"
-              >
-                {{ tag.name }}
-              </span>
-              <span
-                v-if="entry.tags && entry.tags.length > 3"
-                class="text-xs text-gray-400"
-              >
-                +{{ entry.tags.length - 3 }} more
-              </span>
+              <AppEntryTagCell
+                :entry-id="entry.id"
+                :entry-tags="entry.tags ?? []"
+                @tag-click="handleTagFilterFromTable"
+                @updated="refresh"
+              />
             </div>
           </div>
           <div class="text-right text-sm text-gray-400 shrink-0">
