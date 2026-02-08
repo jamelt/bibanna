@@ -19,10 +19,14 @@ const { data: projectsData } = await useFetch('/api/projects')
 
 const { data: tagsData } = await useFetch('/api/tags')
 
+const { data: annotationsData } = await useFetch('/api/annotations', {
+  query: { page: 1, pageSize: 1 },
+})
+
 const stats = computed(() => {
   const totalEntries = entriesData.value?.total || 0
   const totalProjects = projectsData.value?.length || 0
-  const totalAnnotations = entriesData.value?.data?.reduce((sum, entry) => sum + (entry.annotationCount || 0), 0) || 0
+  const totalAnnotations = annotationsData.value?.total || 0
   const totalTags = tagsData.value?.length || 0
 
   return [
