@@ -108,6 +108,7 @@ async function handleSubmit() {
               v-model="form.name"
               placeholder="Enter tag name"
               autofocus
+              class="w-full"
             />
           </UFormField>
 
@@ -116,6 +117,7 @@ async function handleSubmit() {
               v-model="form.description"
               :rows="3"
               placeholder="Optional description"
+              class="w-full"
             />
           </UFormField>
 
