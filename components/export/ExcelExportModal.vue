@@ -127,131 +127,134 @@ async function saveAsPreset() {
 </script>
 
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'max-w-3xl' }">
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">Export to Excel</h3>
-          <UButton
-            variant="ghost"
-            icon="i-heroicons-x-mark"
-            @click="isOpen = false"
-          />
-        </div>
-      </template>
-
-      <div class="space-y-6">
-        <!-- Preset selector -->
-        <div>
-          <label class="block text-sm font-medium mb-2">Preset</label>
-          <div class="flex flex-wrap gap-2">
+  <UModal v-model:open="isOpen" :ui="{ content: 'sm:max-w-3xl' }">
+    <template #content>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Export to Excel</h3>
             <UButton
-              v-for="preset in presets"
-              :key="preset.id"
-              size="sm"
-              :variant="selectedPresetId === preset.id ? 'solid' : 'outline'"
-              @click="selectPreset(preset.id)"
-            >
-              {{ preset.name }}
-            </UButton>
-            <UButton
-              v-for="preset in userPresets"
-              :key="preset.id"
-              size="sm"
-              :variant="selectedPresetId === preset.id ? 'solid' : 'outline'"
-              @click="selectPreset(preset.id)"
-            >
-              {{ preset.name }}
-              <UIcon name="i-heroicons-user" class="w-3 h-3 ml-1" />
-            </UButton>
+              variant="ghost"
+              color="neutral"
+              icon="i-heroicons-x-mark"
+              @click="isOpen = false"
+            />
           </div>
-        </div>
+        </template>
 
-        <!-- Column configuration -->
-        <div class="grid grid-cols-2 gap-6">
-          <!-- Enabled columns -->
+        <div class="space-y-6">
+          <!-- Preset selector -->
           <div>
-            <label class="block text-sm font-medium mb-2">
-              Included Columns (drag to reorder)
-            </label>
-            <draggable
-              :list="enabledColumns"
-              item-key="id"
-              class="space-y-1 min-h-[200px] p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-              @end="updateColumnOrder"
-            >
-              <template #item="{ element }">
-                <div class="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded cursor-move">
-                  <UIcon name="i-heroicons-bars-3" class="w-4 h-4 text-gray-400" />
-                  <span class="flex-1 text-sm">{{ element.header }}</span>
-                  <UButton
-                    variant="ghost"
-                    size="xs"
-                    icon="i-heroicons-x-mark"
-                    @click="toggleColumn(element.id)"
-                  />
-                </div>
-              </template>
-            </draggable>
-          </div>
-
-          <!-- Available columns -->
-          <div>
-            <label class="block text-sm font-medium mb-2">
-              Available Columns
-            </label>
-            <div class="space-y-1 min-h-[200px] p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div
-                v-for="column in disabledColumns"
-                :key="column.id"
-                class="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                @click="toggleColumn(column.id)"
+            <label class="block text-sm font-medium mb-2">Preset</label>
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                v-for="preset in presets"
+                :key="preset.id"
+                size="sm"
+                :variant="selectedPresetId === preset.id ? 'solid' : 'outline'"
+                @click="selectPreset(preset.id)"
               >
-                <UIcon name="i-heroicons-plus" class="w-4 h-4 text-gray-400" />
-                <span class="flex-1 text-sm">{{ column.header }}</span>
-              </div>
-              <div v-if="disabledColumns.length === 0" class="p-4 text-center text-sm text-gray-500">
-                All columns are included
+                {{ preset.name }}
+              </UButton>
+              <UButton
+                v-for="preset in userPresets"
+                :key="preset.id"
+                size="sm"
+                :variant="selectedPresetId === preset.id ? 'solid' : 'outline'"
+                @click="selectPreset(preset.id)"
+              >
+                {{ preset.name }}
+                <UIcon name="i-heroicons-user" class="w-3 h-3 ml-1" />
+              </UButton>
+            </div>
+          </div>
+
+          <!-- Column configuration -->
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Enabled columns -->
+            <div>
+              <label class="block text-sm font-medium mb-2">
+                Included Columns (drag to reorder)
+              </label>
+              <draggable
+                :list="enabledColumns"
+                item-key="id"
+                class="space-y-1 min-h-[200px] p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                @end="updateColumnOrder"
+              >
+                <template #item="{ element }">
+                  <div class="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded cursor-move">
+                    <UIcon name="i-heroicons-bars-3" class="w-4 h-4 text-gray-400" />
+                    <span class="flex-1 text-sm">{{ element.header }}</span>
+                    <UButton
+                      variant="ghost"
+                      size="xs"
+                      icon="i-heroicons-x-mark"
+                      @click="toggleColumn(element.id)"
+                    />
+                  </div>
+                </template>
+              </draggable>
+            </div>
+
+            <!-- Available columns -->
+            <div>
+              <label class="block text-sm font-medium mb-2">
+                Available Columns
+              </label>
+              <div class="space-y-1 min-h-[200px] p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div
+                  v-for="column in disabledColumns"
+                  :key="column.id"
+                  class="flex items-center gap-2 p-2 bg-white dark:bg-gray-700 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                  @click="toggleColumn(column.id)"
+                >
+                  <UIcon name="i-heroicons-plus" class="w-4 h-4 text-gray-400" />
+                  <span class="flex-1 text-sm">{{ column.header }}</span>
+                </div>
+                <div v-if="disabledColumns.length === 0" class="p-4 text-center text-sm text-gray-500">
+                  All columns are included
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Save as preset -->
-        <div v-if="showSavePreset" class="flex gap-2">
-          <UInput
-            v-model="presetName"
-            placeholder="Preset name"
-            class="flex-1"
-          />
-          <UButton @click="saveAsPreset">Save</UButton>
-          <UButton variant="outline" @click="showSavePreset = false">Cancel</UButton>
-        </div>
-        <UButton
-          v-else
-          variant="link"
-          size="sm"
-          @click="showSavePreset = true"
-        >
-          Save current configuration as preset
-        </UButton>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <UButton variant="outline" @click="isOpen = false">
-            Cancel
-          </UButton>
+          <!-- Save as preset -->
+          <div v-if="showSavePreset" class="flex gap-2">
+            <UInput
+              v-model="presetName"
+              placeholder="Preset name"
+              class="flex-1"
+            />
+            <UButton @click="saveAsPreset">Save</UButton>
+            <UButton variant="outline" @click="showSavePreset = false">Cancel</UButton>
+          </div>
           <UButton
-            color="primary"
-            :loading="isExporting"
-            :disabled="enabledColumns.length === 0"
-            @click="handleExport"
+            v-else
+            variant="link"
+            size="sm"
+            @click="showSavePreset = true"
           >
-            Export Excel
+            Save current configuration as preset
           </UButton>
         </div>
-      </template>
-    </UCard>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" @click="isOpen = false">
+              Cancel
+            </UButton>
+            <UButton
+              color="primary"
+              :loading="isExporting"
+              :disabled="enabledColumns.length === 0"
+              @click="handleExport"
+            >
+              Export Excel
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+    </template>
   </UModal>
 </template>

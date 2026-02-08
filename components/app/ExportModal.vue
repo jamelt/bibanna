@@ -23,6 +23,24 @@ const error = ref('')
 
 const { data: presetsData, status: presetsStatus } = useFetch('/api/export/presets')
 const { data: subscriptionData } = useFetch('/api/subscription')
+const { data: citationStylesData } = useFetch('/api/citation/styles', { lazy: true })
+const { defaultCitationStyle } = useUserPreferences()
+
+const selectedCitationStyleId = ref(defaultCitationStyle.value)
+
+watch(defaultCitationStyle, (val) => {
+  if (!selectedCitationStyleId.value || selectedCitationStyleId.value === 'apa-7th') {
+    selectedCitationStyleId.value = val
+  }
+})
+
+const citationStyleOptions = computed(() => {
+  if (!citationStylesData.value) return []
+  return citationStylesData.value.defaultStyles.map((s: any) => ({
+    value: s.id,
+    label: s.shortName || s.name,
+  }))
+})
 
 const userTier = computed<SubscriptionTier>(() => subscriptionData.value?.tier ?? 'free')
 const isPaidUser = computed(() => userTier.value !== 'free')
@@ -131,6 +149,7 @@ async function handleExport() {
         body = {
           ...body,
           ...pdfOptions,
+          citationStyleId: selectedCitationStyleId.value,
         }
         break
 
@@ -139,6 +158,7 @@ async function handleExport() {
         body = {
           ...body,
           ...pdfOptions,
+          citationStyleId: selectedCitationStyleId.value,
         }
         break
 
@@ -344,6 +364,16 @@ async function handleExport() {
 
         <!-- PDF / DOCX Options -->
         <template v-if="exportFormat === 'pdf' || exportFormat === 'docx'">
+          <UFormField label="Citation Style" data-testid="export-citation-style">
+            <USelectMenu
+              v-model="selectedCitationStyleId"
+              :items="citationStyleOptions"
+              value-key="value"
+              label-key="label"
+              placeholder="Select citation style..."
+            />
+          </UFormField>
+
           <div class="grid grid-cols-2 gap-4" data-testid="export-pdf-options">
             <UFormField label="Paper Size">
               <USelectMenu

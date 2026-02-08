@@ -116,15 +116,37 @@ export default defineEventHandler(async (event) => {
 
   const offset = (page - 1) * pageSize
 
+  let countQuery = db
+    .select({ count: sql<number>`count(DISTINCT ${entries.id})` })
+    .from(entries)
+    .where(and(...conditions))
+
+  if (projectId) {
+    countQuery = countQuery.innerJoin(
+      entryProjects,
+      and(
+        eq(entries.id, entryProjects.entryId),
+        eq(entryProjects.projectId, projectId),
+      ),
+    )
+  }
+
+  if (tagIds && tagIds.length > 0) {
+    countQuery = countQuery.innerJoin(
+      entryTags,
+      and(
+        eq(entries.id, entryTags.entryId),
+        inArray(entryTags.tagId, tagIds),
+      ),
+    )
+  }
+
   const [results, countResult] = await Promise.all([
     baseQuery
       .orderBy(orderFn(orderColumn))
       .limit(pageSize)
       .offset(offset),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(entries)
-      .where(and(...conditions)),
+    countQuery,
   ])
 
   const total = Number(countResult[0]?.count ?? 0)

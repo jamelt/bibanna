@@ -58,6 +58,16 @@ async function handleEntryUpdated() {
 
 const toast = useToast()
 const isCopying = ref(false)
+const { defaultCitationStyle } = useUserPreferences()
+
+const { data: citationStyles } = await useFetch('/api/citation/styles', { lazy: true })
+
+const defaultStyleName = computed(() => {
+  const style = citationStyles.value?.defaultStyles?.find(
+    (s: any) => s.id === defaultCitationStyle.value,
+  )
+  return style?.shortName || style?.name || defaultCitationStyle.value
+})
 
 async function copyCitation() {
   if (!entry.value) return
@@ -70,7 +80,7 @@ async function copyCitation() {
       method: 'POST',
       body: {
         entryIds: [entryId.value],
-        styleId: 'apa-7th',
+        styleId: defaultCitationStyle.value,
       },
     })
 
@@ -98,7 +108,7 @@ async function copyCitation() {
 
     toast.add({
       title: 'Citation copied',
-      description: 'APA 7th edition format',
+      description: `${defaultStyleName.value} format`,
       color: 'success',
     })
   }

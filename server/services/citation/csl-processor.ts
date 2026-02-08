@@ -149,13 +149,15 @@ export function formatBibliography(
 export function formatCitation(
   engine: any,
   itemIds: string[],
+  noteIndex: number = 0,
 ): string {
   const citation = {
     citationItems: itemIds.map(id => ({ id })),
-    properties: { noteIndex: 0 },
+    properties: { noteIndex },
   }
 
-  const result = engine.processCitationCluster(citation, [], [])
+  const pre: Array<[string, number]> = []
+  const result = engine.processCitationCluster(citation, pre, [])
 
   if (result && result[1] && result[1][0]) {
     return result[1][0][1]
@@ -168,5 +170,32 @@ export function formatInTextCitation(
   engine: any,
   itemId: string,
 ): string {
-  return formatCitation(engine, [itemId])
+  return formatCitation(engine, [itemId], 1)
+}
+
+export function formatSubsequentCitation(
+  engine: any,
+  itemId: string,
+): string {
+  const firstCitation = {
+    citationItems: [{ id: itemId }],
+    properties: { noteIndex: 1 },
+  }
+  engine.processCitationCluster(firstCitation, [], [])
+
+  const subsequentCitation = {
+    citationItems: [{ id: itemId }],
+    properties: { noteIndex: 2 },
+  }
+  const result = engine.processCitationCluster(
+    subsequentCitation,
+    [['first-cite', 1]],
+    [],
+  )
+
+  if (result && result[1] && result[1][0]) {
+    return result[1][0][1]
+  }
+
+  return ''
 }

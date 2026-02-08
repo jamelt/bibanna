@@ -152,186 +152,189 @@ function getPermissionLabel(permission: string): string {
 </script>
 
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'max-w-lg' }">
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Share Project
-            </h2>
-            <p class="text-sm text-gray-500">{{ projectName }}</p>
-          </div>
-          <UButton
-            variant="ghost"
-            icon="i-heroicons-x-mark"
-            @click="isOpen = false"
-          />
-        </div>
-      </template>
-
-      <div class="space-y-6">
-        <!-- Upgrade prompt if not on Light+ -->
-        <template v-if="!hasFeature('collaboration')">
-          <AppUpgradePrompt feature="collaboration" required-tier="light">
-            Share projects and collaborate with others by upgrading to Light or Pro.
-          </AppUpgradePrompt>
-        </template>
-
-        <template v-else>
-          <!-- Share with user -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Share with people
-            </h3>
-
-            <div class="flex gap-2">
-              <UInput
-                v-model="newShareEmail"
-                placeholder="Enter email address"
-                type="email"
-                class="flex-1"
-              />
-              <USelectMenu
-                v-model="newSharePermission"
-                :options="permissionOptions"
-                value-attribute="value"
-                option-attribute="label"
-                class="w-32"
-              />
-              <UButton
-                color="primary"
-                :loading="isSharing"
-                @click="handleShareWithUser"
-              >
-                Share
-              </UButton>
+  <UModal v-model:open="isOpen" :ui="{ content: 'sm:max-w-lg' }">
+    <template #content>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Share Project
+              </h2>
+              <p class="text-sm text-gray-500">{{ projectName }}</p>
             </div>
-
-            <UAlert
-              v-if="shareError"
-              color="red"
-              variant="subtle"
-              class="mt-2"
-              :title="shareError"
+            <UButton
+              variant="ghost"
+              color="neutral"
+              icon="i-heroicons-x-mark"
+              @click="isOpen = false"
             />
           </div>
+        </template>
 
-          <!-- Current shares -->
-          <div v-if="userShares.length > 0">
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              People with access
-            </h3>
+        <div class="space-y-6">
+          <!-- Upgrade prompt if not on Light+ -->
+          <template v-if="!hasFeature('collaboration')">
+            <AppUpgradePrompt feature="collaboration" required-tier="light">
+              Share projects and collaborate with others by upgrading to Light or Pro.
+            </AppUpgradePrompt>
+          </template>
 
-            <div class="space-y-2">
-              <div
-                v-for="share in userShares"
-                :key="share.id"
-                class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-              >
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <UIcon name="i-heroicons-user" class="w-4 h-4 text-gray-500" />
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ share.userName || share.userEmail }}
-                    </p>
-                    <p v-if="share.userName && share.userEmail" class="text-xs text-gray-500">
-                      {{ share.userEmail }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <UBadge variant="subtle" size="xs">
-                    {{ getPermissionLabel(share.permission) }}
-                  </UBadge>
-                  <UButton
-                    variant="ghost"
-                    color="red"
-                    size="xs"
-                    icon="i-heroicons-trash"
-                    @click="handleRemoveShare(share.id)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Public link -->
-          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Public link
-            </h3>
-
-            <div v-if="publicShare" class="space-y-3">
-              <div class="flex items-center gap-2">
-                <UInput
-                  :model-value="publicLinkUrl"
-                  readonly
-                  class="flex-1"
-                />
-                <UButton
-                  variant="outline"
-                  icon="i-heroicons-clipboard"
-                  @click="copyPublicLink"
-                >
-                  Copy
-                </UButton>
-              </div>
-
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-500">
-                  {{ getPermissionLabel(publicShare.permission) }}
-                  <span v-if="publicShare.expiresAt">
-                    · Expires {{ new Date(publicShare.expiresAt).toLocaleDateString() }}
-                  </span>
-                </span>
-                <UButton
-                  variant="link"
-                  color="red"
-                  size="xs"
-                  @click="handleRevokePublicLink"
-                >
-                  Revoke link
-                </UButton>
-              </div>
-            </div>
-
-            <div v-else class="space-y-3">
-              <p class="text-sm text-gray-500">
-                Anyone with the link can access this project
-              </p>
+          <template v-else>
+            <!-- Share with user -->
+            <div>
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Share with people
+              </h3>
 
               <div class="flex gap-2">
-                <USelectMenu
-                  v-model="publicLinkPermission"
-                  :options="permissionOptions.filter(p => p.value !== 'edit')"
-                  value-attribute="value"
-                  option-attribute="label"
+                <UInput
+                  v-model="newShareEmail"
+                  placeholder="Enter email address"
+                  type="email"
                   class="flex-1"
                 />
                 <USelectMenu
-                  v-model="publicLinkExpiry"
-                  :options="expiryOptions"
+                  v-model="newSharePermission"
+                  :options="permissionOptions"
                   value-attribute="value"
                   option-attribute="label"
-                  class="flex-1"
+                  class="w-32"
                 />
+                <UButton
+                  color="primary"
+                  :loading="isSharing"
+                  @click="handleShareWithUser"
+                >
+                  Share
+                </UButton>
               </div>
 
-              <UButton
-                variant="outline"
-                :loading="isCreatingPublicLink"
-                @click="handleCreatePublicLink"
-              >
-                <UIcon name="i-heroicons-link" class="w-4 h-4 mr-1" />
-                Create public link
-              </UButton>
+              <UAlert
+                v-if="shareError"
+                color="red"
+                variant="subtle"
+                class="mt-2"
+                :title="shareError"
+              />
             </div>
-          </div>
-        </template>
-      </div>
-    </UCard>
+
+            <!-- Current shares -->
+            <div v-if="userShares.length > 0">
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                People with access
+              </h3>
+
+              <div class="space-y-2">
+                <div
+                  v-for="share in userShares"
+                  :key="share.id"
+                  class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <UIcon name="i-heroicons-user" class="w-4 h-4 text-gray-500" />
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ share.userName || share.userEmail }}
+                      </p>
+                      <p v-if="share.userName && share.userEmail" class="text-xs text-gray-500">
+                        {{ share.userEmail }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <UBadge variant="subtle" size="xs">
+                      {{ getPermissionLabel(share.permission) }}
+                    </UBadge>
+                    <UButton
+                      variant="ghost"
+                      color="red"
+                      size="xs"
+                      icon="i-heroicons-trash"
+                      @click="handleRemoveShare(share.id)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Public link -->
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Public link
+              </h3>
+
+              <div v-if="publicShare" class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <UInput
+                    :model-value="publicLinkUrl"
+                    readonly
+                    class="flex-1"
+                  />
+                  <UButton
+                    variant="outline"
+                    icon="i-heroicons-clipboard"
+                    @click="copyPublicLink"
+                  >
+                    Copy
+                  </UButton>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-500">
+                    {{ getPermissionLabel(publicShare.permission) }}
+                    <span v-if="publicShare.expiresAt">
+                      · Expires {{ new Date(publicShare.expiresAt).toLocaleDateString() }}
+                    </span>
+                  </span>
+                  <UButton
+                    variant="link"
+                    color="red"
+                    size="xs"
+                    @click="handleRevokePublicLink"
+                  >
+                    Revoke link
+                  </UButton>
+                </div>
+              </div>
+
+              <div v-else class="space-y-3">
+                <p class="text-sm text-gray-500">
+                  Anyone with the link can access this project
+                </p>
+
+                <div class="flex gap-2">
+                  <USelectMenu
+                    v-model="publicLinkPermission"
+                    :options="permissionOptions.filter(p => p.value !== 'edit')"
+                    value-attribute="value"
+                    option-attribute="label"
+                    class="flex-1"
+                  />
+                  <USelectMenu
+                    v-model="publicLinkExpiry"
+                    :options="expiryOptions"
+                    value-attribute="value"
+                    option-attribute="label"
+                    class="flex-1"
+                  />
+                </div>
+
+                <UButton
+                  variant="outline"
+                  :loading="isCreatingPublicLink"
+                  @click="handleCreatePublicLink"
+                >
+                  <UIcon name="i-heroicons-link" class="w-4 h-4 mr-1" />
+                  Create public link
+                </UButton>
+              </div>
+            </div>
+          </template>
+        </div>
+      </UCard>
+    </template>
   </UModal>
 </template>

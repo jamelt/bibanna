@@ -326,6 +326,22 @@ export const EN_US_LOCALE = `<?xml version="1.0" encoding="utf-8"?>
 
 const styleCache = new Map<string, string>()
 
+const FETCH_TIMEOUT_MS = 10_000
+const MAX_RETRIES = 2
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    return response
+  }
+  finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function fetchStyleXml(styleId: string): Promise<string> {
   const cached = styleCache.get(styleId)
   if (cached) return cached
@@ -335,15 +351,30 @@ export async function fetchStyleXml(styleId: string): Promise<string> {
     throw new Error(`Style not found: ${styleId}`)
   }
 
-  const response = await fetch(style.cslUrl)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch style: ${style.cslUrl}`)
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetchWithTimeout(style.cslUrl, FETCH_TIMEOUT_MS)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} fetching CSL style "${style.shortName}" from ${style.cslUrl}`)
+      }
+
+      const xml = await response.text()
+      styleCache.set(styleId, xml)
+      return xml
+    }
+    catch (err: any) {
+      lastError = err
+      if (attempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+      }
+    }
   }
 
-  const xml = await response.text()
-  styleCache.set(styleId, xml)
-
-  return xml
+  throw new Error(
+    `Failed to fetch CSL style "${style.shortName}" after ${MAX_RETRIES + 1} attempts: ${lastError?.message}`,
+  )
 }
 
 export function getDefaultStyles(): DefaultStyle[] {

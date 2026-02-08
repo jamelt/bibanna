@@ -17,6 +17,9 @@ const { data: preview, pending, error, refresh } = await useFetch('/api/citation
 
 const copiedIndex = ref<number | null>(null)
 
+const isNoteStyle = computed(() => preview.value?.category === 'note')
+const citationLabel = computed(() => isNoteStyle.value ? 'Footnote' : 'In-text')
+
 async function copyToClipboard(text: string, index: number) {
   await navigator.clipboard.writeText(stripHtml(text))
   copiedIndex.value = index
@@ -54,9 +57,21 @@ function stripHtml(html: string): string {
       <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-gray-400" />
     </div>
 
-    <div v-else-if="error" class="text-center py-8">
-      <UIcon name="i-heroicons-exclamation-circle" class="w-8 h-8 mx-auto text-red-400" />
-      <p class="mt-2 text-sm text-red-500">Failed to load preview</p>
+    <div v-else-if="error" class="text-center py-8 space-y-3">
+      <UIcon name="i-heroicons-exclamation-circle" class="w-10 h-10 mx-auto text-red-400" />
+      <p class="text-sm font-medium text-red-600 dark:text-red-400">Failed to load preview</p>
+      <p class="text-xs text-gray-500 max-w-xs mx-auto">
+        The citation style could not be fetched. This may be a temporary network issue.
+      </p>
+      <UButton
+        color="primary"
+        variant="soft"
+        size="sm"
+        icon="i-heroicons-arrow-path"
+        @click="refresh"
+      >
+        Try Again
+      </UButton>
     </div>
 
     <div v-else-if="preview?.samples" class="space-y-6">
@@ -87,9 +102,16 @@ function stripHtml(html: string): string {
         </div>
 
         <div class="flex items-center gap-2 text-xs text-gray-500">
-          <span>In-text:</span>
+          <span>{{ citationLabel }}:</span>
           <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
             {{ sample.inText }}
+          </code>
+        </div>
+
+        <div v-if="sample.subsequentNote" class="flex items-center gap-2 text-xs text-gray-500">
+          <span>Subsequent:</span>
+          <code class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
+            {{ sample.subsequentNote }}
           </code>
         </div>
       </div>

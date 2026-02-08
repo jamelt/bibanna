@@ -460,8 +460,11 @@ const columns = computed(() => {
   return cols
 })
 
-function handleRowClick(row: EntryRow) {
-  navigateToEntry(row.id)
+function handleRowSelect(row: any) {
+  const entry = row?.original ?? row
+  if (entry?.id) {
+    navigateToEntry(entry.id)
+  }
 }
 </script>
 
@@ -479,7 +482,7 @@ function handleRowClick(row: EntryRow) {
       td: 'py-2.5 px-3 text-sm',
       th: 'py-2.5 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
     }"
-    @select="(row: any) => handleRowClick(row)"
+    @select="handleRowSelect"
   >
     <template #empty>
       <div class="text-center py-8">

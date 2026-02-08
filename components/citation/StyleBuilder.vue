@@ -257,9 +257,9 @@ function handleSave() {
 <template>
   <div class="space-y-6">
     <!-- Progress steps -->
-    <nav class="flex items-center justify-center">
-      <ol class="flex items-center space-x-2">
-        <li v-for="step in steps" :key="step.id" class="flex items-center">
+    <nav class="flex items-center justify-center overflow-x-auto">
+      <ol class="flex items-center space-x-2 min-w-0">
+        <li v-for="step in steps" :key="step.id" class="flex items-center shrink-0">
           <button
             type="button"
             class="flex items-center justify-center w-8 h-8 rounded-full transition-colors"
@@ -270,18 +270,24 @@ function handleSave() {
                   ? 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
                   : 'bg-gray-100 text-gray-400 dark:bg-gray-800',
             ]"
+            :title="step.name"
             @click="currentStep = step.id"
           >
             <UIcon :name="step.icon" class="w-4 h-4" />
           </button>
           <div
             v-if="step.id < steps.length"
-            class="w-8 h-0.5 mx-1"
+            class="w-6 sm:w-8 h-0.5 mx-0.5 sm:mx-1"
             :class="currentStep > step.id ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'"
           />
         </li>
       </ol>
     </nav>
+
+    <!-- Current step label (mobile) -->
+    <p class="text-center text-sm font-medium text-gray-600 dark:text-gray-400 sm:hidden">
+      Step {{ currentStep }}: {{ steps[currentStep - 1]?.name }}
+    </p>
 
     <!-- Step content -->
     <div class="min-h-[300px]">

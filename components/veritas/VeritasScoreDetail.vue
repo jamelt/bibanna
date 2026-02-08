@@ -204,43 +204,53 @@ async function handleOverride() {
   </UCard>
 
   <!-- Override Modal -->
-  <UModal v-model="showOverrideModal">
-    <UCard>
-      <template #header>
-        <h3 class="text-lg font-semibold">Override Veritas Score</h3>
-      </template>
-
-      <div class="space-y-4">
-        <p class="text-sm text-gray-500">
-          Override the automatically calculated score if you have additional information about this source's credibility.
-        </p>
-
-        <UFormGroup label="New Score (0-100)">
-          <div class="flex items-center gap-4">
-            <URange v-model="overrideScore" :min="0" :max="100" class="flex-1" />
-            <span class="w-12 text-right font-medium">{{ overrideScore }}</span>
+  <UModal v-model:open="showOverrideModal">
+    <template #content>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Override Veritas Score</h3>
+            <UButton
+              variant="ghost"
+              color="neutral"
+              icon="i-heroicons-x-mark"
+              @click="showOverrideModal = false"
+            />
           </div>
-        </UFormGroup>
+        </template>
 
-        <UFormGroup label="Reason (optional)">
-          <UTextarea
-            v-model="overrideReason"
-            placeholder="Why are you overriding this score?"
-            :rows="3"
-          />
-        </UFormGroup>
-      </div>
+        <div class="space-y-4">
+          <p class="text-sm text-gray-500">
+            Override the automatically calculated score if you have additional information about this source's credibility.
+          </p>
 
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <UButton variant="outline" color="gray" @click="showOverrideModal = false">
-            Cancel
-          </UButton>
-          <UButton color="primary" @click="handleOverride">
-            Save Override
-          </UButton>
+          <UFormGroup label="New Score (0-100)">
+            <div class="flex items-center gap-4">
+              <URange v-model="overrideScore" :min="0" :max="100" class="flex-1" />
+              <span class="w-12 text-right font-medium">{{ overrideScore }}</span>
+            </div>
+          </UFormGroup>
+
+          <UFormGroup label="Reason (optional)">
+            <UTextarea
+              v-model="overrideReason"
+              placeholder="Why are you overriding this score?"
+              :rows="3"
+            />
+          </UFormGroup>
         </div>
-      </template>
-    </UCard>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" color="neutral" @click="showOverrideModal = false">
+              Cancel
+            </UButton>
+            <UButton color="primary" @click="handleOverride">
+              Save Override
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+    </template>
   </UModal>
 </template>

@@ -4,6 +4,7 @@ import {
   createCitationProcessor,
   formatBibliography,
   formatInTextCitation,
+  formatSubsequentCitation,
   type CitationItem,
 } from './csl-processor'
 import {
@@ -65,6 +66,41 @@ export async function formatSingleEntry(
 ): Promise<FormattedCitation> {
   const result = await formatEntriesWithStyle([entry], styleId)
   return result.entries[0]
+}
+
+export interface FormattedCitationWithSubsequent extends FormattedCitation {
+  subsequentNote?: string
+}
+
+export async function formatSingleEntryWithSubsequent(
+  entry: Entry,
+  styleId: string,
+): Promise<FormattedCitationWithSubsequent> {
+  const style = getStyleById(styleId)
+  if (!style) {
+    throw new Error(`Unknown citation style: ${styleId}`)
+  }
+
+  const styleXml = await fetchStyleXml(styleId)
+  const cslItem = entryToCSLItem(entry)
+  const engine = await createCitationProcessor(styleXml, EN_US_LOCALE, [cslItem])
+
+  const [bibliography] = formatBibliography(engine, [entry.id])
+  const inText = formatInTextCitation(engine, entry.id)
+
+  let subsequentNote: string | undefined
+  if (style.category === 'note') {
+    const subsequentEngine = await createCitationProcessor(styleXml, EN_US_LOCALE, [cslItem])
+    subsequentEngine.updateItems([entry.id])
+    subsequentNote = formatSubsequentCitation(subsequentEngine, entry.id)
+  }
+
+  return {
+    entryId: entry.id,
+    bibliography: bibliography || '',
+    inText,
+    subsequentNote,
+  }
 }
 
 export async function previewStyleWithEntry(

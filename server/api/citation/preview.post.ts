@@ -1,4 +1,4 @@
-import { previewStyleWithEntry, formatSingleEntry, getStyleById } from '~/server/services/citation'
+import { previewStyleWithEntry, formatSingleEntryWithSubsequent, getStyleById } from '~/server/services/citation'
 import { z } from 'zod'
 import type { Entry, Author } from '~/shared/types'
 
@@ -120,23 +120,25 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const result = await formatSingleEntry(entryToFormat, styleId!)
+  const style = getStyleById(styleId!)
 
   const allSamples = await Promise.all(
     SAMPLE_ENTRIES.map(async (entry) => {
-      const formatted = await formatSingleEntry(entry, styleId!)
+      const formatted = await formatSingleEntryWithSubsequent(entry, styleId!)
       return {
         type: entry.entryType,
         title: entry.title,
         bibliography: formatted.bibliography,
         inText: formatted.inText,
+        subsequentNote: formatted.subsequentNote,
       }
     }),
   )
 
   return {
     styleId,
-    styleName: getStyleById(styleId!)?.name,
+    styleName: style?.name,
+    category: style?.category,
     samples: allSamples,
   }
 })

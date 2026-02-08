@@ -11,6 +11,7 @@ interface CitationStyle {
 
 const props = defineProps<{
   modelValue: string
+  defaultStyleId?: string
 }>()
 
 const emit = defineEmits<{
@@ -84,7 +85,7 @@ function getCategoryColor(category: string): string {
 <template>
   <div class="space-y-4">
     <!-- Search and filters -->
-    <div class="flex gap-3">
+    <div class="flex flex-col sm:flex-row gap-3">
       <UInput
         v-model="searchQuery"
         icon="i-heroicons-magnifying-glass"
@@ -97,7 +98,7 @@ function getCategoryColor(category: string): string {
         value-attribute="value"
         option-attribute="label"
         placeholder="Category"
-        class="w-40"
+        class="w-full sm:w-40"
       />
     </div>
 
@@ -149,6 +150,14 @@ function getCategoryColor(category: string): string {
                 size="xs"
               >
                 Custom
+              </UBadge>
+              <UBadge
+                v-if="props.defaultStyleId === style.id"
+                color="primary"
+                variant="subtle"
+                size="xs"
+              >
+                Default
               </UBadge>
             </div>
             <p v-if="style.description" class="text-sm text-gray-500 mt-0.5 truncate">
