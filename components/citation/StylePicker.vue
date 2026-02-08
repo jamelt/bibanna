@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
+  (e: 'select', value: string): void
 }>()
 
 const { data: styles, pending } = await useFetch('/api/citation/styles', {
@@ -61,6 +62,7 @@ const filteredStyles = computed(() => {
 
 function selectStyle(styleId: string) {
   emit('update:modelValue', styleId)
+  emit('select', styleId)
 }
 
 function getCategoryColor(category: string): string {
@@ -104,7 +106,7 @@ function getCategoryColor(category: string): string {
 
     <!-- Toggle custom styles -->
     <div v-if="styles?.customStyles?.length" class="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
-      <UToggle v-model="showCustom" size="sm" />
+      <USwitch v-model="showCustom" size="sm" />
       <span class="text-xs text-gray-500">
         Custom ({{ styles.customStyles.length }})
       </span>

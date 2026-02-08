@@ -139,51 +139,49 @@ async function deleteStyle(styleId: string) {
     </div>
 
     <!-- Mobile layout -->
-    <div class="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900" style="height: calc(100vh - 260px); min-height: 400px;">
-      <div class="flex flex-col h-full">
+    <div class="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 flex flex-col" style="height: calc(100vh - 260px); min-height: 400px;">
+      <div class="flex-1 min-h-0 flex flex-col">
         <CitationStylePicker
           v-model="selectedStyleId"
           :default-style-id="defaultCitationStyle"
+          @select="showMobilePreview = true"
         />
+      </div>
 
-        <!-- Mobile actions -->
-        <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0 space-y-2">
-          <UButton
-            variant="soft"
-            color="primary"
-            size="sm"
-            icon="i-heroicons-eye"
-            block
-            @click="showMobilePreview = true"
-          >
-            Preview {{ selectedStyleName }}
-          </UButton>
-          <div class="flex items-center gap-2">
-            <UButton
-              v-if="!isSelectedDefault"
-              variant="outline"
-              color="primary"
-              size="xs"
-              icon="i-heroicons-star"
-              :loading="isSavingDefault"
-              block
-              @click="handleSetDefault"
-            >
-              Set as Default
-            </UButton>
-            <span v-else class="inline-flex items-center justify-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 w-full py-1">
-              <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
-              Default Style
-            </span>
-          </div>
-        </div>
+      <!-- Sticky mobile footer -->
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0 flex items-center gap-2">
+        <UButton
+          variant="soft"
+          color="primary"
+          size="sm"
+          icon="i-heroicons-eye"
+          class="flex-1"
+          @click="showMobilePreview = true"
+        >
+          Preview
+        </UButton>
+        <UButton
+          v-if="!isSelectedDefault"
+          variant="outline"
+          color="primary"
+          size="sm"
+          icon="i-heroicons-star"
+          :loading="isSavingDefault"
+          @click="handleSetDefault"
+        >
+          Set Default
+        </UButton>
+        <span v-else class="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 shrink-0 px-2">
+          <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
+          Default
+        </span>
       </div>
     </div>
 
     <!-- Mobile preview slide-over -->
-    <USlideover v-model:open="showMobilePreview" class="lg:hidden">
+    <USlideover v-model:open="showMobilePreview">
       <template #content="{ close }">
-        <div class="flex flex-col h-full">
+        <div class="flex flex-col h-full bg-white dark:bg-gray-900">
           <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
               {{ selectedStyleName }}
@@ -196,7 +194,7 @@ async function deleteStyle(styleId: string) {
               @click="close"
             />
           </div>
-          <div class="flex-1 overflow-hidden">
+          <div class="flex-1 min-h-0 overflow-y-auto">
             <CitationPreview :style-id="selectedStyleId" />
           </div>
         </div>
