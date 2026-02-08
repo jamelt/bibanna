@@ -11,7 +11,7 @@ import {
   fetchStyleXml,
   getDefaultStyles,
   getStyleById,
-  EN_US_LOCALE,
+  getEnUsLocale,
   type DefaultStyle,
 } from './default-styles'
 
@@ -38,8 +38,9 @@ export async function formatEntriesWithStyle(
   }
 
   const styleXml = await fetchStyleXml(styleId)
+  const localeXml = await getEnUsLocale()
   const cslItems = entries.map(entryToCSLItem)
-  const engine = await createCitationProcessor(styleXml, EN_US_LOCALE, cslItems)
+  const engine = await createCitationProcessor(styleXml, localeXml, cslItems)
 
   const itemIds = cslItems.map(item => item.id)
   const bibliographies = formatBibliography(engine, itemIds)
@@ -82,15 +83,16 @@ export async function formatSingleEntryWithSubsequent(
   }
 
   const styleXml = await fetchStyleXml(styleId)
+  const localeXml = await getEnUsLocale()
   const cslItem = entryToCSLItem(entry)
-  const engine = await createCitationProcessor(styleXml, EN_US_LOCALE, [cslItem])
+  const engine = await createCitationProcessor(styleXml, localeXml, [cslItem])
 
   const [bibliography] = formatBibliography(engine, [entry.id])
   const inText = formatInTextCitation(engine, entry.id)
 
   let subsequentNote: string | undefined
   if (style.category === 'note') {
-    const subsequentEngine = await createCitationProcessor(styleXml, EN_US_LOCALE, [cslItem])
+    const subsequentEngine = await createCitationProcessor(styleXml, localeXml, [cslItem])
     subsequentEngine.updateItems([entry.id])
     subsequentNote = formatSubsequentCitation(subsequentEngine, entry.id)
   }
@@ -107,8 +109,9 @@ export async function previewStyleWithEntry(
   entry: Entry,
   styleXml: string,
 ): Promise<FormattedCitation> {
+  const localeXml = await getEnUsLocale()
   const cslItem = entryToCSLItem(entry)
-  const engine = await createCitationProcessor(styleXml, EN_US_LOCALE, [cslItem])
+  const engine = await createCitationProcessor(styleXml, localeXml, [cslItem])
 
   const [bibliography] = formatBibliography(engine, [entry.id])
   const inText = formatInTextCitation(engine, entry.id)
@@ -125,8 +128,9 @@ export async function formatWithCustomStyle(
   styleXml: string,
   styleName: string,
 ): Promise<BibliographyResult> {
+  const localeXml = await getEnUsLocale()
   const cslItems = entries.map(entryToCSLItem)
-  const engine = await createCitationProcessor(styleXml, EN_US_LOCALE, cslItems)
+  const engine = await createCitationProcessor(styleXml, localeXml, cslItems)
 
   const itemIds = cslItems.map(item => item.id)
   const bibliographies = formatBibliography(engine, itemIds)

@@ -16,7 +16,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['psychology', 'social-sciences', 'education'],
     description: 'The most widely used style in social sciences',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl',
+    cslUrl: 'https://www.zotero.org/styles/apa?source=1',
   },
   {
     id: 'mla-9th',
@@ -25,7 +25,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['humanities', 'literature', 'language'],
     description: 'Standard for humanities and liberal arts',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/modern-language-association.csl',
+    cslUrl: 'https://www.zotero.org/styles/modern-language-association?source=1',
   },
   {
     id: 'chicago-17th-author-date',
@@ -34,7 +34,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['social-sciences', 'natural-sciences'],
     description: 'Chicago style with in-text author-date citations',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-author-date.csl',
+    cslUrl: 'https://www.zotero.org/styles/chicago-author-date?source=1',
   },
   {
     id: 'chicago-17th-note',
@@ -43,7 +43,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'note',
     fields: ['humanities', 'history', 'arts'],
     description: 'Chicago style with footnotes/endnotes',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-note-bibliography.csl',
+    cslUrl: 'https://www.zotero.org/styles/chicago-note-bibliography?source=1',
   },
   {
     id: 'turabian-9th-author-date',
@@ -52,7 +52,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['social-sciences', 'natural-sciences'],
     description: 'Student-friendly version of Chicago style',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/turabian-author-date.csl',
+    cslUrl: 'https://www.zotero.org/styles/turabian-author-date?source=1',
   },
   {
     id: 'turabian-9th-note',
@@ -61,7 +61,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'note',
     fields: ['humanities', 'history'],
     description: 'Student-friendly Chicago with footnotes',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/turabian-fullnote-bibliography.csl',
+    cslUrl: 'https://www.zotero.org/styles/turabian-fullnote-bibliography?source=1',
   },
   {
     id: 'harvard',
@@ -70,7 +70,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['general', 'business'],
     description: 'Common in UK and Australian universities',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/harvard-cite-them-right.csl',
+    cslUrl: 'https://www.zotero.org/styles/harvard-cite-them-right?source=1',
   },
   {
     id: 'ieee',
@@ -79,7 +79,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['engineering', 'computer-science', 'technology'],
     description: 'Standard for engineering and technology',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl',
+    cslUrl: 'https://www.zotero.org/styles/ieee?source=1',
   },
   {
     id: 'acm',
@@ -88,7 +88,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['computer-science'],
     description: 'Standard for computer science publications',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/acm-sig-proceedings.csl',
+    cslUrl: 'https://www.zotero.org/styles/acm-sig-proceedings?source=1',
   },
   {
     id: 'ama',
@@ -97,7 +97,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['medicine', 'health-sciences'],
     description: 'Standard for medical journals',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/american-medical-association.csl',
+    cslUrl: 'https://www.zotero.org/styles/american-medical-association?source=1',
   },
   {
     id: 'vancouver',
@@ -106,7 +106,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['medicine', 'biomedical'],
     description: 'Common in biomedical journals',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/vancouver.csl',
+    cslUrl: 'https://www.zotero.org/styles/vancouver?source=1',
   },
   {
     id: 'acs',
@@ -115,7 +115,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['chemistry'],
     description: 'Standard for chemistry publications',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/american-chemical-society.csl',
+    cslUrl: 'https://www.zotero.org/styles/american-chemical-society?source=1',
   },
   {
     id: 'nature',
@@ -124,7 +124,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['natural-sciences', 'biology'],
     description: 'Style used by Nature journals',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/nature.csl',
+    cslUrl: 'https://www.zotero.org/styles/nature?source=1',
   },
   {
     id: 'science',
@@ -133,7 +133,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['natural-sciences'],
     description: 'Style used by Science magazine',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/science.csl',
+    cslUrl: 'https://www.zotero.org/styles/science?source=1',
   },
   {
     id: 'cell',
@@ -142,7 +142,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'numeric',
     fields: ['biology', 'life-sciences'],
     description: 'Style used by Cell Press journals',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/cell.csl',
+    cslUrl: 'https://www.zotero.org/styles/cell?source=1',
   },
   {
     id: 'bluebook',
@@ -151,7 +151,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'note',
     fields: ['law'],
     description: 'Standard legal citation in the US',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/bluebook-law-review.csl',
+    cslUrl: 'https://www.zotero.org/styles/bluebook-law-review?source=1',
   },
   {
     id: 'oscola',
@@ -160,7 +160,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'note',
     fields: ['law'],
     description: 'UK legal citation standard',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/oscola.csl',
+    cslUrl: 'https://www.zotero.org/styles/oscola?source=1',
   },
   {
     id: 'aaa',
@@ -169,7 +169,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['anthropology'],
     description: 'Standard for anthropology',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/american-anthropological-association.csl',
+    cslUrl: 'https://www.zotero.org/styles/american-anthropological-association?source=1',
   },
   {
     id: 'asa',
@@ -178,7 +178,7 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['sociology'],
     description: 'Standard for sociology',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/american-sociological-association.csl',
+    cslUrl: 'https://www.zotero.org/styles/american-sociological-association?source=1',
   },
   {
     id: 'apsa',
@@ -187,21 +187,56 @@ export const DEFAULT_STYLES: DefaultStyle[] = [
     category: 'author-date',
     fields: ['political-science'],
     description: 'Standard for political science',
-    cslUrl: 'https://raw.githubusercontent.com/citation-style-language/styles/master/american-political-science-association.csl',
+    cslUrl: 'https://www.zotero.org/styles/american-political-science-association?source=1',
   },
 ]
 
-export const EN_US_LOCALE = `<?xml version="1.0" encoding="utf-8"?>
+const styleCache = new Map<string, string>()
+
+const FETCH_TIMEOUT_MS = 10_000
+const MAX_RETRIES = 2
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    return response
+  }
+  finally {
+    clearTimeout(timer)
+  }
+}
+
+const EN_US_LOCALE_URL = 'https://raw.githubusercontent.com/citation-style-language/locales/master/locales-en-US.xml'
+
+let _enUsLocale: string | null = null
+
+export async function getEnUsLocale(): Promise<string> {
+  if (_enUsLocale) return _enUsLocale
+
+  try {
+    const response = await fetchWithTimeout(EN_US_LOCALE_URL, FETCH_TIMEOUT_MS)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} fetching en-US locale`)
+    }
+    _enUsLocale = await response.text()
+    return _enUsLocale
+  }
+  catch {
+    _enUsLocale = getFallbackLocale()
+    return _enUsLocale
+  }
+}
+
+function getFallbackLocale(): string {
+  return `<?xml version="1.0" encoding="utf-8"?>
 <locale xmlns="http://purl.org/net/xbiblio/csl" version="1.0" xml:lang="en-US">
-  <info>
-    <rights license="http://creativecommons.org/licenses/by-sa/3.0/">This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 License</rights>
-    <updated>2024-01-01T00:00:00+00:00</updated>
-  </info>
+  <info><updated>2024-01-01T00:00:00+00:00</updated></info>
   <style-options punctuation-in-quote="true"/>
   <date form="text">
-    <date-part name="month" suffix=" "/>
-    <date-part name="day" suffix=", "/>
-    <date-part name="year"/>
+    <date-part name="month" suffix=" "/><date-part name="day" suffix=", "/><date-part name="year"/>
   </date>
   <date form="numeric">
     <date-part name="month" form="numeric-leading-zeros" suffix="/"/>
@@ -220,10 +255,7 @@ export const EN_US_LOCALE = `<?xml version="1.0" encoding="utf-8"?>
     <term name="circa">circa</term>
     <term name="circa" form="short">c.</term>
     <term name="cited">cited</term>
-    <term name="edition">
-      <single>edition</single>
-      <multiple>editions</multiple>
-    </term>
+    <term name="edition"><single>edition</single><multiple>editions</multiple></term>
     <term name="edition" form="short">ed.</term>
     <term name="et-al">et al.</term>
     <term name="forthcoming">forthcoming</term>
@@ -232,114 +264,71 @@ export const EN_US_LOCALE = `<?xml version="1.0" encoding="utf-8"?>
     <term name="in">in</term>
     <term name="in press">in press</term>
     <term name="internet">internet</term>
-    <term name="interview">interview</term>
-    <term name="letter">letter</term>
     <term name="no date">no date</term>
     <term name="no date" form="short">n.d.</term>
     <term name="online">online</term>
     <term name="presented at">presented at the</term>
-    <term name="reference">
-      <single>reference</single>
-      <multiple>references</multiple>
-    </term>
-    <term name="reference" form="short">
-      <single>ref.</single>
-      <multiple>refs.</multiple>
-    </term>
+    <term name="reference"><single>reference</single><multiple>references</multiple></term>
+    <term name="reference" form="short"><single>ref.</single><multiple>refs.</multiple></term>
     <term name="retrieved">retrieved</term>
-    <term name="scale">scale</term>
     <term name="version">version</term>
-    <term name="page">
-      <single>page</single>
-      <multiple>pages</multiple>
-    </term>
-    <term name="page" form="short">
-      <single>p.</single>
-      <multiple>pp.</multiple>
-    </term>
-    <term name="number-of-pages">
-      <single>page</single>
-      <multiple>pages</multiple>
-    </term>
-    <term name="number-of-pages" form="short">
-      <single>p.</single>
-      <multiple>pp.</multiple>
-    </term>
-    <term name="paragraph">
-      <single>paragraph</single>
-      <multiple>paragraphs</multiple>
-    </term>
-    <term name="paragraph" form="short">
-      <single>para.</single>
-      <multiple>paras.</multiple>
-    </term>
-    <term name="volume">
-      <single>volume</single>
-      <multiple>volumes</multiple>
-    </term>
-    <term name="volume" form="short">
-      <single>vol.</single>
-      <multiple>vols.</multiple>
-    </term>
-    <term name="issue">
-      <single>number</single>
-      <multiple>numbers</multiple>
-    </term>
-    <term name="issue" form="short">
-      <single>no.</single>
-      <multiple>nos.</multiple>
-    </term>
-    <term name="chapter">
-      <single>chapter</single>
-      <multiple>chapters</multiple>
-    </term>
-    <term name="chapter" form="short">
-      <single>chap.</single>
-      <multiple>chaps.</multiple>
-    </term>
-    <term name="section">
-      <single>section</single>
-      <multiple>sections</multiple>
-    </term>
-    <term name="section" form="short">
-      <single>sec.</single>
-      <multiple>secs.</multiple>
-    </term>
-    <term name="editor">
-      <single>editor</single>
-      <multiple>editors</multiple>
-    </term>
-    <term name="editor" form="short">
-      <single>ed.</single>
-      <multiple>eds.</multiple>
-    </term>
-    <term name="translator">
-      <single>translator</single>
-      <multiple>translators</multiple>
-    </term>
-    <term name="translator" form="short">
-      <single>trans.</single>
-      <multiple>trans.</multiple>
-    </term>
+    <term name="page"><single>page</single><multiple>pages</multiple></term>
+    <term name="page" form="short"><single>p.</single><multiple>pp.</multiple></term>
+    <term name="volume"><single>volume</single><multiple>volumes</multiple></term>
+    <term name="volume" form="short"><single>vol.</single><multiple>vols.</multiple></term>
+    <term name="issue"><single>number</single><multiple>numbers</multiple></term>
+    <term name="issue" form="short"><single>no.</single><multiple>nos.</multiple></term>
+    <term name="chapter"><single>chapter</single><multiple>chapters</multiple></term>
+    <term name="chapter" form="short"><single>chap.</single><multiple>chaps.</multiple></term>
+    <term name="section"><single>section</single><multiple>sections</multiple></term>
+    <term name="section" form="short"><single>sec.</single><multiple>secs.</multiple></term>
+    <term name="editor"><single>editor</single><multiple>editors</multiple></term>
+    <term name="editor" form="short"><single>ed.</single><multiple>eds.</multiple></term>
+    <term name="translator"><single>translator</single><multiple>translators</multiple></term>
+    <term name="translator" form="short"><single>trans.</single><multiple>trans.</multiple></term>
+    <term name="ordinal">th</term>
+    <term name="ordinal-01">st</term>
+    <term name="ordinal-02">nd</term>
+    <term name="ordinal-03">rd</term>
+    <term name="ordinal-11">th</term>
+    <term name="ordinal-12">th</term>
+    <term name="ordinal-13">th</term>
+    <term name="long-ordinal-01">first</term>
+    <term name="long-ordinal-02">second</term>
+    <term name="long-ordinal-03">third</term>
+    <term name="long-ordinal-04">fourth</term>
+    <term name="long-ordinal-05">fifth</term>
+    <term name="long-ordinal-06">sixth</term>
+    <term name="long-ordinal-07">seventh</term>
+    <term name="long-ordinal-08">eighth</term>
+    <term name="long-ordinal-09">ninth</term>
+    <term name="long-ordinal-10">tenth</term>
+    <term name="month-01">January</term>
+    <term name="month-02">February</term>
+    <term name="month-03">March</term>
+    <term name="month-04">April</term>
+    <term name="month-05">May</term>
+    <term name="month-06">June</term>
+    <term name="month-07">July</term>
+    <term name="month-08">August</term>
+    <term name="month-09">September</term>
+    <term name="month-10">October</term>
+    <term name="month-11">November</term>
+    <term name="month-12">December</term>
+    <term name="month-01" form="short">Jan.</term>
+    <term name="month-02" form="short">Feb.</term>
+    <term name="month-03" form="short">Mar.</term>
+    <term name="month-04" form="short">Apr.</term>
+    <term name="month-05" form="short">May</term>
+    <term name="month-06" form="short">Jun.</term>
+    <term name="month-07" form="short">Jul.</term>
+    <term name="month-08" form="short">Aug.</term>
+    <term name="month-09" form="short">Sep.</term>
+    <term name="month-10" form="short">Oct.</term>
+    <term name="month-11" form="short">Nov.</term>
+    <term name="month-12" form="short">Dec.</term>
   </terms>
 </locale>`
-
-const styleCache = new Map<string, string>()
-
-const FETCH_TIMEOUT_MS = 10_000
-const MAX_RETRIES = 2
-
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-
-  try {
-    const response = await fetch(url, { signal: controller.signal })
-    return response
-  }
-  finally {
-    clearTimeout(timer)
-  }
 }
 
 export async function fetchStyleXml(styleId: string): Promise<string> {

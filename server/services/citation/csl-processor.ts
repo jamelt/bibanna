@@ -5,7 +5,7 @@ let CSL: any = null
 async function getCSL() {
   if (!CSL) {
     const mod = await import('citeproc')
-    CSL = mod.Engine || mod.default || mod
+    CSL = mod.default?.Engine || mod.Engine || mod.default || mod
   }
   return CSL
 }
@@ -177,19 +177,22 @@ export function formatSubsequentCitation(
   engine: any,
   itemId: string,
 ): string {
+  const firstCitationId = `cite-first-${itemId}`
   const firstCitation = {
+    citationID: firstCitationId,
     citationItems: [{ id: itemId }],
     properties: { noteIndex: 1 },
   }
   engine.processCitationCluster(firstCitation, [], [])
 
   const subsequentCitation = {
+    citationID: `cite-subsequent-${itemId}`,
     citationItems: [{ id: itemId }],
     properties: { noteIndex: 2 },
   }
   const result = engine.processCitationCluster(
     subsequentCitation,
-    [['first-cite', 1]],
+    [[firstCitationId, 1]],
     [],
   )
 

@@ -17,6 +17,12 @@ const isSavingDefault = ref(false)
 
 const isSelectedDefault = computed(() => selectedStyleId.value === defaultCitationStyle.value)
 
+const selectedStyleName = computed(() => {
+  const style = styles.value?.defaultStyles?.find((s: any) => s.id === selectedStyleId.value)
+    || styles.value?.customStyles?.find((s: any) => s.id === selectedStyleId.value)
+  return style?.shortName || style?.name || selectedStyleId.value
+})
+
 async function handleSetDefault() {
   isSavingDefault.value = true
   try {
@@ -71,13 +77,14 @@ async function deleteStyle(styleId: string) {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="space-y-4">
+    <!-- Page header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           Citation Styles
         </h1>
-        <p class="text-gray-500 dark:text-gray-400">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           Choose from 20+ built-in styles or create your own
         </p>
       </div>
@@ -85,6 +92,7 @@ async function deleteStyle(styleId: string) {
         v-if="hasFeature('customCitationStyles')"
         color="primary"
         icon="i-heroicons-plus"
+        size="sm"
         class="self-start sm:self-auto shrink-0"
         @click="showBuilder = true"
       >
@@ -92,70 +100,105 @@ async function deleteStyle(styleId: string) {
       </UButton>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
-      <!-- Style Picker -->
-      <UCard>
-        <template #header>
-          <h2 class="font-semibold text-gray-900 dark:text-white">
-            Available Styles
-          </h2>
-        </template>
-        <CitationStylePicker v-model="selectedStyleId" :default-style-id="defaultCitationStyle" />
+    <!-- Master-detail layout (desktop) -->
+    <div class="hidden lg:block rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900" style="height: calc(100vh - 220px); min-height: 500px;">
+      <div class="flex h-full">
+        <!-- Left: Style list sidebar -->
+        <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 bg-gray-50/50 dark:bg-gray-800/30">
+          <CitationStylePicker
+            v-model="selectedStyleId"
+            :default-style-id="defaultCitationStyle"
+          />
 
-        <template #footer>
-          <div class="space-y-3">
-            <div class="flex items-center gap-3">
-              <UButton
-                v-if="!isSelectedDefault"
-                variant="soft"
-                color="primary"
-                size="sm"
-                icon="i-heroicons-star"
-                :loading="isSavingDefault"
-                @click="handleSetDefault"
-              >
-                Set as Default
-              </UButton>
-              <span v-else class="inline-flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400">
-                <UIcon name="i-heroicons-star-solid" class="w-4 h-4" />
-                Default Style
-              </span>
-            </div>
+          <!-- Actions footer -->
+          <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
             <UButton
-              class="lg:hidden w-full"
+              v-if="!isSelectedDefault"
               variant="soft"
               color="primary"
-              icon="i-heroicons-eye"
-              @click="showMobilePreview = true"
+              size="xs"
+              icon="i-heroicons-star"
+              :loading="isSavingDefault"
+              block
+              @click="handleSetDefault"
             >
-              Preview Selected Style
+              Set as Default
             </UButton>
+            <span v-else class="inline-flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 px-1">
+              <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
+              Default Style
+            </span>
           </div>
-        </template>
-      </UCard>
+        </div>
 
-      <!-- Preview (desktop only) -->
-      <div class="hidden lg:block">
-        <CitationPreview :style-id="selectedStyleId" />
+        <!-- Right: Preview panel -->
+        <div class="flex flex-col flex-1 min-w-0 bg-gray-100 dark:bg-gray-950/50">
+          <CitationPreview :style-id="selectedStyleId" />
+        </div>
       </div>
     </div>
 
-    <!-- Preview (mobile slide-over) -->
+    <!-- Mobile layout -->
+    <div class="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900" style="height: calc(100vh - 260px); min-height: 400px;">
+      <div class="flex flex-col h-full">
+        <CitationStylePicker
+          v-model="selectedStyleId"
+          :default-style-id="defaultCitationStyle"
+        />
+
+        <!-- Mobile actions -->
+        <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0 space-y-2">
+          <UButton
+            variant="soft"
+            color="primary"
+            size="sm"
+            icon="i-heroicons-eye"
+            block
+            @click="showMobilePreview = true"
+          >
+            Preview {{ selectedStyleName }}
+          </UButton>
+          <div class="flex items-center gap-2">
+            <UButton
+              v-if="!isSelectedDefault"
+              variant="outline"
+              color="primary"
+              size="xs"
+              icon="i-heroicons-star"
+              :loading="isSavingDefault"
+              block
+              @click="handleSetDefault"
+            >
+              Set as Default
+            </UButton>
+            <span v-else class="inline-flex items-center justify-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 w-full py-1">
+              <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
+              Default Style
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile preview slide-over -->
     <USlideover v-model:open="showMobilePreview" class="lg:hidden">
       <template #content="{ close }">
-        <div class="p-4">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Citation Preview
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+              {{ selectedStyleName }}
             </h3>
             <UButton
               variant="ghost"
               color="neutral"
               icon="i-heroicons-x-mark"
+              size="sm"
               @click="close"
             />
           </div>
-          <CitationPreview :style-id="selectedStyleId" />
+          <div class="flex-1 overflow-hidden">
+            <CitationPreview :style-id="selectedStyleId" />
+          </div>
         </div>
       </template>
     </USlideover>
