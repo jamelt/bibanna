@@ -14,6 +14,14 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.25"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.12"
+    }
+    kubectl = {
+      source  = "alekc/kubectl"
+      version = "~> 2.0"
+    }
   }
 
   backend "gcs" {
@@ -33,6 +41,29 @@ provider "google-beta" {
   region                      = var.region
   user_project_override       = true
   billing_project             = var.project_id
+}
+
+data "google_client_config" "default" {}
+
+provider "kubernetes" {
+  host                   = "https://${module.gke.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = "https://${module.gke.endpoint}"
+    token                  = data.google_client_config.default.access_token
+    cluster_ca_certificate = base64decode(module.gke.ca_certificate)
+  }
+}
+
+provider "kubectl" {
+  host                   = "https://${module.gke.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
+  load_config_file       = false
 }
 
 resource "google_project_service" "required_apis" {
@@ -89,6 +120,26 @@ module "vpc" {
         ip_cidr_range = "10.2.0.0/20"
       },
     ]
+  }
+}
+
+# Cloud NAT (required for private nodes to pull public images)
+resource "google_compute_router" "nat_router" {
+  name    = "${local.name}-router"
+  region  = var.region
+  network = module.vpc.network_self_link
+}
+
+resource "google_compute_router_nat" "nat" {
+  name                               = "${local.name}-nat"
+  router                             = google_compute_router.nat_router.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
   }
 }
 

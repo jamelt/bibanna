@@ -119,166 +119,53 @@ make tf-apply ENV=staging
 ```
 
 This will take 10-15 minutes. It provisions:
-- VPC network with private subnets
+- VPC network with private subnets and Cloud NAT
 - GKE cluster (1-3 spot e2-medium nodes)
-- Cloud SQL PostgreSQL (db-f1-micro with pgvector)
+- Cloud SQL PostgreSQL (db-f1-micro)
 - Artifact Registry for Docker images
 - Cloud Storage bucket for uploads
 - IAM service accounts with Workload Identity
 - Monitoring alerts and budget alerts
 - Cloud Build service account IAM roles
+- **Cluster add-ons** (all managed as IaC via Terraform Helm provider):
+  - nginx-ingress-controller with LoadBalancer
+  - cert-manager with Let's Encrypt ClusterIssuer
+  - External Secrets Operator with GCP ClusterSecretStore
+  - Application namespace (`annobib-staging`)
 
 After completion, note the outputs:
 ```bash
 cd terraform && terraform output
 ```
 
----
-
-## Step 6: Install Cluster Add-ons (Staging)
-
-Connect to the staging cluster:
-
+Get the ingress external IP (needed for DNS):
 ```bash
 gcloud container clusters get-credentials annobib-staging-gke \
   --region us-central1 \
   --project annobib-staging
-```
 
-### Install nginx-ingress-controller
-
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-
-helm install ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace \
-  --set controller.service.type=LoadBalancer
-```
-
-Wait for the external IP:
-```bash
-kubectl get svc -n ingress-nginx ingress-nginx-controller -w
+kubectl get svc -n ingress-nginx ingress-nginx-controller
 ```
 
 **Write down this IP address** -- you'll need it for DNS.
 
-### Install cert-manager (for TLS)
-
-```bash
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --set crds.enabled=true
-```
-
-Create the Let's Encrypt ClusterIssuer:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: your-email@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
-EOF
-```
-
-### Install External Secrets Operator
-
-```bash
-helm repo add external-secrets https://charts.external-secrets.io
-helm repo update
-
-helm install external-secrets external-secrets/external-secrets \
-  --namespace external-secrets \
-  --create-namespace
-```
-
-Create the ClusterSecretStore for GCP:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: external-secrets.io/v1beta1
-kind: ClusterSecretStore
-metadata:
-  name: gcp-secret-store
-spec:
-  provider:
-    gcpsm:
-      projectID: annobib-staging
-EOF
-```
-
 ---
 
-## Step 7: Configure DNS
+## Step 6: Configure DNS
 
 Go to your domain registrar (wherever you registered annobib.com) and create these DNS records:
 
 | Type | Name | Value | TTL |
 |------|------|-------|-----|
-| A | `@` | `<production-ingress-ip>` | 300 |
-| A | `www` | `<production-ingress-ip>` | 300 |
 | A | `staging` | `<staging-ingress-ip>` | 300 |
-| CNAME | `www` | `annobib.com` | 300 |
 
-**Note:** You won't have the production IP until Step 10. Set up the staging record first, and add the production records after provisioning production.
+**Note:** Production DNS records (`@` and `www`) will be added after provisioning production in Step 10.
 
-After DNS propagates (5-30 minutes), update the staging ingress to use the domain:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: annobib-ingress
-  namespace: annobib-staging
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    nginx.ingress.kubernetes.io/limit-rps: "30"
-    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
-    nginx.ingress.kubernetes.io/limit-connections: "10"
-spec:
-  tls:
-    - hosts:
-        - staging.annobib.com
-      secretName: annobib-staging-tls
-  rules:
-    - host: staging.annobib.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: annobib-app
-                port:
-                  number: 80
-EOF
-```
+After DNS propagates (5-30 minutes), the TLS ingress is already defined in `k8s/overlays/staging/` and will be applied during the first deploy.
 
 ---
 
-## Step 8: Populate Secret Manager (Staging)
+## Step 7: Populate Secret Manager (Staging)
 
 Store your secrets in GCP Secret Manager for the staging environment:
 
@@ -324,7 +211,7 @@ echo -n "your-google-books-key" | \
 
 ---
 
-## Step 9: Connect Cloud Build to GitHub
+## Step 8: Connect Cloud Build to GitHub
 
 1. Go to the [Cloud Build Triggers page](https://console.cloud.google.com/cloud-build/triggers) in the **annobib-staging** project
 2. Click **Connect Repository**
@@ -357,7 +244,7 @@ echo -n "your-google-books-key" | \
 
 ---
 
-## Step 10: First Staging Deploy
+## Step 9: First Staging Deploy
 
 Push your code to main. Cloud Build will automatically:
 1. Lint, typecheck, and run unit tests
@@ -395,7 +282,7 @@ make health ENV=staging
 
 ---
 
-## Step 11: Provision Production Infrastructure
+## Step 10: Provision Production Infrastructure
 
 ```bash
 make tf-init ENV=production
@@ -403,35 +290,36 @@ make tf-plan ENV=production
 make tf-apply ENV=production
 ```
 
-Then install the same cluster add-ons (repeat Step 6 but targeting the production cluster):
+This provisions the same infrastructure as staging (including all cluster add-ons) for production.
 
+After completion, get the production ingress IP:
 ```bash
 gcloud container clusters get-credentials annobib-production-gke \
   --region us-central1 \
   --project annobib-prod
+
+kubectl get svc -n ingress-nginx ingress-nginx-controller
 ```
 
-Install nginx-ingress, cert-manager (with ClusterIssuer), and External Secrets Operator (with ClusterSecretStore pointing to `annobib-prod`).
-
-**Get the production ingress IP** and update your DNS records (the `@` and `www` A records from Step 7).
+**Update your DNS records** with the production IP (the `@` and `www` A records from Step 6).
 
 ---
 
-## Step 12: Populate Secret Manager (Production)
+## Step 11: Populate Secret Manager (Production)
 
-Same as Step 8, but targeting `annobib-prod` project and using **live** credentials:
+Same as Step 7, but targeting `annobib-prod` project and using **live** credentials:
 - Stripe: live mode keys (`sk_live_...`, `pk_live_...`)
 - Auth0: production tenant/application
 - OpenAI: same key (or a separate one if you prefer billing separation)
 
 ```bash
 PROJECT=annobib-prod
-# Repeat all the gcloud secrets create commands from Step 8 with production values
+# Repeat all the gcloud secrets create commands from Step 7 with production values
 ```
 
 ---
 
-## Step 13: First Production Deploy
+## Step 12: First Production Deploy
 
 Create your first release tag:
 
@@ -452,7 +340,7 @@ curl https://annobib.com/api/health
 
 ---
 
-## Step 14: Configure External Services
+## Step 13: Configure External Services
 
 ### Stripe Webhooks
 
