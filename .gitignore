@@ -50,3 +50,7 @@ drizzle/meta
 # PWA
 public/sw.js
 public/workbox-*.js
+
+# Work files
+AnnoBib_Email_Setup_Guide.docx
+\~$*
