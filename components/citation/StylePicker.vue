@@ -12,11 +12,14 @@ interface CitationStyle {
 const props = defineProps<{
   modelValue: string
   defaultStyleId?: string
+  isSelectedDefault?: boolean
+  savingDefault?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'select', value: string): void
+  (e: 'setDefault'): void
 }>()
 
 const { data: styles, pending } = await useFetch('/api/citation/styles', {
@@ -60,6 +63,13 @@ const filteredStyles = computed(() => {
   return result
 })
 
+const selectedStyleLabel = computed(() => {
+  if (!styles.value) return props.modelValue
+  const all = [...styles.value.defaultStyles, ...styles.value.customStyles]
+  const found = all.find(s => s.id === props.modelValue)
+  return found?.shortName || found?.name || props.modelValue
+})
+
 function selectStyle(styleId: string) {
   emit('update:modelValue', styleId)
   emit('select', styleId)
@@ -101,6 +111,32 @@ function getCategoryColor(category: string): string {
         >
           {{ cat.label }}
         </button>
+      </div>
+    </div>
+
+    <!-- Selected style action bar -->
+    <div class="mx-3 my-2 rounded-lg shrink-0 overflow-hidden" :class="props.isSelectedDefault ? 'bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-200 dark:ring-primary-800' : 'bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700'">
+      <div class="px-3 py-2.5 flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none mb-1">Selected</p>
+          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ selectedStyleLabel }}</p>
+        </div>
+        <UButton
+          v-if="!props.isSelectedDefault"
+          variant="soft"
+          color="primary"
+          size="xs"
+          icon="i-heroicons-star"
+          :loading="props.savingDefault"
+          class="shrink-0"
+          @click="emit('setDefault')"
+        >
+          Set Default
+        </UButton>
+        <span v-else class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0">
+          <UIcon name="i-heroicons-star-solid" class="w-4 h-4" />
+          Default
+        </span>
       </div>
     </div>
 

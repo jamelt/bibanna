@@ -105,29 +105,14 @@ async function deleteStyle(styleId: string) {
       <div class="flex h-full">
         <!-- Left: Style list sidebar -->
         <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 bg-gray-50/50 dark:bg-gray-800/30">
-          <CitationStylePicker
-            v-model="selectedStyleId"
-            :default-style-id="defaultCitationStyle"
-          />
-
-          <!-- Actions footer -->
-          <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
-            <UButton
-              v-if="!isSelectedDefault"
-              variant="soft"
-              color="primary"
-              size="xs"
-              icon="i-heroicons-star"
-              :loading="isSavingDefault"
-              block
-              @click="handleSetDefault"
-            >
-              Set as Default
-            </UButton>
-            <span v-else class="inline-flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 px-1">
-              <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
-              Default Style
-            </span>
+          <div class="flex-1 min-h-0 flex flex-col">
+            <CitationStylePicker
+              v-model="selectedStyleId"
+              :default-style-id="defaultCitationStyle"
+              :is-selected-default="isSelectedDefault"
+              :saving-default="isSavingDefault"
+              @set-default="handleSetDefault"
+            />
           </div>
         </div>
 
@@ -144,37 +129,25 @@ async function deleteStyle(styleId: string) {
         <CitationStylePicker
           v-model="selectedStyleId"
           :default-style-id="defaultCitationStyle"
+          :is-selected-default="isSelectedDefault"
+          :saving-default="isSavingDefault"
           @select="showMobilePreview = true"
+          @set-default="handleSetDefault"
         />
       </div>
 
-      <!-- Sticky mobile footer -->
-      <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0 flex items-center gap-2">
+      <!-- Sticky mobile footer: preview button only -->
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
         <UButton
           variant="soft"
           color="primary"
           size="sm"
           icon="i-heroicons-eye"
-          class="flex-1"
+          block
           @click="showMobilePreview = true"
         >
-          Preview
+          Preview {{ selectedStyleName }}
         </UButton>
-        <UButton
-          v-if="!isSelectedDefault"
-          variant="outline"
-          color="primary"
-          size="sm"
-          icon="i-heroicons-star"
-          :loading="isSavingDefault"
-          @click="handleSetDefault"
-        >
-          Set Default
-        </UButton>
-        <span v-else class="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 shrink-0 px-2">
-          <UIcon name="i-heroicons-star-solid" class="w-3.5 h-3.5" />
-          Default
-        </span>
       </div>
     </div>
 
