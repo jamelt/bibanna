@@ -154,6 +154,7 @@ export const tags = pgTable('tags', {
   name: text('name').notNull(),
   color: text('color').default('#6B7280'),
   description: text('description'),
+  groupName: text('group_name'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   userNameIdx: uniqueIndex('tags_user_name_idx').on(table.userId, table.name),

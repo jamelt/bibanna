@@ -124,6 +124,7 @@ export const createTagSchema = z.object({
     .optional()
     .default("#6B7280"),
   description: z.string().optional(),
+  groupName: z.string().optional(),
 });
 
 export const updateTagSchema = createTagSchema.partial();
@@ -150,6 +151,7 @@ export const searchQuerySchema = z.object({
   yearFrom: coerceOptionalInt,
   yearTo: coerceOptionalInt,
   isFavorite: coerceOptionalBool,
+  untagged: coerceOptionalBool,
   sortBy: z
     .enum(["relevance", "title", "author", "year", "createdAt", "updatedAt"])
     .optional()

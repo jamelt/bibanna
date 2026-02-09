@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     yearFrom,
     yearTo,
     isFavorite,
+    untagged,
     sortBy,
     sortOrder,
     page,
@@ -85,6 +86,12 @@ export default defineEventHandler(async (event) => {
 
   if (isFavorite !== undefined) {
     conditions.push(eq(entries.isFavorite, isFavorite))
+  }
+
+  if (untagged) {
+    conditions.push(
+      sql`NOT EXISTS (SELECT 1 FROM entry_tags et WHERE et.entry_id = ${entries.id})`,
+    )
   }
 
   let baseQuery = db

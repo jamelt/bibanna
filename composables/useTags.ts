@@ -1,17 +1,18 @@
 import type { Tag } from '~/shared/types'
 
 const TAG_COLORS = [
-  '#4F46E5',
-  '#7C3AED',
-  '#EC4899',
-  '#EF4444',
-  '#F97316',
-  '#EAB308',
-  '#22C55E',
-  '#14B8A6',
-  '#06B6D4',
-  '#3B82F6',
-  '#6B7280',
+  '#3B82F6', '#2563EB',
+  '#4F46E5', '#6366F1',
+  '#7C3AED', '#8B5CF6',
+  '#EC4899', '#DB2777',
+  '#EF4444', '#DC2626',
+  '#F97316', '#EA580C',
+  '#EAB308', '#CA8A04',
+  '#22C55E', '#16A34A',
+  '#14B8A6', '#0D9488',
+  '#06B6D4', '#0891B2',
+  '#F43F5E', '#84CC16',
+  '#6B7280', '#4B5563',
 ]
 
 function pickRandomColor(): string {
@@ -36,7 +37,7 @@ export function useTags() {
     }
   }
 
-  async function createTag(name: string, color?: string): Promise<Tag> {
+  async function createTag(name: string, color?: string, extra?: { description?: string; groupName?: string }): Promise<Tag> {
     const trimmed = name.trim()
     if (!trimmed) throw new Error('Tag name is required')
 
@@ -50,6 +51,7 @@ export function useTags() {
       body: {
         name: trimmed,
         color: color || pickRandomColor(),
+        ...extra,
       },
     })
 
@@ -72,7 +74,7 @@ export function useTags() {
     return results
   }
 
-  async function updateTag(tagId: string, data: Partial<{ name: string; color: string; description: string }>): Promise<Tag> {
+  async function updateTag(tagId: string, data: Partial<{ name: string; color: string; description: string; groupName: string }>): Promise<Tag> {
     const updated = await $fetch<Tag>(`/api/tags/${tagId}`, {
       method: 'PUT',
       body: data,
@@ -97,6 +99,22 @@ export function useTags() {
     return result
   }
 
+  function optimisticRemove(tagId: string): Tag | undefined {
+    const tag = tags.value.find(t => t.id === tagId)
+    if (tag) tags.value = tags.value.filter(t => t.id !== tagId)
+    return tag
+  }
+
+  function optimisticRestore(tag: Tag) {
+    if (!tags.value.find(t => t.id === tag.id)) {
+      tags.value = [...tags.value, tag]
+    }
+  }
+
+  async function permanentDelete(tagId: string): Promise<void> {
+    await $fetch(`/api/tags/${tagId}`, { method: 'DELETE' })
+  }
+
   function findByName(name: string): Tag | undefined {
     return tags.value.find(
       t => t.name.toLowerCase() === name.trim().toLowerCase(),
@@ -118,6 +136,9 @@ export function useTags() {
     updateTag,
     deleteTag,
     mergeTags,
+    optimisticRemove,
+    optimisticRestore,
+    permanentDelete,
     findByName,
     searchTags,
     TAG_COLORS,

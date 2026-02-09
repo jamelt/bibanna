@@ -26,7 +26,16 @@ const {
 
 const entrySearchQuery = ref("");
 const selectedTypes = ref<string[]>([]);
-const selectedTags = ref<string[]>([]);
+const showUntagged = ref(route.query.untagged === "true");
+const selectedTags = ref<string[]>(
+  (() => {
+    if (showUntagged.value) return [];
+    const tagIds = route.query.tagIds;
+    if (!tagIds) return [];
+    if (Array.isArray(tagIds)) return tagIds.filter(Boolean) as string[];
+    return tagIds.split(",").filter(Boolean);
+  })(),
+);
 const sortBy = ref("createdAt");
 const sortOrder = ref<"asc" | "desc">("desc");
 const page = ref(1);
@@ -44,6 +53,7 @@ const entryTypesQuery = computed(() =>
 const tagIdsQuery = computed(() =>
   selectedTags.value.length > 0 ? selectedTags.value : undefined,
 );
+const untaggedQuery = computed(() => showUntagged.value || undefined);
 
 const {
   data: entriesData,
@@ -55,6 +65,7 @@ const {
     q,
     entryTypes: entryTypesQuery,
     tagIds: tagIdsQuery,
+    untagged: untaggedQuery,
     sortBy,
     sortOrder,
     page,
@@ -70,6 +81,15 @@ watch([entrySearchQuery, selectedTypes, selectedTags], () => {
   page.value = 1;
 });
 
+watch(showUntagged, (val) => {
+  if (val) selectedTags.value = [];
+  page.value = 1;
+});
+
+watch(selectedTags, (val) => {
+  if (val.length > 0) showUntagged.value = false;
+});
+
 const { data: userTags } = await useFetch<Tag[]>("/api/tags", { lazy: true });
 
 const entryTypeOptions = Object.entries(ENTRY_TYPE_LABELS).map(
@@ -83,6 +103,7 @@ const isEditModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const isExportModalOpen = ref(false);
 const isAddEntryModalOpen = ref(false);
+const isTagInsightsOpen = ref(false);
 const isDeleting = ref(false);
 const isRemovingEntry = ref<string | null>(null);
 const isAddingEntries = ref(false);
@@ -149,6 +170,7 @@ function clearFilters() {
   entrySearchQuery.value = "";
   selectedTypes.value = [];
   selectedTags.value = [];
+  showUntagged.value = false;
   page.value = 1;
 }
 
@@ -156,8 +178,26 @@ const hasActiveFilters = computed(
   () =>
     entrySearchQuery.value ||
     selectedTypes.value.length > 0 ||
-    selectedTags.value.length > 0,
+    selectedTags.value.length > 0 ||
+    showUntagged.value,
 );
+
+function handleInsightsTagClick(tagId: string) {
+  selectedTags.value = [tagId];
+  showUntagged.value = false;
+  isTagInsightsOpen.value = false;
+}
+
+function handleInsightsTagPairClick(tagIdA: string, tagIdB: string) {
+  selectedTags.value = [tagIdA, tagIdB];
+  showUntagged.value = false;
+  isTagInsightsOpen.value = false;
+}
+
+function handleInsightsUntagged() {
+  showUntagged.value = true;
+  isTagInsightsOpen.value = false;
+}
 
 const { data: libraryEntries } = await useFetch<{
   data: Entry[];
@@ -537,6 +577,15 @@ onEntryCreated(() => {
           @click="openMindMap"
         />
         <UButton
+          icon="i-heroicons-chart-bar-square"
+          label="Tag Insights"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          class="hidden sm:flex"
+          @click="isTagInsightsOpen = true"
+        />
+        <UButton
           icon="i-heroicons-arrow-down-tray"
           label="Export"
           variant="outline"
@@ -569,6 +618,11 @@ onEntryCreated(() => {
                 label: 'Mind Map',
                 icon: 'i-heroicons-share',
                 onSelect: openMindMap,
+              },
+              {
+                label: 'Tag Insights',
+                icon: 'i-heroicons-chart-bar-square',
+                onSelect: () => (isTagInsightsOpen.value = true),
               },
               {
                 label: 'Export',
@@ -686,6 +740,7 @@ onEntryCreated(() => {
             label-key="name"
             size="sm"
             class="w-full lg:w-36"
+            :disabled="showUntagged"
           >
             <template #item-leading="{ item }">
               <span
@@ -694,6 +749,15 @@ onEntryCreated(() => {
               />
             </template>
           </USelectMenu>
+          <UButton
+            icon="i-heroicons-tag"
+            label="Untagged"
+            :variant="showUntagged ? 'soft' : 'outline'"
+            :color="showUntagged ? 'primary' : 'neutral'"
+            size="sm"
+            class="shrink-0"
+            @click="showUntagged = !showUntagged"
+          />
           <UButton
             v-if="hasActiveFilters"
             icon="i-heroicons-x-mark"
@@ -1181,5 +1245,34 @@ onEntryCreated(() => {
         </UCard>
       </template>
     </UModal>
+
+    <!-- Tag Insights Slideover -->
+    <USlideover v-model:open="isTagInsightsOpen">
+      <template #content>
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              Tag Insights
+            </h2>
+            <UButton
+              icon="i-heroicons-x-mark"
+              variant="ghost"
+              color="neutral"
+              @click="isTagInsightsOpen = false"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto p-6">
+            <LazyAppTagAnalytics
+              v-if="project?.id"
+              :tags="userTags || []"
+              :project-id="project.id"
+              @select-tag="handleInsightsTagClick"
+              @select-tag-pair="handleInsightsTagPairClick"
+              @select-untagged="handleInsightsUntagged"
+            />
+          </div>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>

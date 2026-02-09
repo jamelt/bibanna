@@ -12,7 +12,7 @@ const emit = defineEmits<{
   updated: [tag: Tag]
 }>()
 
-const { updateTag, createTag: createNewTag, TAG_COLORS } = useTags()
+const { tags: allTags, updateTag, createTag: createNewTag, TAG_COLORS } = useTags()
 
 const isOpen = computed({
   get: () => props.open,
@@ -25,16 +25,26 @@ const form = reactive({
   name: '',
   description: '',
   color: '#6B7280',
+  groupName: '',
 })
 
 const isSubmitting = ref(false)
 const error = ref('')
+
+const existingGroups = computed(() => {
+  const groups = new Set<string>()
+  for (const t of allTags.value) {
+    if (t.groupName) groups.add(t.groupName)
+  }
+  return [...groups].sort()
+})
 
 watch(() => props.tag, (tag) => {
   if (tag) {
     form.name = tag.name
     form.description = tag.description || ''
     form.color = tag.color
+    form.groupName = tag.groupName || ''
   }
 }, { immediate: true })
 
@@ -42,6 +52,7 @@ function resetForm() {
   form.name = ''
   form.description = ''
   form.color = '#6B7280'
+  form.groupName = ''
   error.value = ''
 }
 
@@ -57,11 +68,19 @@ async function handleSubmit() {
 
   try {
     if (isEditing.value) {
-      const updated = await updateTag(props.tag!.id, form)
+      const updated = await updateTag(props.tag!.id, {
+        name: form.name,
+        description: form.description || undefined,
+        color: form.color,
+        groupName: form.groupName || undefined,
+      })
       emit('updated', updated)
     }
     else {
-      const created = await createNewTag(form.name, form.color)
+      const created = await createNewTag(form.name, form.color, {
+        description: form.description || undefined,
+        groupName: form.groupName || undefined,
+      })
       emit('created', created)
     }
 
@@ -121,16 +140,50 @@ async function handleSubmit() {
             />
           </UFormField>
 
+          <UFormField label="Group">
+            <UInput
+              v-model="form.groupName"
+              placeholder="e.g., Discipline, Methodology, Status"
+              class="w-full"
+            />
+            <div v-if="existingGroups.length" class="mt-2 flex flex-wrap gap-1.5">
+              <button
+                v-for="group in existingGroups"
+                :key="group"
+                type="button"
+                class="text-xs px-2 py-1 rounded-md transition-colors"
+                :class="form.groupName === group
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                @click="form.groupName = form.groupName === group ? '' : group"
+              >
+                {{ group }}
+              </button>
+            </div>
+          </UFormField>
+
           <UFormField label="Color">
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2.5">
               <button
                 v-for="color in TAG_COLORS"
                 :key="color"
                 type="button"
-                class="w-8 h-8 rounded-lg transition-transform hover:scale-110"
+                class="w-9 h-9 rounded-lg transition-transform hover:scale-110"
                 :class="form.color === color ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white' : ''"
                 :style="{ backgroundColor: color }"
                 @click="form.color = color"
+              />
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+              <span
+                class="w-9 h-9 rounded-lg shrink-0 border border-gray-200 dark:border-gray-700"
+                :style="{ backgroundColor: form.color }"
+              />
+              <UInput
+                v-model="form.color"
+                placeholder="#000000"
+                class="flex-1 font-mono"
+                maxlength="7"
               />
             </div>
           </UFormField>

@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
       name: tags.name,
       color: tags.color,
       description: tags.description,
+      groupName: tags.groupName,
       createdAt: tags.createdAt,
       entryCount: sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as('entry_count'),
     })

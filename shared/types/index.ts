@@ -155,6 +155,7 @@ export interface Tag {
   name: string
   color: string
   description?: string
+  groupName?: string
   createdAt: Date
   entryCount?: number
 }

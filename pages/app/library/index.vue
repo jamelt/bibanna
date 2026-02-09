@@ -13,8 +13,10 @@ const toast = useToast()
 
 const searchQuery = ref(route.query.q as string || '')
 const selectedTypes = ref<string[]>([])
+const showUntagged = ref(route.query.untagged === 'true')
 const selectedTags = ref<string[]>(
   (() => {
+    if (showUntagged.value) return []
     const tagIds = route.query.tagIds
     if (!tagIds) return []
     return Array.isArray(tagIds) ? tagIds : [tagIds]
@@ -65,6 +67,7 @@ const tagIdsQuery = computed(() =>
   selectedTags.value.length > 0 ? selectedTags.value : undefined,
 )
 const projectIdQuery = computed(() => selectedProject.value || undefined)
+const untaggedQuery = computed(() => showUntagged.value || undefined)
 
 const { data: entriesData, pending, refresh } = await useFetch('/api/entries', {
   query: {
@@ -72,6 +75,7 @@ const { data: entriesData, pending, refresh } = await useFetch('/api/entries', {
     entryTypes: entryTypesQuery,
     tagIds: tagIdsQuery,
     projectId: projectIdQuery,
+    untagged: untaggedQuery,
     sortBy,
     sortOrder,
     page,
@@ -129,6 +133,15 @@ watch([searchQuery, selectedTypes, selectedTags, selectedProject], () => {
   page.value = 1
 })
 
+watch(showUntagged, (val) => {
+  if (val) selectedTags.value = []
+  page.value = 1
+})
+
+watch(selectedTags, (val) => {
+  if (val.length > 0) showUntagged.value = false
+})
+
 function handleSearch() {
   router.push({ query: { ...route.query, q: searchQuery.value || undefined } })
 }
@@ -138,6 +151,7 @@ function clearFilters() {
   selectedTypes.value = []
   selectedTags.value = []
   selectedProject.value = null
+  showUntagged.value = false
   page.value = 1
 }
 
@@ -490,6 +504,7 @@ onUnmounted(() => {
         label-key="name"
         size="sm"
         class="w-full lg:w-36"
+        :disabled="showUntagged"
       >
         <template #item-leading="{ item }">
           <span
@@ -498,6 +513,16 @@ onUnmounted(() => {
           />
         </template>
       </USelectMenu>
+
+      <UButton
+        icon="i-heroicons-tag"
+        label="Untagged"
+        :variant="showUntagged ? 'soft' : 'outline'"
+        :color="showUntagged ? 'primary' : 'neutral'"
+        size="sm"
+        class="shrink-0"
+        @click="showUntagged = !showUntagged"
+      />
 
       <USelectMenu
         v-model="selectedProject"
@@ -526,7 +551,7 @@ onUnmounted(() => {
       />
 
       <UButton
-        v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject"
+        v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject || showUntagged"
         icon="i-heroicons-x-mark"
         variant="ghost"
         color="neutral"
