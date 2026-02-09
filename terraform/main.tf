@@ -170,8 +170,9 @@ module "cloudsql" {
 
   additional_users = [
     {
-      name     = "${var.app_name}_app"
-      password = var.db_password
+      name            = "${var.app_name}_app"
+      password        = var.db_password
+      random_password = false
     }
   ]
 
