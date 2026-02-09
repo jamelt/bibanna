@@ -26,62 +26,6 @@ resource "google_monitoring_notification_channel" "email" {
   }
 }
 
-resource "google_monitoring_alert_policy" "high_error_rate" {
-  display_name = "${local.name_prefix} - High Error Rate"
-  combiner     = "OR"
-  
-  conditions {
-    display_name = "HTTP 5xx Error Rate > 1%"
-    
-    condition_threshold {
-      filter          = "resource.type=\"k8s_container\" AND metric.type=\"logging.googleapis.com/user/http_5xx_count\""
-      duration        = "300s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = 0.01
-      
-      aggregations {
-        alignment_period     = "60s"
-        per_series_aligner   = "ALIGN_RATE"
-        cross_series_reducer = "REDUCE_SUM"
-      }
-    }
-  }
-  
-  notification_channels = [google_monitoring_notification_channel.email.name]
-  
-  alert_strategy {
-    auto_close = "1800s"
-  }
-}
-
-resource "google_monitoring_alert_policy" "high_latency" {
-  display_name = "${local.name_prefix} - High API Latency"
-  combiner     = "OR"
-  
-  conditions {
-    display_name = "API Latency > 2s (p95)"
-    
-    condition_threshold {
-      filter          = "resource.type=\"k8s_container\" AND metric.type=\"custom.googleapis.com/opencensus/http_request_duration_ms\""
-      duration        = "300s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = 2000
-      
-      aggregations {
-        alignment_period     = "60s"
-        per_series_aligner   = "ALIGN_PERCENTILE_95"
-        cross_series_reducer = "REDUCE_MEAN"
-      }
-    }
-  }
-  
-  notification_channels = [google_monitoring_notification_channel.email.name]
-  
-  alert_strategy {
-    auto_close = "1800s"
-  }
-}
-
 resource "google_monitoring_alert_policy" "database_connections" {
   display_name = "${local.name_prefix} - Database Connection Pool Exhaustion"
   combiner     = "OR"

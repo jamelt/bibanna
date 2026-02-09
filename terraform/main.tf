@@ -22,13 +22,36 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project                     = var.project_id
+  region                      = var.region
+  user_project_override       = true
+  billing_project             = var.project_id
 }
 
 provider "google-beta" {
-  project = var.project_id
-  region  = var.region
+  project                     = var.project_id
+  region                      = var.region
+  user_project_override       = true
+  billing_project             = var.project_id
+}
+
+resource "google_project_service" "required_apis" {
+  for_each = toset([
+    "container.googleapis.com",
+    "sqladmin.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "secretmanager.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "cloudtrace.googleapis.com",
+    "monitoring.googleapis.com",
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+  ])
+
+  service            = each.key
+  disable_on_destroy = false
 }
 
 locals {
@@ -89,9 +112,9 @@ module "gke" {
 
   release_channel = "REGULAR"
 
-  maintenance_start_time = "2025-01-01T02:00:00Z"
-  maintenance_end_time   = "2025-01-01T06:00:00Z"
-  maintenance_recurrence = "FREQ=WEEKLY;BYDAY=SU"
+  maintenance_start_time = "2025-01-04T02:00:00Z"
+  maintenance_end_time   = "2025-01-04T14:00:00Z"
+  maintenance_recurrence = "FREQ=WEEKLY;BYDAY=SA,SU"
 
   node_pools = [
     {
@@ -123,6 +146,21 @@ module "gke" {
   }
 }
 
+# Private Service Access (required for Cloud SQL private IP)
+resource "google_compute_global_address" "private_ip_range" {
+  name          = "${local.name}-private-ip"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = module.vpc.network_self_link
+}
+
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = module.vpc.network_self_link
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_range.name]
+}
+
 # Cloud SQL PostgreSQL
 module "cloudsql" {
   source  = "GoogleCloudPlatform/sql-db/google//modules/postgresql"
@@ -141,19 +179,17 @@ module "cloudsql" {
     ipv4_enabled        = false
     private_network     = module.vpc.network_self_link
     require_ssl         = true
-    allocated_ip_range  = null
+    allocated_ip_range  = google_compute_global_address.private_ip_range.name
     authorized_networks = []
   }
+
+  module_depends_on = [google_service_networking_connection.private_vpc_connection]
 
   maintenance_window_day          = 7
   maintenance_window_hour         = 2
   maintenance_window_update_track = "stable"
 
   database_flags = [
-    {
-      name  = "cloudsql.enable_pgvector"
-      value = "on"
-    },
     {
       name  = "max_connections"
       value = "200"
@@ -281,6 +317,8 @@ resource "google_service_account_iam_binding" "workload_identity" {
   members = [
     "serviceAccount:${var.project_id}.svc.id.goog[${var.app_name}-${local.env_name}/${var.app_name}-app]",
   ]
+
+  depends_on = [module.gke]
 }
 
 # Cloud Build Service Account IAM
@@ -331,6 +369,8 @@ module "monitoring" {
 resource "google_billing_budget" "monthly" {
   billing_account = var.billing_account_id
   display_name    = "${local.name}-monthly-budget"
+
+  depends_on = [google_project_service.required_apis]
 
   budget_filter {
     projects = ["projects/${data.google_project.current.number}"]
