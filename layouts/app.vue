@@ -409,12 +409,7 @@ const announcementBannerColors: Record<string, string> = {
 
         <!-- Search -->
         <div class="flex-1 max-w-xl">
-          <UInput
-            icon="i-heroicons-magnifying-glass"
-            placeholder="Search entries, projects, tags..."
-            size="sm"
-            class="w-full"
-          />
+          <AppGlobalSearchInput />
         </div>
 
         <!-- Quick add button -->
@@ -662,6 +657,8 @@ const announcementBannerColors: Record<string, string> = {
       :default-project-id="quickAddProjectId"
       @created="notifyEntryCreated"
     />
+
+    <AppGlobalSearch />
 
     <!-- Feedback Modal -->
     <UModal v-model:open="isFeedbackOpen">
