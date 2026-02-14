@@ -70,7 +70,7 @@ steps:
       - |
         /workspace/cloud-sql-proxy ${_CLOUD_SQL_CONNECTION} --port 5433 &
         sleep 3
-        node ./node_modules/.bin/tsx scripts/db/migrate.ts up
+        ./node_modules/.bin/tsx scripts/db/migrate.ts up
         RESULT=$$?
         kill $$(pgrep cloud-sql-proxy) 2>/dev/null || true
         exit $$RESULT
@@ -88,7 +88,7 @@ steps:
       - |
         /workspace/cloud-sql-proxy ${_CLOUD_SQL_CONNECTION} --port 5433 &
         sleep 3
-        node ./node_modules/.bin/tsx scripts/db/migrate.ts validate
+        ./node_modules/.bin/tsx scripts/db/migrate.ts validate
         RESULT=$$?
         kill $$(pgrep cloud-sql-proxy) 2>/dev/null || true
         exit $$RESULT
