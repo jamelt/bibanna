@@ -37,14 +37,11 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nuxtjs
 
-COPY --from=builder /app/.output ./.output
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/scripts/db ./scripts/db
-COPY --from=builder /app/server/database/migrations ./server/database/migrations
-
-RUN chown -R nuxtjs:nodejs /app
+COPY --from=builder --chown=nuxtjs:nodejs /app/.output ./.output
+COPY --from=deps    --chown=nuxtjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nuxtjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nuxtjs:nodejs /app/scripts/db ./scripts/db
+COPY --from=builder --chown=nuxtjs:nodejs /app/server/database/migrations ./server/database/migrations
 
 USER nuxtjs
 
