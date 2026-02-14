@@ -50,7 +50,7 @@ for (const device of mobileDevices) {
       if (device.isMobile) {
         await page.getByTestId('quick-add-fab').click()
 
-        await expect(page.getByText('Quick Add')).toBeVisible()
+        await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible()
       }
     })
 
@@ -108,7 +108,7 @@ for (const device of mobileDevices) {
       if (device.isMobile) {
         await page.getByTestId('quick-add-fab').click()
 
-        const urlInput = page.getByPlaceholder('https://example.com/article')
+        const urlInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
         await urlInput.tap()
         await urlInput.fill('https://example.com/test')
 
@@ -121,11 +121,13 @@ for (const device of mobileDevices) {
       await page.goto('/app?action=quick-add')
 
       if (device.isMobile) {
-        await expect(page.getByText('Quick Add')).toBeVisible()
+        await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible()
 
         await page.goBack()
 
-        await expect(page.getByText('Quick Add')).not.toBeVisible({ timeout: 5000 })
+        await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
+          timeout: 5000,
+        })
       }
     })
 

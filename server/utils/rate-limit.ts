@@ -45,6 +45,10 @@ export function enforceRateLimit(
   maxRequests: number,
   windowMs: number,
 ) {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    return
+  }
+
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
   const key = `${prefix}:${ip}`
 

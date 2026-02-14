@@ -43,9 +43,12 @@ export default defineConfig({
   webServer: process.env.BASE_URL
     ? undefined
     : {
-        command: 'pnpm dev',
+        command: 'NODE_ENV=development pnpm dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !isCI,
         timeout: 120 * 1000,
+        env: {
+          NODE_ENV: 'development',
+        },
       },
 })

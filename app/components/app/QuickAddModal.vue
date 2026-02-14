@@ -704,6 +704,7 @@ onMounted(() => {
   >
     <template #content>
       <div
+        data-testid="quick-add-modal"
         class="flex flex-col bg-white dark:bg-gray-900 overflow-hidden"
         :class="isMobile ? 'h-full w-full' : 'min-h-112 max-h-[min(90vh,44rem)] rounded-lg'"
         @keydown="handleKeydown"
@@ -725,6 +726,7 @@ onMounted(() => {
               icon="i-heroicons-x-mark"
               color="neutral"
               size="sm"
+              data-testid="quick-add-close"
               @click="resetAndClose"
             />
           </div>

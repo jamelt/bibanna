@@ -168,6 +168,7 @@ test.describe('Smoke Tests - Navigation', () => {
 
     // Modal should appear
     await expect(page.getByTestId('quick-add-modal')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible()
 
     // Close button should work
     await page.getByTestId('quick-add-close').click()

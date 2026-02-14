@@ -41,9 +41,12 @@ test.describe('Dashboard Quick Actions', () => {
   test('Add Entry opens Quick Add modal so user can add a reference', async ({ page }) => {
     await page.getByTestId('dashboard-quick-action-add-entry').click()
 
-    await expect(page.getByRole('heading', { name: 'Quick Add' })).toBeVisible({ timeout: 5000 })
-    await expect(page.getByRole('button', { name: 'Type' })).toBeVisible()
-    await expect(page.getByPlaceholder('Enter title...')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
+      timeout: 5000,
+    })
+    await expect(
+      page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields'),
+    ).toBeVisible()
   })
 
   test('New Project opens create modal and user can create a project', async ({ page }) => {
