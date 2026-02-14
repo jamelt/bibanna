@@ -125,44 +125,15 @@ async function handleOAuthLogin(provider: string) {
 
         <USeparator label="or continue with" class="my-6" />
 
-        <div class="space-y-3">
-          <UButton
-            icon="i-simple-icons-google"
-            variant="outline"
-            color="neutral"
-            block
-            @click="handleOAuthLogin('google')"
-          >
-            Google
-          </UButton>
-          <UButton
-            icon="i-simple-icons-apple"
-            variant="outline"
-            color="neutral"
-            block
-            @click="handleOAuthLogin('apple')"
-          >
-            Apple
-          </UButton>
-          <UButton
-            icon="i-simple-icons-facebook"
-            variant="outline"
-            color="neutral"
-            block
-            @click="handleOAuthLogin('facebook')"
-          >
-            Facebook
-          </UButton>
-          <UButton
-            icon="i-simple-icons-microsoft"
-            variant="outline"
-            color="neutral"
-            block
-            @click="handleOAuthLogin('microsoft')"
-          >
-            Microsoft
-          </UButton>
-        </div>
+        <UButton
+          icon="i-simple-icons-google"
+          variant="outline"
+          color="neutral"
+          block
+          @click="handleOAuthLogin('google')"
+        >
+          Google
+        </UButton>
 
         <p class="mt-6 text-xs text-center text-gray-500 dark:text-gray-400">
           By creating an account, you agree to our

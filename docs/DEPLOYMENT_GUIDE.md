@@ -353,10 +353,13 @@ curl https://annobib.com/api/health
 
 ### Auth0
 
-1. Create two Auth0 applications (or tenants):
-   - **Staging**: Allowed callback URLs: `https://staging.annobib.com/api/auth/callback`
-   - **Production**: Allowed callback URLs: `https://annobib.com/api/auth/callback`
-2. Update the Auth0 secrets in Secret Manager for each environment
+1. Create two Auth0 applications (or tenants), each set to **Regular Web Application** type
+2. Enable the **Google** social connection under Authentication > Social in the Auth0 Dashboard
+3. Configure Allowed Callback URLs for each application:
+   - **Staging**: `https://staging.annobib.com/api/auth/google`
+   - **Production**: `https://annobib.com/api/auth/google`
+   - **Local development**: `http://localhost:3000/api/auth/google`
+4. Update the Auth0 secrets (`NUXT_AUTH0_DOMAIN`, `NUXT_AUTH0_CLIENT_ID`, `NUXT_AUTH0_CLIENT_SECRET`) in Secret Manager for each environment
 
 ---
 

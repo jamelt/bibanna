@@ -30,6 +30,13 @@ export default defineNuxtConfig({
     auth0Domain: process.env.NUXT_AUTH0_DOMAIN,
     auth0ClientId: process.env.NUXT_AUTH0_CLIENT_ID,
     auth0ClientSecret: process.env.NUXT_AUTH0_CLIENT_SECRET,
+    oauth: {
+      auth0: {
+        domain: process.env.NUXT_AUTH0_DOMAIN,
+        clientId: process.env.NUXT_AUTH0_CLIENT_ID,
+        clientSecret: process.env.NUXT_AUTH0_CLIENT_SECRET,
+      },
+    },
     stripeSecretKey: process.env.NUXT_STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.NUXT_STRIPE_WEBHOOK_SECRET,
     openaiApiKey: process.env.NUXT_OPENAI_API_KEY,
