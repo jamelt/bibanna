@@ -1,20 +1,30 @@
-import { previewStyleWithEntry, formatSingleEntryWithSubsequent, getStyleById } from '~/server/services/citation'
+import {
+  previewStyleWithEntry,
+  formatSingleEntryWithSubsequent,
+  getStyleById,
+} from '~/server/services/citation'
 import { z } from 'zod'
 import type { Entry, Author } from '~/shared/types'
 
 const previewSchema = z.object({
   styleId: z.string().optional(),
   cslXml: z.string().optional(),
-  sampleEntry: z.object({
-    title: z.string(),
-    authors: z.array(z.object({
-      firstName: z.string().optional(),
-      lastName: z.string(),
-    })).optional(),
-    year: z.number().optional(),
-    entryType: z.string(),
-    metadata: z.record(z.any()).optional(),
-  }).optional(),
+  sampleEntry: z
+    .object({
+      title: z.string(),
+      authors: z
+        .array(
+          z.object({
+            firstName: z.string().optional(),
+            lastName: z.string(),
+          }),
+        )
+        .optional(),
+      year: z.number().optional(),
+      entryType: z.string(),
+      metadata: z.record(z.any()).optional(),
+    })
+    .optional(),
 })
 
 const SAMPLE_ENTRIES: Entry[] = [
@@ -22,9 +32,7 @@ const SAMPLE_ENTRIES: Entry[] = [
     id: 'sample-book',
     userId: 'system',
     title: 'The Structure of Scientific Revolutions',
-    authors: [
-      { firstName: 'Thomas S.', lastName: 'Kuhn' },
-    ],
+    authors: [{ firstName: 'Thomas S.', lastName: 'Kuhn' }],
     year: 1962,
     entryType: 'book',
     metadata: {
@@ -61,9 +69,7 @@ const SAMPLE_ENTRIES: Entry[] = [
     id: 'sample-website',
     userId: 'system',
     title: 'World Health Organization: COVID-19 Dashboard',
-    authors: [
-      { lastName: 'World Health Organization' },
-    ],
+    authors: [{ lastName: 'World Health Organization' }],
     year: 2024,
     entryType: 'website',
     metadata: {
@@ -98,7 +104,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entryToFormat = sampleEntry
-    ? {
+    ? ({
         id: 'preview',
         userId: 'system',
         title: sampleEntry.title,
@@ -109,7 +115,7 @@ export default defineEventHandler(async (event) => {
         isFavorite: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as Entry
+      } as Entry)
     : SAMPLE_ENTRIES[0]
 
   if (cslXml) {

@@ -17,10 +17,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingTag = await db.query.tags.findFirst({
-    where: and(
-      eq(tags.userId, user.id),
-      eq(tags.name, parsed.data.name),
-    ),
+    where: and(eq(tags.userId, user.id), eq(tags.name, parsed.data.name)),
   })
 
   if (existingTag) {

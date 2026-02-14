@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import type { Tag } from '~/shared/types'
 
-const props = withDefaults(defineProps<{
-  modelValue: string[]
-  size?: 'xs' | 'sm' | 'md'
-  placeholder?: string
-  showCreateHint?: boolean
-}>(), {
-  size: 'sm',
-  placeholder: 'Add tags...',
-  showCreateHint: true,
-})
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[]
+    size?: 'xs' | 'sm' | 'md'
+    placeholder?: string
+    showCreateHint?: boolean
+  }>(),
+  {
+    size: 'sm',
+    placeholder: 'Add tags...',
+    showCreateHint: true,
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [ids: string[]]
@@ -30,22 +33,20 @@ onMounted(() => {
 
 const filteredTags = computed(() => {
   const results = searchTags(inputValue.value)
-  return results.map(tag => ({
+  return results.map((tag) => ({
     ...tag,
     selected: props.modelValue.includes(tag.id),
   }))
 })
 
 const selectedTags = computed(() => {
-  return props.modelValue
-    .map(id => tags.value.find(t => t.id === id))
-    .filter(Boolean) as Tag[]
+  return props.modelValue.map((id) => tags.value.find((t) => t.id === id)).filter(Boolean) as Tag[]
 })
 
 const showCreateOption = computed(() => {
   if (!inputValue.value.trim()) return false
   const lower = inputValue.value.trim().toLowerCase()
-  return !tags.value.some(t => t.name.toLowerCase() === lower)
+  return !tags.value.some((t) => t.name.toLowerCase() === lower)
 })
 
 function toggleTag(tagId: string) {
@@ -60,7 +61,10 @@ function toggleTag(tagId: string) {
 }
 
 function removeTag(tagId: string) {
-  emit('update:modelValue', props.modelValue.filter(id => id !== tagId))
+  emit(
+    'update:modelValue',
+    props.modelValue.filter((id) => id !== tagId),
+  )
 }
 
 async function handleCreateTag() {
@@ -70,7 +74,10 @@ async function handleCreateTag() {
   isCreating.value = true
   try {
     const parts = value.includes(',')
-      ? value.split(',').map(s => s.trim()).filter(Boolean)
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [value]
 
     const newIds = [...props.modelValue]
@@ -95,7 +102,7 @@ function handleKeydown(e: KeyboardEvent) {
       handleCreateTag()
     } else if (inputValue.value.trim()) {
       const match = filteredTags.value.find(
-        t => t.name.toLowerCase() === inputValue.value.trim().toLowerCase(),
+        (t) => t.name.toLowerCase() === inputValue.value.trim().toLowerCase(),
       )
       if (match) {
         toggleTag(match.id)
@@ -119,10 +126,14 @@ function focusInput() {
 
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'xs': return { badge: 'text-[10px] px-1 py-0', input: 'text-xs', gap: 'gap-0.5' }
-    case 'sm': return { badge: 'text-xs px-1.5 py-0.5', input: 'text-sm', gap: 'gap-1' }
-    case 'md': return { badge: 'text-sm px-2 py-0.5', input: 'text-sm', gap: 'gap-1.5' }
-    default: return { badge: 'text-xs px-1.5 py-0.5', input: 'text-sm', gap: 'gap-1' }
+    case 'xs':
+      return { badge: 'text-[10px] px-1 py-0', input: 'text-xs', gap: 'gap-0.5' }
+    case 'sm':
+      return { badge: 'text-xs px-1.5 py-0.5', input: 'text-sm', gap: 'gap-1' }
+    case 'md':
+      return { badge: 'text-sm px-2 py-0.5', input: 'text-sm', gap: 'gap-1.5' }
+    default:
+      return { badge: 'text-xs px-1.5 py-0.5', input: 'text-sm', gap: 'gap-1' }
   }
 })
 </script>
@@ -165,9 +176,16 @@ const sizeClasses = computed(() => {
         v-model="inputValue"
         type="text"
         :placeholder="selectedTags.length === 0 ? placeholder : ''"
-        :class="[sizeClasses.input, 'flex-1 min-w-[80px] bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500']"
+        :class="[
+          sizeClasses.input,
+          'flex-1 min-w-[80px] bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500',
+        ]"
         @focus="isOpen = true"
-        @blur="() => { setTimeout(() => isOpen = false, 150) }"
+        @blur="
+          () => {
+            setTimeout(() => (isOpen = false), 150)
+          }
+        "
         @keydown="handleKeydown"
       />
     </div>
@@ -194,15 +212,24 @@ const sizeClasses = computed(() => {
           <UIcon name="i-heroicons-plus-circle" class="w-4 h-4 text-primary-500 shrink-0" />
           <span>
             Create
-            <strong class="font-medium text-gray-900 dark:text-white">"{{ inputValue.trim() }}"</strong>
+            <strong class="font-medium text-gray-900 dark:text-white"
+              >"{{ inputValue.trim() }}"</strong
+            >
           </span>
           <span v-if="inputValue.includes(',')" class="text-xs text-gray-400 ml-auto">
-            {{ inputValue.split(',').filter(s => s.trim()).length }} tags
+            {{ inputValue.split(',').filter((s) => s.trim()).length }} tags
           </span>
-          <UIcon v-if="isCreating" name="i-heroicons-arrow-path" class="w-3.5 h-3.5 animate-spin ml-auto" />
+          <UIcon
+            v-if="isCreating"
+            name="i-heroicons-arrow-path"
+            class="w-3.5 h-3.5 animate-spin ml-auto"
+          />
         </button>
 
-        <div v-if="showCreateOption && filteredTags.length > 0" class="border-t border-gray-100 dark:border-gray-800" />
+        <div
+          v-if="showCreateOption && filteredTags.length > 0"
+          class="border-t border-gray-100 dark:border-gray-800"
+        />
 
         <button
           v-for="tag in filteredTags"
@@ -211,11 +238,15 @@ const sizeClasses = computed(() => {
           class="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-left transition-colors"
           @mousedown.prevent="toggleTag(tag.id)"
         >
+          <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: tag.color }" />
           <span
-            class="w-3 h-3 rounded-full shrink-0"
-            :style="{ backgroundColor: tag.color }"
-          />
-          <span class="flex-1 truncate" :class="tag.selected ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'">
+            class="flex-1 truncate"
+            :class="
+              tag.selected
+                ? 'font-medium text-gray-900 dark:text-white'
+                : 'text-gray-700 dark:text-gray-300'
+            "
+          >
             {{ tag.name }}
           </span>
           <UIcon
@@ -225,11 +256,17 @@ const sizeClasses = computed(() => {
           />
         </button>
 
-        <div v-if="filteredTags.length === 0 && !showCreateOption" class="px-3 py-4 text-center text-sm text-gray-400">
+        <div
+          v-if="filteredTags.length === 0 && !showCreateOption"
+          class="px-3 py-4 text-center text-sm text-gray-400"
+        >
           No tags found
         </div>
 
-        <div v-if="showCreateHint && !showCreateOption && filteredTags.length > 0" class="border-t border-gray-100 dark:border-gray-800 px-3 py-1.5 text-[10px] text-gray-400">
+        <div
+          v-if="showCreateHint && !showCreateOption && filteredTags.length > 0"
+          class="border-t border-gray-100 dark:border-gray-800 px-3 py-1.5 text-[10px] text-gray-400"
+        >
           Type to create new tags &middot; Use commas for multiple
         </div>
       </div>

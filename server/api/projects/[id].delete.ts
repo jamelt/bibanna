@@ -27,10 +27,7 @@ export default defineEventHandler(async (event) => {
 
   await db
     .delete(projects)
-    .where(and(
-      eq(projects.id, existingProject.id),
-      eq(projects.userId, user.id),
-    ))
+    .where(and(eq(projects.id, existingProject.id), eq(projects.userId, user.id)))
 
   return { success: true, deletedId: existingProject.id }
 })

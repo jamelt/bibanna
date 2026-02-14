@@ -59,7 +59,7 @@ export function entryToCSLItem(entry: Entry): CitationItem {
   }
 
   if (entry.authors && entry.authors.length > 0) {
-    item.author = entry.authors.map(a => ({
+    item.author = entry.authors.map((a) => ({
       family: a.lastName,
       given: a.firstName || '',
     }))
@@ -92,16 +92,12 @@ export function entryToCSLItem(entry: Entry): CitationItem {
     if (meta.accessDate) {
       const accessDate = new Date(meta.accessDate)
       item.accessed = {
-        'date-parts': [[
-          accessDate.getFullYear(),
-          accessDate.getMonth() + 1,
-          accessDate.getDate(),
-        ]],
+        'date-parts': [[accessDate.getFullYear(), accessDate.getMonth() + 1, accessDate.getDate()]],
       }
     }
 
     if (meta.editors && meta.editors.length > 0) {
-      item.editor = meta.editors.map(e => ({
+      item.editor = meta.editors.map((e) => ({
         family: e.lastName,
         given: e.firstName || '',
       }))
@@ -117,7 +113,7 @@ export async function createCitationProcessor(
   items: CitationItem[],
 ): Promise<any> {
   const CSLModule = await getCSL()
-  
+
   const itemsById: Record<string, CitationItem> = {}
   for (const item of items) {
     itemsById[item.id] = item
@@ -132,10 +128,7 @@ export async function createCitationProcessor(
   return engine
 }
 
-export function formatBibliography(
-  engine: any,
-  itemIds: string[],
-): string[] {
+export function formatBibliography(engine: any, itemIds: string[]): string[] {
   engine.updateItems(itemIds)
   const result = engine.makeBibliography()
 
@@ -152,13 +145,9 @@ export function formatBibliography(
   return entries.map((entry: string) => entry.trim())
 }
 
-export function formatCitation(
-  engine: any,
-  itemIds: string[],
-  noteIndex: number = 0,
-): string {
+export function formatCitation(engine: any, itemIds: string[], noteIndex: number = 0): string {
   const citation = {
-    citationItems: itemIds.map(id => ({ id })),
+    citationItems: itemIds.map((id) => ({ id })),
     properties: { noteIndex },
   }
 
@@ -172,17 +161,11 @@ export function formatCitation(
   return ''
 }
 
-export function formatInTextCitation(
-  engine: any,
-  itemId: string,
-): string {
+export function formatInTextCitation(engine: any, itemId: string): string {
   return formatCitation(engine, [itemId], 1)
 }
 
-export function formatSubsequentCitation(
-  engine: any,
-  itemId: string,
-): string {
+export function formatSubsequentCitation(engine: any, itemId: string): string {
   const firstCitationId = `cite-first-${itemId}`
   const firstCitation = {
     citationID: firstCitationId,
@@ -196,11 +179,7 @@ export function formatSubsequentCitation(
     citationItems: [{ id: itemId }],
     properties: { noteIndex: 2 },
   }
-  const result = engine.processCitationCluster(
-    subsequentCitation,
-    [[firstCitationId, 1]],
-    [],
-  )
+  const result = engine.processCitationCluster(subsequentCitation, [[firstCitationId, 1]], [])
 
   if (result && result[1] && result[1][0]) {
     return result[1][0][1]

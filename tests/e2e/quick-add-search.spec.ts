@@ -8,14 +8,16 @@ async function signUpAndLogin(page: import('@playwright/test').Page) {
   }
   await page.goto('/signup')
   await page.waitForLoadState('networkidle')
-  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({
+    timeout: 5000,
+  })
   await page.getByPlaceholder('Your name').fill(testUser.name)
   await page.getByPlaceholder('you@example.com').fill(testUser.email)
   await page.locator('input[type="password"]').first().fill(testUser.password)
   await page.locator('input[type="password"]').nth(1).fill(testUser.password)
 
   const [response] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/api/auth/register'), { timeout: 15000 }),
+    page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 15000 }),
     page.getByRole('button', { name: 'Create Account' }).click(),
   ])
   if (!response.ok()) {
@@ -39,13 +41,27 @@ test.describe('QuickAdd Search - Field Qualifier Pills', () => {
     await page.goto('/app')
     await openQuickAddModal(page)
 
-    await expect(page.getByRole('button', { name: 'Any' }).or(page.locator('span:text("Any")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Author' }).or(page.locator('span:text("Author")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Title' }).or(page.locator('span:text("Title")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Publisher' }).or(page.locator('span:text("Publisher")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Journal' }).or(page.locator('span:text("Journal")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Subject' }).or(page.locator('span:text("Subject")'))).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Year' }).or(page.locator('span:text("Year")'))).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Any' }).or(page.locator('span:text("Any")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Author' }).or(page.locator('span:text("Author")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Title' }).or(page.locator('span:text("Title")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Publisher' }).or(page.locator('span:text("Publisher")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Journal' }).or(page.locator('span:text("Journal")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Subject' }).or(page.locator('span:text("Subject")')),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Year' }).or(page.locator('span:text("Year")')),
+    ).toBeVisible()
   })
 
   test('clicking Author pill shows qualifier badge and updates placeholder', async ({ page }) => {
@@ -137,7 +153,9 @@ test.describe('QuickAdd Search - Keyboard Navigation', () => {
     await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({ timeout: 5000 })
 
     await page.keyboard.press('Meta+k')
-    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({ timeout: 3000 })
+    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
+      timeout: 3000,
+    })
   })
 })
 
@@ -157,7 +175,9 @@ test.describe('QuickAdd Search - API Integration', () => {
       { timeout: 15000 },
     )
 
-    await expect(page.locator('button:has-text("The Power Broker")').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('button:has-text("The Power Broker")').first()).toBeVisible({
+      timeout: 10000,
+    })
   })
 
   test('searching by author uses field qualifier in API call', async ({ page }) => {

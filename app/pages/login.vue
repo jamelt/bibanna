@@ -13,11 +13,15 @@ const error = ref('')
 
 const redirectTo = computed(() => (route.query.redirect as string) || '/app')
 
-watch(loggedIn, async (value) => {
-  if (value) {
-    await navigateTo(redirectTo.value, { external: true })
-  }
-}, { immediate: true })
+watch(
+  loggedIn,
+  async (value) => {
+    if (value) {
+      await navigateTo(redirectTo.value, { external: true })
+    }
+  },
+  { immediate: true },
+)
 
 async function handleLogin() {
   error.value = ''
@@ -30,11 +34,9 @@ async function handleLogin() {
     })
     await fetchSession()
     await navigateTo(redirectTo.value, { external: true })
-  }
-  catch (e: any) {
+  } catch (e: any) {
     error.value = e.data?.message || 'Invalid email or password'
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }
@@ -100,14 +102,7 @@ async function handleOAuthLogin(provider: string) {
             </NuxtLink>
           </div>
 
-          <UButton
-            type="submit"
-            color="primary"
-            block
-            :loading="isLoading"
-          >
-            Sign in
-          </UButton>
+          <UButton type="submit" color="primary" block :loading="isLoading"> Sign in </UButton>
         </form>
 
         <USeparator label="or continue with" class="my-6" />

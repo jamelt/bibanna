@@ -13,33 +13,36 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     await page.locator('input[type="password"]').first().fill(testUser.password)
     await page.locator('input[type="password"]').nth(1).fill(testUser.password)
     await page.getByRole('button', { name: 'Create Account' }).click()
-    
+
     await expect(page).toHaveURL('/app', { timeout: 10000 })
   })
 
   test('newly created entry appears immediately without page reload', async ({ page }) => {
     await page.goto('/app/library')
     await page.waitForLoadState('networkidle')
-    
+
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
 
     const entryTitle = `Test Book ${Date.now()}`
-    
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
-    
+
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
+
     await expect(page.getByLabel('Title')).toBeVisible()
     await page.getByLabel('Title').fill(entryTitle)
-    
+
     await page.getByLabel('First Name').fill('John')
     await page.getByLabel('Last Name').fill('Doe')
     await page.getByRole('button', { name: 'Add Author' }).click()
-    
+
     await page.getByRole('button', { name: /Create Entry/i }).click()
-    
+
     await expect(page.getByLabel('Title')).toBeHidden({ timeout: 10000 })
-    
+
     await expect(page.getByText(entryTitle)).toBeVisible({ timeout: 5000 })
-    
+
     const entryElement = page.locator(`text="${entryTitle}"`).first()
     await expect(entryElement).toBeVisible()
   })
@@ -55,17 +58,20 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     ]
 
     for (const entry of entries) {
-      await page.getByRole('button', { name: /Add Entry/i }).first().click()
+      await page
+        .getByRole('button', { name: /Add Entry/i })
+        .first()
+        .click()
       await expect(page.getByLabel('Title')).toBeVisible()
-      
+
       await page.getByLabel('Title').fill(entry.title)
       await page.getByLabel('First Name').fill(entry.author)
       await page.getByLabel('Last Name').fill('Author')
       await page.getByRole('button', { name: 'Add Author' }).click()
       await page.getByRole('button', { name: /Create Entry/i }).click()
-      
+
       await expect(page.getByLabel('Title')).toBeHidden({ timeout: 10000 })
-      
+
       await expect(page.getByText(entry.title)).toBeVisible({ timeout: 5000 })
     }
 
@@ -79,7 +85,10 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     await page.waitForLoadState('networkidle')
 
     const firstEntry = `First Entry ${Date.now()}`
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
     await page.getByLabel('Title').fill(firstEntry)
     await page.getByLabel('First Name').fill('First')
     await page.getByLabel('Last Name').fill('Author')
@@ -90,7 +99,10 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     await page.waitForTimeout(1000)
 
     const secondEntry = `Second Entry ${Date.now()}`
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
     await page.getByLabel('Title').fill(secondEntry)
     await page.getByLabel('First Name').fill('Second')
     await page.getByLabel('Last Name').fill('Author')
@@ -114,18 +126,25 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     await page.waitForLoadState('networkidle')
 
     const entryTitle = `Tagged Entry ${Date.now()}`
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
     await page.getByLabel('Title').fill(entryTitle)
     await page.getByLabel('First Name').fill('Tagged')
     await page.getByLabel('Last Name').fill('Author')
     await page.getByRole('button', { name: 'Add Author' }).click()
-    
-    const tagSelect = page.locator('label:has-text("Tags")').locator('..').locator('select, input, [role="combobox"]').first()
+
+    const tagSelect = page
+      .locator('label:has-text("Tags")')
+      .locator('..')
+      .locator('select, input, [role="combobox"]')
+      .first()
     if (await tagSelect.isVisible()) {
       await tagSelect.click()
       await page.getByText('Important').click()
     }
-    
+
     await page.getByRole('button', { name: /Create Entry/i }).click()
     await expect(page.getByText(entryTitle)).toBeVisible({ timeout: 5000 })
   })
@@ -135,21 +154,24 @@ test.describe('Library Entry Creation - Immediate Display', () => {
     await page.waitForLoadState('networkidle')
 
     const hasEmptyState = await page.locator('text=/Your library is empty|No entries/i').isVisible()
-    
+
     if (hasEmptyState) {
       await expect(page.locator('text=/Your library is empty|No entries/i')).toBeVisible()
     }
 
     const entryTitle = `First Ever Entry ${Date.now()}`
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
     await page.getByLabel('Title').fill(entryTitle)
     await page.getByLabel('First Name').fill('First')
     await page.getByLabel('Last Name').fill('Author')
     await page.getByRole('button', { name: 'Add Author' }).click()
     await page.getByRole('button', { name: /Create Entry/i }).click()
-    
+
     await expect(page.getByText(entryTitle)).toBeVisible({ timeout: 5000 })
-    
+
     if (hasEmptyState) {
       await expect(page.locator('text=/Your library is empty|No entries/i')).not.toBeVisible()
     }

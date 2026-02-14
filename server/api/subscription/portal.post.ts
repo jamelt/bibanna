@@ -20,10 +20,7 @@ export default defineEventHandler(async (event) => {
   const baseUrl = getHeader(event, 'origin') || 'http://localhost:3000'
   const returnUrl = `${baseUrl}/app/subscription`
 
-  const session = await createCustomerPortalSession(
-    dbUser.stripeCustomerId,
-    returnUrl,
-  )
+  const session = await createCustomerPortalSession(dbUser.stripeCustomerId, returnUrl)
 
   return {
     url: session.url,

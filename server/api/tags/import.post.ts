@@ -5,7 +5,10 @@ import { eq, and } from 'drizzle-orm'
 
 const importTagSchema = z.object({
   name: z.string().min(1),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   description: z.string().optional(),
   groupName: z.string().optional(),
 })
@@ -48,12 +51,10 @@ export default defineEventHandler(async (event) => {
           })
           .where(eq(tags.id, existing.id))
         updated++
-      }
-      else {
+      } else {
         skipped++
       }
-    }
-    else {
+    } else {
       await db.insert(tags).values({
         userId: user.id,
         name: tagData.name,

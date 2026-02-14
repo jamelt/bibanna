@@ -34,17 +34,14 @@ export async function buildProjectGraph(projectId: string, userId: string): Prom
     .from(entryProjects)
     .where(eq(entryProjects.projectId, projectId))
 
-  const entryIds = projectEntryIds.map(e => e.entryId)
+  const entryIds = projectEntryIds.map((e) => e.entryId)
 
   if (entryIds.length === 0) {
     return { nodes: [], edges: [] }
   }
 
   const projectEntries = await db.query.entries.findMany({
-    where: and(
-      inArray(entries.id, entryIds),
-      eq(entries.userId, userId),
-    ),
+    where: and(inArray(entries.id, entryIds), eq(entries.userId, userId)),
   })
 
   const entryTagsData = await db
@@ -83,7 +80,7 @@ export async function buildProjectGraph(projectId: string, userId: string): Prom
       metadata: {
         entryType: entry.entryType,
         year: entry.year || undefined,
-        authors: (entry.authors as any[])?.map(a => `${a.firstName || ''} ${a.lastName}`.trim()),
+        authors: (entry.authors as any[])?.map((a) => `${a.firstName || ''} ${a.lastName}`.trim()),
         annotationCount: annotationCountMap.get(entry.id) || 0,
       },
     })
@@ -177,9 +174,10 @@ export async function buildProjectGraph(projectId: string, userId: string): Prom
       for (let i = 0; i < entryIdsList.length; i++) {
         for (let j = i + 1; j < entryIdsList.length; j++) {
           const existingSameAuthor = edges.find(
-            e => e.type === 'same_author'
-              && ((e.source === entryIdsList[i] && e.target === entryIdsList[j])
-                || (e.source === entryIdsList[j] && e.target === entryIdsList[i])),
+            (e) =>
+              e.type === 'same_author' &&
+              ((e.source === entryIdsList[i] && e.target === entryIdsList[j]) ||
+                (e.source === entryIdsList[j] && e.target === entryIdsList[i])),
           )
           if (!existingSameAuthor) {
             edges.push({
@@ -208,7 +206,7 @@ export async function buildLibraryGraph(userId: string, limit = 200): Promise<Gr
     return { nodes: [], edges: [] }
   }
 
-  const entryIds = userEntries.map(e => e.id)
+  const entryIds = userEntries.map((e) => e.id)
 
   const entryTagsData = await db
     .select({
@@ -246,7 +244,7 @@ export async function buildLibraryGraph(userId: string, limit = 200): Promise<Gr
       metadata: {
         entryType: entry.entryType,
         year: entry.year || undefined,
-        authors: (entry.authors as any[])?.map(a => `${a.firstName || ''} ${a.lastName}`.trim()),
+        authors: (entry.authors as any[])?.map((a) => `${a.firstName || ''} ${a.lastName}`.trim()),
         annotationCount: annotationCountMap.get(entry.id) || 0,
       },
     })
@@ -340,9 +338,10 @@ export async function buildLibraryGraph(userId: string, limit = 200): Promise<Gr
       for (let i = 0; i < entryIdsList.length; i++) {
         for (let j = i + 1; j < entryIdsList.length; j++) {
           const existingSameAuthor = edges.find(
-            e => e.type === 'same_author'
-              && ((e.source === entryIdsList[i] && e.target === entryIdsList[j])
-                || (e.source === entryIdsList[j] && e.target === entryIdsList[i])),
+            (e) =>
+              e.type === 'same_author' &&
+              ((e.source === entryIdsList[i] && e.target === entryIdsList[j]) ||
+                (e.source === entryIdsList[j] && e.target === entryIdsList[i])),
           )
           if (!existingSameAuthor) {
             edges.push({
@@ -369,30 +368,33 @@ export function filterGraphByType(
     showSimilarEdges?: boolean
   },
 ): GraphData {
-  const { showAuthors = true, showTags = true, showSameAuthorEdges = true, showSimilarEdges = true } = options
+  const {
+    showAuthors = true,
+    showTags = true,
+    showSameAuthorEdges = true,
+    showSimilarEdges = true,
+  } = options
 
   let filteredNodes = graph.nodes
 
   if (!showAuthors) {
-    filteredNodes = filteredNodes.filter(n => n.type !== 'author')
+    filteredNodes = filteredNodes.filter((n) => n.type !== 'author')
   }
 
   if (!showTags) {
-    filteredNodes = filteredNodes.filter(n => n.type !== 'tag')
+    filteredNodes = filteredNodes.filter((n) => n.type !== 'tag')
   }
 
-  const nodeIds = new Set(filteredNodes.map(n => n.id))
+  const nodeIds = new Set(filteredNodes.map((n) => n.id))
 
-  let filteredEdges = graph.edges.filter(
-    e => nodeIds.has(e.source) && nodeIds.has(e.target),
-  )
+  let filteredEdges = graph.edges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target))
 
   if (!showSameAuthorEdges) {
-    filteredEdges = filteredEdges.filter(e => e.type !== 'same_author')
+    filteredEdges = filteredEdges.filter((e) => e.type !== 'same_author')
   }
 
   if (!showSimilarEdges) {
-    filteredEdges = filteredEdges.filter(e => e.type !== 'similar_to')
+    filteredEdges = filteredEdges.filter((e) => e.type !== 'similar_to')
   }
 
   return { nodes: filteredNodes, edges: filteredEdges }

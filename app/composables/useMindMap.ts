@@ -29,10 +29,7 @@ export interface MindMapOptions {
   onNodeHover?: (node: MindMapNode | null) => void
 }
 
-export function useMindMap(
-  containerRef: Ref<HTMLElement | null>,
-  options: MindMapOptions = {},
-) {
+export function useMindMap(containerRef: Ref<HTMLElement | null>, options: MindMapOptions = {}) {
   const {
     width = 800,
     height = 600,
@@ -108,8 +105,8 @@ export function useMindMap(
         'link',
         d3
           .forceLink<MindMapNode, MindMapEdge>()
-          .id(d => d.id)
-          .distance(d => linkDistance / (d.weight || 1)),
+          .id((d) => d.id)
+          .distance((d) => linkDistance / (d.weight || 1)),
       )
       .force('charge', d3.forceManyBody().strength(chargeStrength))
       .force('center', d3.forceCenter(width / 2, height / 2))
@@ -119,8 +116,8 @@ export function useMindMap(
   function update(newNodes: MindMapNode[], newEdges: MindMapEdge[]) {
     if (!svg || !simulation) return
 
-    nodes.value = newNodes.map(n => ({ ...n }))
-    edges.value = newEdges.map(e => ({ ...e }))
+    nodes.value = newNodes.map((n) => ({ ...n }))
+    edges.value = newEdges.map((e) => ({ ...e }))
 
     const g = svg.select('.graph-container')
 
@@ -134,9 +131,9 @@ export function useMindMap(
     const linkEnter = link
       .enter()
       .append('line')
-      .attr('stroke', d => getEdgeColor(d.type))
+      .attr('stroke', (d) => getEdgeColor(d.type))
       .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', d => Math.sqrt(d.weight) * 2)
+      .attr('stroke-width', (d) => Math.sqrt(d.weight) * 2)
 
     const linkMerge = linkEnter.merge(link as any)
 
@@ -150,8 +147,8 @@ export function useMindMap(
     const nodeEnter = node
       .enter()
       .append('circle')
-      .attr('r', d => getNodeRadius(d))
-      .attr('fill', d => nodeColors[d.type] || '#6366f1')
+      .attr('r', (d) => getNodeRadius(d))
+      .attr('fill', (d) => nodeColors[d.type] || '#6366f1')
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer')
@@ -174,14 +171,17 @@ export function useMindMap(
         d3.select(event.currentTarget).attr('stroke', '#fff').attr('stroke-width', 2)
       })
 
-    nodeEnter.append('title').text(d => d.label)
+    nodeEnter.append('title').text((d) => d.label)
 
     const nodeMerge = nodeEnter.merge(node as any)
 
     const label = g
       .select('.labels')
       .selectAll<SVGTextElement, MindMapNode>('text')
-      .data(nodes.value.filter(n => n.type === 'entry'), (d: MindMapNode) => d.id)
+      .data(
+        nodes.value.filter((n) => n.type === 'entry'),
+        (d: MindMapNode) => d.id,
+      )
 
     label.exit().remove()
 
@@ -191,8 +191,8 @@ export function useMindMap(
       .attr('font-size', '10px')
       .attr('fill', '#374151')
       .attr('text-anchor', 'middle')
-      .attr('dy', d => getNodeRadius(d) + 12)
-      .text(d => d.label.length > 20 ? d.label.slice(0, 17) + '...' : d.label)
+      .attr('dy', (d) => getNodeRadius(d) + 12)
+      .text((d) => (d.label.length > 20 ? d.label.slice(0, 17) + '...' : d.label))
 
     const labelMerge = labelEnter.merge(label as any)
 
@@ -253,7 +253,8 @@ export function useMindMap(
       event.subject.fy = null
     }
 
-    return d3.drag<SVGCircleElement, MindMapNode>()
+    return d3
+      .drag<SVGCircleElement, MindMapNode>()
       .on('start', dragstarted)
       .on('drag', dragged)
       .on('end', dragended)
@@ -264,10 +265,10 @@ export function useMindMap(
 
     const padding = 50
     const bounds = {
-      minX: d3.min(nodes.value, d => d.x || 0) || 0,
-      maxX: d3.max(nodes.value, d => d.x || 0) || width,
-      minY: d3.min(nodes.value, d => d.y || 0) || 0,
-      maxY: d3.max(nodes.value, d => d.y || 0) || height,
+      minX: d3.min(nodes.value, (d) => d.x || 0) || 0,
+      maxX: d3.max(nodes.value, (d) => d.x || 0) || width,
+      minY: d3.min(nodes.value, (d) => d.y || 0) || 0,
+      maxY: d3.max(nodes.value, (d) => d.y || 0) || height,
     }
 
     const graphWidth = bounds.maxX - bounds.minX + padding * 2
@@ -280,10 +281,7 @@ export function useMindMap(
     svg
       .transition()
       .duration(750)
-      .call(
-        zoom!.transform as any,
-        d3.zoomIdentity.translate(translateX, translateY).scale(scale),
-      )
+      .call(zoom!.transform as any, d3.zoomIdentity.translate(translateX, translateY).scale(scale))
   }
 
   function exportSVG(): string {

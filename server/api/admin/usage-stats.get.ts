@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
   const globalAvgDaily = avgResult[0]?.avgDaily ?? 0
 
   return {
-    users: topUsers.map(u => ({
+    users: topUsers.map((u) => ({
       userId: u.userId,
       email: u.email,
       name: u.name,

@@ -48,9 +48,10 @@ export default defineEventHandler(async (event) => {
     if (dupeConditions.length === 0 && entryData.title) {
       const titleMatch = ilike(entries.title, entryData.title)
 
-      const firstAuthorLast = Array.isArray(entryData.authors) && entryData.authors.length > 0
-        ? (entryData.authors[0] as { lastName?: string })?.lastName
-        : undefined
+      const firstAuthorLast =
+        Array.isArray(entryData.authors) && entryData.authors.length > 0
+          ? (entryData.authors[0] as { lastName?: string })?.lastName
+          : undefined
 
       const fuzzyParts = [titleMatch]
       if (firstAuthorLast) {
@@ -96,7 +97,7 @@ export default defineEventHandler(async (event) => {
 
   if (projectIds && projectIds.length > 0) {
     await db.insert(entryProjects).values(
-      projectIds.map(projectId => ({
+      projectIds.map((projectId) => ({
         entryId: newEntry.id,
         projectId,
       })),
@@ -105,7 +106,7 @@ export default defineEventHandler(async (event) => {
 
   if (tagIds && tagIds.length > 0) {
     await db.insert(entryTags).values(
-      tagIds.map(tagId => ({
+      tagIds.map((tagId) => ({
         entryId: newEntry.id,
         tagId,
       })),

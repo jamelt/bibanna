@@ -4,7 +4,8 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
 import { sql } from 'drizzle-orm'
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
 const command = process.argv[2]
 
 interface MigrationRecord {
@@ -59,14 +60,14 @@ async function ensureExtensions(db: ReturnType<typeof drizzle>) {
 
 async function runMigrations(db: ReturnType<typeof drizzle>, client: postgres.Sql) {
   console.log('Running migrations...')
-  
+
   try {
     await db.execute(sql`SELECT pg_advisory_lock(12345)`)
 
     await ensureExtensions(db)
-    
+
     await migrate(db, { migrationsFolder: './server/database/migrations' })
-    
+
     console.log('Migrations completed successfully')
   } catch (error) {
     console.error('Migration failed:', error)
@@ -78,33 +79,31 @@ async function runMigrations(db: ReturnType<typeof drizzle>, client: postgres.Sq
 
 async function rollbackMigration(db: ReturnType<typeof drizzle>, client: postgres.Sql) {
   console.log('Rolling back last migration...')
-  
+
   const migrations = await db.execute<MigrationRecord>(
-    sql`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1`
+    sql`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1`,
   )
-  
+
   if (!migrations.length) {
     console.log('No migrations to rollback')
     return
   }
-  
+
   const lastMigration = migrations[0]
   console.log(`Rolling back migration: ${lastMigration.hash}`)
-  
+
   const rollbackPath = `./server/database/migrations/${lastMigration.hash}_rollback.sql`
-  
+
   try {
     const fs = await import('fs')
     const rollbackSql = fs.readFileSync(rollbackPath, 'utf-8')
-    
+
     await db.execute(sql`SELECT pg_advisory_lock(12345)`)
-    
+
     await db.execute(sql.raw(rollbackSql))
-    
-    await db.execute(
-      sql`DELETE FROM drizzle.__drizzle_migrations WHERE id = ${lastMigration.id}`
-    )
-    
+
+    await db.execute(sql`DELETE FROM drizzle.__drizzle_migrations WHERE id = ${lastMigration.id}`)
+
     console.log('Rollback completed successfully')
   } catch (error: any) {
     if (error.code === 'ENOENT') {
@@ -121,17 +120,17 @@ async function rollbackMigration(db: ReturnType<typeof drizzle>, client: postgre
 
 async function showStatus(db: ReturnType<typeof drizzle>) {
   console.log('Migration status:')
-  
+
   try {
     const migrations = await db.execute<MigrationRecord>(
-      sql`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at ASC`
+      sql`SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at ASC`,
     )
-    
+
     if (!migrations.length) {
       console.log('No migrations applied')
       return
     }
-    
+
     console.log('\nApplied migrations:')
     for (const m of migrations) {
       console.log(`  ${m.hash} - ${m.created_at}`)
@@ -147,31 +146,33 @@ async function showStatus(db: ReturnType<typeof drizzle>) {
 
 async function validateMigrations(db: ReturnType<typeof drizzle>, client: postgres.Sql) {
   console.log('Validating migrations...')
-  
+
   const fs = await import('fs')
   const path = await import('path')
-  
+
   const migrationsDir = './server/database/migrations'
-  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql') && !f.includes('_rollback'))
-  
+  const files = fs
+    .readdirSync(migrationsDir)
+    .filter((f) => f.endsWith('.sql') && !f.includes('_rollback'))
+
   let hasErrors = false
-  
+
   for (const file of files) {
     const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8')
-    
+
     const hasDropColumn = /ALTER TABLE .* DROP COLUMN/i.test(content)
     const hasDropTable = /DROP TABLE/i.test(content)
     const hasRenameColumn = /ALTER TABLE .* RENAME COLUMN/i.test(content)
-    
+
     if (hasDropColumn || hasDropTable || hasRenameColumn) {
       const rollbackFile = file.replace('.sql', '_rollback.sql')
       const rollbackPath = path.join(migrationsDir, rollbackFile)
-      
+
       if (!fs.existsSync(rollbackPath)) {
         console.error(`⚠️  ${file}: Destructive migration without rollback file`)
         hasErrors = true
       }
-      
+
       if (hasDropColumn || hasDropTable) {
         const backupCheck = /CREATE TABLE.*_backup|INSERT INTO.*_backup/i.test(content)
         if (!backupCheck) {
@@ -179,15 +180,15 @@ async function validateMigrations(db: ReturnType<typeof drizzle>, client: postgr
         }
       }
     }
-    
+
     console.log(`✓ ${file}`)
   }
-  
+
   if (hasErrors) {
     console.error('\nValidation failed - please fix the issues above')
     process.exit(1)
   }
-  
+
   console.log('\nAll migrations validated successfully')
 }
 
@@ -196,19 +197,17 @@ async function createBackup(db: ReturnType<typeof drizzle>, tableName?: string) 
     console.error('Please specify a table name: migrate.ts backup <table>')
     process.exit(1)
   }
-  
+
   const backupTable = `${tableName}_backup_${Date.now()}`
-  
+
   console.log(`Creating backup of ${tableName} to ${backupTable}...`)
-  
-  await db.execute(
-    sql.raw(`CREATE TABLE ${backupTable} AS SELECT * FROM ${tableName}`)
-  )
-  
+
+  await db.execute(sql.raw(`CREATE TABLE ${backupTable} AS SELECT * FROM ${tableName}`))
+
   const count = await db.execute<{ count: number }>(
-    sql.raw(`SELECT COUNT(*) as count FROM ${backupTable}`)
+    sql.raw(`SELECT COUNT(*) as count FROM ${backupTable}`),
   )
-  
+
   console.log(`Backup created: ${backupTable} (${count[0].count} rows)`)
 }
 
@@ -217,18 +216,18 @@ async function restoreBackup(db: ReturnType<typeof drizzle>, backupTable?: strin
     console.error('Please specify a backup table name: migrate.ts restore <backup_table>')
     process.exit(1)
   }
-  
+
   const originalTable = backupTable.replace(/_backup_\d+$/, '')
-  
+
   console.log(`Restoring ${backupTable} to ${originalTable}...`)
-  
+
   await db.execute(sql.raw(`TRUNCATE TABLE ${originalTable}`))
   await db.execute(sql.raw(`INSERT INTO ${originalTable} SELECT * FROM ${backupTable}`))
-  
+
   const count = await db.execute<{ count: number }>(
-    sql.raw(`SELECT COUNT(*) as count FROM ${originalTable}`)
+    sql.raw(`SELECT COUNT(*) as count FROM ${originalTable}`),
   )
-  
+
   console.log(`Restored ${count[0].count} rows to ${originalTable}`)
 }
 

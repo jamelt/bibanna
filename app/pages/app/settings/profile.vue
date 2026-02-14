@@ -14,16 +14,20 @@ const form = reactive({
   email: '',
 })
 
-watch(user, (u) => {
-  if (u) {
-    form.name = (u as any).name || ''
-    form.email = (u as any).email || ''
-  }
-}, { immediate: true })
+watch(
+  user,
+  (u) => {
+    if (u) {
+      form.name = (u as any).name || ''
+      form.email = (u as any).email || ''
+    }
+  },
+  { immediate: true },
+)
 
 async function handleSubmit() {
   isSubmitting.value = true
-  
+
   try {
     await $fetch('/api/auth/profile', {
       method: 'PUT',
@@ -31,20 +35,18 @@ async function handleSubmit() {
         name: form.name,
       },
     })
-    
+
     toast.add({
       title: 'Profile updated',
       color: 'success',
     })
-  }
-  catch (e: any) {
+  } catch (e: any) {
     toast.add({
       title: 'Failed to update profile',
       description: e.data?.message || 'An error occurred',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isSubmitting.value = false
   }
 }
@@ -62,21 +64,14 @@ async function handleSubmit() {
     </nav>
 
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-        Profile Settings
-      </h1>
-      <p class="mt-1 text-gray-500">
-        Manage your account information
-      </p>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
+      <p class="mt-1 text-gray-500">Manage your account information</p>
     </div>
 
     <UCard class="max-w-2xl">
       <form class="space-y-6" @submit.prevent="handleSubmit">
         <UFormField label="Name">
-          <UInput
-            v-model="form.name"
-            placeholder="Your name"
-          />
+          <UInput v-model="form.name" placeholder="Your name" />
         </UFormField>
 
         <UFormField label="Email">
@@ -87,20 +82,12 @@ async function handleSubmit() {
             :ui="{ base: 'cursor-not-allowed opacity-60' }"
           />
           <template #hint>
-            <span class="text-xs text-gray-400">
-              Email cannot be changed
-            </span>
+            <span class="text-xs text-gray-400"> Email cannot be changed </span>
           </template>
         </UFormField>
 
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <UButton
-            type="submit"
-            color="primary"
-            :loading="isSubmitting"
-          >
-            Save Changes
-          </UButton>
+          <UButton type="submit" color="primary" :loading="isSubmitting"> Save Changes </UButton>
         </div>
       </form>
     </UCard>
@@ -108,28 +95,18 @@ async function handleSubmit() {
     <!-- Danger Zone -->
     <UCard class="max-w-2xl border-red-200 dark:border-red-900">
       <template #header>
-        <h3 class="text-lg font-medium text-red-600 dark:text-red-400">
-          Danger Zone
-        </h3>
+        <h3 class="text-lg font-medium text-red-600 dark:text-red-400">Danger Zone</h3>
       </template>
-      
+
       <div class="space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="font-medium text-gray-900 dark:text-white">
-              Delete Account
-            </p>
+            <p class="font-medium text-gray-900 dark:text-white">Delete Account</p>
             <p class="text-sm text-gray-500">
               Permanently delete your account and all associated data
             </p>
           </div>
-          <UButton
-            color="error"
-            variant="outline"
-            disabled
-          >
-            Delete Account
-          </UButton>
+          <UButton color="error" variant="outline" disabled> Delete Account </UButton>
         </div>
       </div>
     </UCard>

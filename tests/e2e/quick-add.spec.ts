@@ -8,14 +8,16 @@ async function signUpAndLogin(page: import('@playwright/test').Page) {
   }
   await page.goto('/signup')
   await page.waitForLoadState('networkidle')
-  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({
+    timeout: 5000,
+  })
   await page.getByPlaceholder('Your name').fill(testUser.name)
   await page.getByPlaceholder('you@example.com').fill(testUser.email)
   await page.locator('input[type="password"]').first().fill(testUser.password)
   await page.locator('input[type="password"]').nth(1).fill(testUser.password)
 
   const [response] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/api/auth/register'), { timeout: 15000 }),
+    page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 15000 }),
     page.getByRole('button', { name: 'Create Account' }).click(),
   ])
   if (!response.ok()) {
@@ -51,7 +53,9 @@ test.describe('Quick Add - Desktop', () => {
     await expect(page.getByRole('heading', { name: 'Quick Add' })).toBeVisible({ timeout: 5000 })
 
     await page.getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({ timeout: 3000 })
+    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({
+      timeout: 3000,
+    })
   })
 
   test('closes Quick Add modal when X button is clicked', async ({ page }) => {
@@ -62,7 +66,9 @@ test.describe('Quick Add - Desktop', () => {
     await expect(page.getByRole('heading', { name: 'Quick Add' })).toBeVisible({ timeout: 5000 })
 
     await page.getByTestId('quick-add-close').click()
-    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({ timeout: 3000 })
+    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({
+      timeout: 3000,
+    })
   })
 
   test('can fill in form fields in the modal', async ({ page }) => {
@@ -131,7 +137,9 @@ test.describe('Quick Add - Mobile', () => {
     await expect(page.getByRole('heading', { name: 'Quick Add' })).toBeVisible({ timeout: 5000 })
 
     await page.getByTestId('quick-add-close').click()
-    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({ timeout: 3000 })
+    await expect(page.getByRole('heading', { name: 'Quick Add' })).not.toBeVisible({
+      timeout: 3000,
+    })
   })
 
   test('URL tab and input are available in Quick Add', async ({ page }) => {

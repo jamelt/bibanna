@@ -23,7 +23,7 @@ const { data: logsData, pending } = useFetch('/api/admin/audit-logs', {
 })
 
 function formatAction(action: string) {
-  return action.replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return action.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 const actionColors: Record<string, string> = {
@@ -47,7 +47,9 @@ const actionColors: Record<string, string> = {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Audit Log</h1>
-      <span class="text-sm text-gray-500 dark:text-gray-400">{{ logsData?.total ?? 0 }} entries</span>
+      <span class="text-sm text-gray-500 dark:text-gray-400"
+        >{{ logsData?.total ?? 0 }} entries</span
+      >
     </div>
 
     <div v-if="targetIdFilter" class="flex items-center gap-2">
@@ -90,30 +92,36 @@ const actionColors: Record<string, string> = {
       </div>
 
       <div v-else class="space-y-0 divide-y divide-gray-200 dark:divide-gray-700">
-        <div
-          v-for="log in logsData?.data"
-          :key="log.id"
-          class="flex items-center gap-4 py-3"
-        >
+        <div v-for="log in logsData?.data" :key="log.id" class="flex items-center gap-4 py-3">
           <div class="shrink-0">
-            <UBadge :color="(actionColors[log.action] || 'neutral') as any" variant="subtle" size="sm">
+            <UBadge
+              :color="(actionColors[log.action] || 'neutral') as any"
+              variant="subtle"
+              size="sm"
+            >
               {{ formatAction(log.action) }}
             </UBadge>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-900 dark:text-white">
               <span class="font-medium">{{ log.adminName || log.adminEmail }}</span>
-              performed <span class="font-medium">{{ log.action }}</span>
-              on {{ log.targetType }}
-              <span v-if="log.targetId" class="text-gray-500">{{ log.targetId.slice(0, 8) }}...</span>
+              performed <span class="font-medium">{{ log.action }}</span> on {{ log.targetType }}
+              <span v-if="log.targetId" class="text-gray-500"
+                >{{ log.targetId.slice(0, 8) }}...</span
+              >
             </p>
-            <p v-if="log.details && Object.keys(log.details).length" class="text-xs text-gray-500 mt-0.5">
+            <p
+              v-if="log.details && Object.keys(log.details).length"
+              class="text-xs text-gray-500 mt-0.5"
+            >
               {{ JSON.stringify(log.details) }}
             </p>
           </div>
           <div class="shrink-0 text-right">
             <p class="text-xs text-gray-500">{{ new Date(log.createdAt).toLocaleString() }}</p>
-            <p v-if="log.ipAddress" class="text-xs text-gray-400 dark:text-gray-600">{{ log.ipAddress }}</p>
+            <p v-if="log.ipAddress" class="text-xs text-gray-400 dark:text-gray-600">
+              {{ log.ipAddress }}
+            </p>
           </div>
         </div>
 
@@ -123,11 +131,30 @@ const actionColors: Record<string, string> = {
       </div>
 
       <!-- Pagination -->
-      <div v-if="logsData && logsData.totalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <span class="text-sm text-gray-500 dark:text-gray-400">Page {{ logsData.page }} of {{ logsData.totalPages }}</span>
+      <div
+        v-if="logsData && logsData.totalPages > 1"
+        class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+      >
+        <span class="text-sm text-gray-500 dark:text-gray-400"
+          >Page {{ logsData.page }} of {{ logsData.totalPages }}</span
+        >
         <div class="flex gap-2">
-          <UButton icon="i-heroicons-chevron-left" variant="ghost" color="neutral" size="sm" :disabled="page <= 1" @click="page--" />
-          <UButton icon="i-heroicons-chevron-right" variant="ghost" color="neutral" size="sm" :disabled="page >= logsData.totalPages" @click="page++" />
+          <UButton
+            icon="i-heroicons-chevron-left"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            :disabled="page <= 1"
+            @click="page--"
+          />
+          <UButton
+            icon="i-heroicons-chevron-right"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            :disabled="page >= logsData.totalPages"
+            @click="page++"
+          />
         </div>
       </div>
     </UCard>

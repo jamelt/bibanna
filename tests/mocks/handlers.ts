@@ -4,7 +4,7 @@ export const handlers = [
   http.get('https://api.semanticscholar.org/graph/v1/paper/search', ({ request }) => {
     const url = new URL(request.url)
     const query = url.searchParams.get('query')
-    
+
     return HttpResponse.json({
       total: 1,
       data: [
@@ -14,9 +14,7 @@ export const handlers = [
           year: 2024,
           citationCount: 42,
           influentialCitationCount: 5,
-          authors: [
-            { authorId: '123', name: 'John Doe', hIndex: 25 },
-          ],
+          authors: [{ authorId: '123', name: 'John Doe', hIndex: 25 }],
           venue: 'Mock Journal',
           isOpenAccess: true,
         },
@@ -31,9 +29,7 @@ export const handlers = [
       year: 2024,
       citationCount: 42,
       influentialCitationCount: 5,
-      authors: [
-        { authorId: '123', name: 'John Doe', hIndex: 25 },
-      ],
+      authors: [{ authorId: '123', name: 'John Doe', hIndex: 25 }],
       venue: 'Mock Journal',
       isOpenAccess: true,
       publicationTypes: ['JournalArticle'],
@@ -43,7 +39,7 @@ export const handlers = [
   http.get('https://api.openalex.org/works', ({ request }) => {
     const url = new URL(request.url)
     const search = url.searchParams.get('search')
-    
+
     return HttpResponse.json({
       results: [
         {
@@ -55,9 +51,7 @@ export const handlers = [
           authorships: [
             {
               author: { id: 'A123', display_name: 'John Doe' },
-              institutions: [
-                { id: 'I123', display_name: 'Mock University', type: 'education' },
-              ],
+              institutions: [{ id: 'I123', display_name: 'Mock University', type: 'education' }],
             },
           ],
           primary_location: {
@@ -79,9 +73,7 @@ export const handlers = [
       message: {
         DOI: params.doi,
         title: ['Mock CrossRef Title'],
-        author: [
-          { given: 'John', family: 'Doe' },
-        ],
+        author: [{ given: 'John', family: 'Doe' }],
         publisher: 'Mock Publisher',
         'published-print': {
           'date-parts': [[2024, 1, 1]],
@@ -96,9 +88,9 @@ export const handlers = [
   }),
 
   http.post('https://api.openai.com/v1/chat/completions', async ({ request }) => {
-    const body = await request.json() as { messages: Array<{ content: string }> }
+    const body = (await request.json()) as { messages: Array<{ content: string }> }
     const lastMessage = body.messages?.[body.messages.length - 1]?.content || ''
-    
+
     return HttpResponse.json({
       id: 'mock-completion-id',
       object: 'chat.completion',
@@ -124,7 +116,7 @@ export const handlers = [
 
   http.post('https://api.openai.com/v1/embeddings', async () => {
     const mockEmbedding = new Array(1536).fill(0).map(() => Math.random() - 0.5)
-    
+
     return HttpResponse.json({
       object: 'list',
       data: [
@@ -177,23 +169,14 @@ export const handlers = [
 
 export const errorHandlers = [
   http.get('https://api.semanticscholar.org/graph/v1/paper/search', () => {
-    return HttpResponse.json(
-      { error: 'Service unavailable' },
-      { status: 503 },
-    )
+    return HttpResponse.json({ error: 'Service unavailable' }, { status: 503 })
   }),
 
   http.get('https://api.openalex.org/works', () => {
-    return HttpResponse.json(
-      { error: 'Rate limit exceeded' },
-      { status: 429 },
-    )
+    return HttpResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }),
 
   http.post('https://api.openai.com/v1/chat/completions', () => {
-    return HttpResponse.json(
-      { error: { message: 'API quota exceeded' } },
-      { status: 429 },
-    )
+    return HttpResponse.json({ error: { message: 'API quota exceeded' } }, { status: 429 })
   }),
 ]

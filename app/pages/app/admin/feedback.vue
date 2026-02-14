@@ -15,7 +15,11 @@ const queryParams = computed(() => ({
   pageSize: 20,
 }))
 
-const { data: feedbackData, pending, refresh } = useFetch('/api/admin/feedback', {
+const {
+  data: feedbackData,
+  pending,
+  refresh,
+} = useFetch('/api/admin/feedback', {
   query: queryParams,
   watch: [queryParams],
 })
@@ -59,7 +63,9 @@ const statusColors: Record<string, string> = {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Feedback Inbox</h1>
-      <span class="text-sm text-gray-500 dark:text-gray-400">{{ feedbackData?.total ?? 0 }} items</span>
+      <span class="text-sm text-gray-500 dark:text-gray-400"
+        >{{ feedbackData?.total ?? 0 }} items</span
+      >
     </div>
 
     <div class="flex gap-3">
@@ -100,12 +106,15 @@ const statusColors: Record<string, string> = {
       >
         <div class="flex items-start gap-4">
           <div class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
-            <UIcon :name="typeIcons[item.type] || 'i-heroicons-chat-bubble-left'" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <UIcon
+              :name="typeIcons[item.type] || 'i-heroicons-chat-bubble-left'"
+              class="w-5 h-5 text-gray-500 dark:text-gray-400"
+            />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
               <h3 class="font-medium text-gray-900 dark:text-white truncate">{{ item.subject }}</h3>
-              <UBadge :color="(statusColors[item.status] as any)" variant="subtle" size="sm">
+              <UBadge :color="statusColors[item.status] as any" variant="subtle" size="sm">
                 {{ item.status.replace('_', ' ') }}
               </UBadge>
             </div>
@@ -125,11 +134,30 @@ const statusColors: Record<string, string> = {
     </div>
 
     <!-- Pagination -->
-    <div v-if="feedbackData && feedbackData.totalPages > 1" class="flex items-center justify-between">
-      <span class="text-sm text-gray-500 dark:text-gray-400">Page {{ feedbackData.page }} of {{ feedbackData.totalPages }}</span>
+    <div
+      v-if="feedbackData && feedbackData.totalPages > 1"
+      class="flex items-center justify-between"
+    >
+      <span class="text-sm text-gray-500 dark:text-gray-400"
+        >Page {{ feedbackData.page }} of {{ feedbackData.totalPages }}</span
+      >
       <div class="flex gap-2">
-        <UButton icon="i-heroicons-chevron-left" variant="ghost" color="neutral" size="sm" :disabled="page <= 1" @click="page--" />
-        <UButton icon="i-heroicons-chevron-right" variant="ghost" color="neutral" size="sm" :disabled="page >= feedbackData.totalPages" @click="page++" />
+        <UButton
+          icon="i-heroicons-chevron-left"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          :disabled="page <= 1"
+          @click="page--"
+        />
+        <UButton
+          icon="i-heroicons-chevron-right"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          :disabled="page >= feedbackData.totalPages"
+          @click="page++"
+        />
       </div>
     </div>
 
@@ -137,72 +165,76 @@ const statusColors: Record<string, string> = {
     <USlideover v-model:open="isDetailOpen" :title="selectedFeedback?.subject || 'Feedback Detail'">
       <template #body>
         <div v-if="selectedFeedback" class="space-y-6">
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <UBadge :color="(statusColors[selectedFeedback.status] as any)" variant="subtle">
-              {{ selectedFeedback.status.replace('_', ' ') }}
-            </UBadge>
-            <UBadge variant="subtle" color="neutral">
-              {{ selectedFeedback.type.replace('_', ' ') }}
-            </UBadge>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <UBadge :color="statusColors[selectedFeedback.status] as any" variant="subtle">
+                {{ selectedFeedback.status.replace('_', ' ') }}
+              </UBadge>
+              <UBadge variant="subtle" color="neutral">
+                {{ selectedFeedback.type.replace('_', ' ') }}
+              </UBadge>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ selectedFeedback.subject }}
+            </h3>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ selectedFeedback.subject }}</h3>
-        </div>
 
-        <div>
-          <p class="text-xs text-gray-500 mb-1">From</p>
-          <p class="text-sm text-gray-900 dark:text-white">{{ selectedFeedback.userName || selectedFeedback.userEmail || 'Anonymous' }}</p>
-        </div>
-
-        <div>
-          <p class="text-xs text-gray-500 mb-1">Submitted</p>
-          <p class="text-sm text-gray-900 dark:text-white">{{ new Date(selectedFeedback.createdAt).toLocaleString() }}</p>
-        </div>
-
-        <div>
-          <p class="text-xs text-gray-500 mb-2">Content</p>
-          <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-            {{ selectedFeedback.content }}
+          <div>
+            <p class="text-xs text-gray-500 mb-1">From</p>
+            <p class="text-sm text-gray-900 dark:text-white">
+              {{ selectedFeedback.userName || selectedFeedback.userEmail || 'Anonymous' }}
+            </p>
           </div>
-        </div>
 
-        <hr class="border-gray-200 dark:border-gray-700">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Submitted</p>
+            <p class="text-sm text-gray-900 dark:text-white">
+              {{ new Date(selectedFeedback.createdAt).toLocaleString() }}
+            </p>
+          </div>
 
-        <div>
-          <p class="text-xs text-gray-500 mb-2">Admin Notes</p>
-          <UTextarea
-            v-model="adminNotes"
-            placeholder="Add internal notes..."
-            :rows="3"
-          />
-        </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-2">Content</p>
+            <div
+              class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
+            >
+              {{ selectedFeedback.content }}
+            </div>
+          </div>
 
-        <div class="flex flex-wrap gap-2">
-          <UButton
-            v-if="selectedFeedback.status === 'open'"
-            label="Mark In Progress"
-            color="info"
-            variant="outline"
-            size="sm"
-            @click="updateStatus('in_progress')"
-          />
-          <UButton
-            v-if="selectedFeedback.status !== 'resolved'"
-            label="Resolve"
-            color="success"
-            variant="outline"
-            size="sm"
-            @click="updateStatus('resolved')"
-          />
-          <UButton
-            v-if="selectedFeedback.status !== 'closed'"
-            label="Close"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            @click="updateStatus('closed')"
-          />
-        </div>
+          <hr class="border-gray-200 dark:border-gray-700" />
+
+          <div>
+            <p class="text-xs text-gray-500 mb-2">Admin Notes</p>
+            <UTextarea v-model="adminNotes" placeholder="Add internal notes..." :rows="3" />
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              v-if="selectedFeedback.status === 'open'"
+              label="Mark In Progress"
+              color="info"
+              variant="outline"
+              size="sm"
+              @click="updateStatus('in_progress')"
+            />
+            <UButton
+              v-if="selectedFeedback.status !== 'resolved'"
+              label="Resolve"
+              color="success"
+              variant="outline"
+              size="sm"
+              @click="updateStatus('resolved')"
+            />
+            <UButton
+              v-if="selectedFeedback.status !== 'closed'"
+              label="Close"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              @click="updateStatus('closed')"
+            />
+          </div>
         </div>
       </template>
     </USlideover>

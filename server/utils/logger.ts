@@ -25,7 +25,11 @@ export const logger: pino.Logger = pino({
         }
       },
       log(object: Record<string, unknown>) {
-        const { err, error, ...rest } = object as { err?: Error; error?: Error; [key: string]: unknown }
+        const { err, error, ...rest } = object as {
+          err?: Error
+          error?: Error
+          [key: string]: unknown
+        }
         const errorObj = err || error
 
         if (errorObj && errorObj instanceof Error) {
@@ -36,7 +40,8 @@ export const logger: pino.Logger = pino({
               name: errorObj.name,
               stack: errorObj.stack,
             },
-            '@type': 'type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent',
+            '@type':
+              'type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent',
           }
         }
 
@@ -133,14 +138,17 @@ export function logDatabaseQuery(
   durationMs: number,
   rowCount?: number,
 ) {
-  log.debug({
-    db: {
-      operation,
-      table,
-      durationMs,
-      rowCount,
+  log.debug(
+    {
+      db: {
+        operation,
+        table,
+        durationMs,
+        rowCount,
+      },
     },
-  }, `DB ${operation} on ${table} - ${durationMs}ms`)
+    `DB ${operation} on ${table} - ${durationMs}ms`,
+  )
 }
 
 export function logExternalApiCall(
@@ -161,7 +169,10 @@ export function logExternalApiCall(
   }
 
   if (error) {
-    log.error({ ...logData, err: error }, `External API ${service} ${endpoint} failed - ${durationMs}ms`)
+    log.error(
+      { ...logData, err: error },
+      `External API ${service} ${endpoint} failed - ${durationMs}ms`,
+    )
   } else if (statusCode >= 400) {
     log.warn(logData, `External API ${service} ${endpoint} ${statusCode} - ${durationMs}ms`)
   } else {
@@ -169,15 +180,14 @@ export function logExternalApiCall(
   }
 }
 
-export function logBusinessEvent(
-  log: pino.Logger,
-  event: string,
-  data: Record<string, unknown>,
-) {
-  log.info({
-    event,
-    eventData: data,
-  }, `Business event: ${event}`)
+export function logBusinessEvent(log: pino.Logger, event: string, data: Record<string, unknown>) {
+  log.info(
+    {
+      event,
+      eventData: data,
+    },
+    `Business event: ${event}`,
+  )
 }
 
 export default logger

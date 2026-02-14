@@ -52,10 +52,7 @@ export default defineEventHandler(async (event) => {
   const [updatedProject] = await db
     .update(projects)
     .set(updateData)
-    .where(and(
-      eq(projects.id, existingProject.id),
-      eq(projects.userId, user.id),
-    ))
+    .where(and(eq(projects.id, existingProject.id), eq(projects.userId, user.id)))
     .returning()
 
   return updatedProject
@@ -81,10 +78,7 @@ async function generateUniqueProjectSlug(
 
   for (;;) {
     const existing = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.userId, userId),
-        eq(projects.slug, candidate),
-      ),
+      where: and(eq(projects.userId, userId), eq(projects.slug, candidate)),
     })
 
     if (!existing || existing.id === excludeProjectId) {

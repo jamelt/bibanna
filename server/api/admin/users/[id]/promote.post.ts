@@ -21,14 +21,25 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [updated] = await db.update(users).set({
-    role: 'admin',
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId)).returning()
+  const [updated] = await db
+    .update(users)
+    .set({
+      role: 'admin',
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning()
 
-  await logAdminAction(admin.id, 'user.promote_admin', 'user', userId, {
-    previousRole: targetUser.role,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.promote_admin',
+    'user',
+    userId,
+    {
+      previousRole: targetUser.role,
+    },
+    ip,
+  )
 
   return updated
 })

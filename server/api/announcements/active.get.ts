@@ -5,14 +5,15 @@ import { eq, and, lte, or, isNull, gte, sql } from 'drizzle-orm'
 export default defineEventHandler(async () => {
   const now = new Date()
 
-  const active = await db.select({
-    id: announcements.id,
-    title: announcements.title,
-    content: announcements.content,
-    type: announcements.type,
-    startAt: announcements.startAt,
-    endAt: announcements.endAt,
-  })
+  const active = await db
+    .select({
+      id: announcements.id,
+      title: announcements.title,
+      content: announcements.content,
+      type: announcements.type,
+      startAt: announcements.startAt,
+      endAt: announcements.endAt,
+    })
     .from(announcements)
     .where(
       and(

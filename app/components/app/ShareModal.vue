@@ -32,8 +32,8 @@ const publicLinkPermission = ref<'view' | 'comment'>('view')
 const publicLinkExpiry = ref<number | undefined>(undefined)
 const isCreatingPublicLink = ref(false)
 
-const publicShare = computed(() => shares.value?.find(s => s.isPublic))
-const userShares = computed(() => shares.value?.filter(s => !s.isPublic) || [])
+const publicShare = computed(() => shares.value?.find((s) => s.isPublic))
+const userShares = computed(() => shares.value?.filter((s) => !s.isPublic) || [])
 
 const publicLinkUrl = computed(() => {
   if (!publicShare.value?.publicToken) return null
@@ -74,11 +74,9 @@ async function handleShareWithUser() {
 
     newShareEmail.value = ''
     await refreshShares()
-  }
-  catch (error: any) {
+  } catch (error: any) {
     shareError.value = error.data?.message || 'Failed to share project'
-  }
-  finally {
+  } finally {
     isSharing.value = false
   }
 }
@@ -97,17 +95,19 @@ async function handleCreatePublicLink() {
     })
 
     await refreshShares()
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('Failed to create public link:', error)
-  }
-  finally {
+  } finally {
     isCreatingPublicLink.value = false
   }
 }
 
 async function handleRevokePublicLink() {
-  if (!confirm('Are you sure you want to revoke this public link? Anyone with this link will lose access.')) {
+  if (
+    !confirm(
+      'Are you sure you want to revoke this public link? Anyone with this link will lose access.',
+    )
+  ) {
     return
   }
 
@@ -117,14 +117,13 @@ async function handleRevokePublicLink() {
     })
 
     await refreshShares()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to revoke link:', error)
   }
 }
 
 async function handleRemoveShare(shareId: string) {
-  if (!confirm('Are you sure you want to remove this user\'s access?')) {
+  if (!confirm("Are you sure you want to remove this user's access?")) {
     return
   }
 
@@ -134,8 +133,7 @@ async function handleRemoveShare(shareId: string) {
     })
 
     await refreshShares()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to remove share:', error)
   }
 }
@@ -147,7 +145,7 @@ async function copyPublicLink() {
 }
 
 function getPermissionLabel(permission: string): string {
-  return permissionOptions.find(p => p.value === permission)?.label || permission
+  return permissionOptions.find((p) => p.value === permission)?.label || permission
 }
 </script>
 
@@ -158,9 +156,7 @@ function getPermissionLabel(permission: string): string {
         <template #header>
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Share Project
-              </h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Share Project</h2>
               <p class="text-sm text-gray-500">{{ projectName }}</p>
             </div>
             <UButton
@@ -201,11 +197,7 @@ function getPermissionLabel(permission: string): string {
                   option-attribute="label"
                   class="w-32"
                 />
-                <UButton
-                  color="primary"
-                  :loading="isSharing"
-                  @click="handleShareWithUser"
-                >
+                <UButton color="primary" :loading="isSharing" @click="handleShareWithUser">
                   Share
                 </UButton>
               </div>
@@ -232,7 +224,9 @@ function getPermissionLabel(permission: string): string {
                   class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
                 >
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <div
+                      class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+                    >
                       <UIcon name="i-heroicons-user" class="w-4 h-4 text-gray-500" />
                     </div>
                     <div>
@@ -262,22 +256,12 @@ function getPermissionLabel(permission: string): string {
 
             <!-- Public link -->
             <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Public link
-              </h3>
+              <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Public link</h3>
 
               <div v-if="publicShare" class="space-y-3">
                 <div class="flex items-center gap-2">
-                  <UInput
-                    :model-value="publicLinkUrl"
-                    readonly
-                    class="flex-1"
-                  />
-                  <UButton
-                    variant="outline"
-                    icon="i-heroicons-clipboard"
-                    @click="copyPublicLink"
-                  >
+                  <UInput :model-value="publicLinkUrl" readonly class="flex-1" />
+                  <UButton variant="outline" icon="i-heroicons-clipboard" @click="copyPublicLink">
                     Copy
                   </UButton>
                 </div>
@@ -289,26 +273,19 @@ function getPermissionLabel(permission: string): string {
                       · Expires {{ new Date(publicShare.expiresAt).toLocaleDateString() }}
                     </span>
                   </span>
-                  <UButton
-                    variant="link"
-                    color="red"
-                    size="xs"
-                    @click="handleRevokePublicLink"
-                  >
+                  <UButton variant="link" color="red" size="xs" @click="handleRevokePublicLink">
                     Revoke link
                   </UButton>
                 </div>
               </div>
 
               <div v-else class="space-y-3">
-                <p class="text-sm text-gray-500">
-                  Anyone with the link can access this project
-                </p>
+                <p class="text-sm text-gray-500">Anyone with the link can access this project</p>
 
                 <div class="flex gap-2">
                   <USelectMenu
                     v-model="publicLinkPermission"
-                    :options="permissionOptions.filter(p => p.value !== 'edit')"
+                    :options="permissionOptions.filter((p) => p.value !== 'edit')"
                     value-attribute="value"
                     option-attribute="label"
                     class="flex-1"

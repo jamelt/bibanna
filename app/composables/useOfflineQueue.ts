@@ -16,7 +16,7 @@ export function useOfflineQueue() {
 
   onMounted(() => {
     loadQueue()
-    
+
     isOnline.value = navigator.onLine
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
@@ -45,10 +45,10 @@ export function useOfflineQueue() {
       timestamp: Date.now(),
       synced: false,
     }
-    
+
     queue.value.push(newAction)
     saveQueue()
-    
+
     if (isOnline.value) {
       syncQueue()
     } else if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
@@ -56,16 +56,16 @@ export function useOfflineQueue() {
         registration.sync.register('sync-actions')
       })
     }
-    
+
     return newAction.id
   }
 
   async function syncQueue() {
     if (isSyncing.value || !isOnline.value) return
-    
+
     isSyncing.value = true
-    const unsynced = queue.value.filter(a => !a.synced)
-    
+    const unsynced = queue.value.filter((a) => !a.synced)
+
     for (const action of unsynced) {
       try {
         await syncAction(action)
@@ -75,8 +75,8 @@ export function useOfflineQueue() {
         break
       }
     }
-    
-    queue.value = queue.value.filter(a => !a.synced)
+
+    queue.value = queue.value.filter((a) => !a.synced)
     saveQueue()
     isSyncing.value = false
   }
@@ -88,24 +88,24 @@ export function useOfflineQueue() {
       tag: '/api/tags',
       annotation: '/api/entries/{entryId}/annotations',
     }
-    
+
     let url = endpoints[action.resource]
     if (!url) throw new Error(`Unknown resource: ${action.resource}`)
-    
+
     if (action.resource === 'annotation' && action.data.entryId) {
       url = url.replace('{entryId}', action.data.entryId as string)
     }
-    
+
     const method = {
       create: 'POST',
       update: 'PUT',
       delete: 'DELETE',
     }[action.type]
-    
+
     if (action.type !== 'create' && action.data.id) {
       url = `${url}/${action.data.id}`
     }
-    
+
     await $fetch(url, {
       method,
       body: action.type !== 'delete' ? action.data : undefined,
@@ -126,7 +126,7 @@ export function useOfflineQueue() {
     saveQueue()
   }
 
-  const pendingCount = computed(() => queue.value.filter(a => !a.synced).length)
+  const pendingCount = computed(() => queue.value.filter((a) => !a.synced).length)
 
   return {
     queue: readonly(queue),

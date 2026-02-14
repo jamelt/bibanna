@@ -25,25 +25,30 @@ export default defineEventHandler(async (event) => {
     conditions.push(eq(feedback.type, parsed.type))
   }
 
-  const whereClause = conditions.length > 0
-    ? sql`${sql.join(conditions.map(c => sql`(${c})`), sql` AND `)}`
-    : undefined
+  const whereClause =
+    conditions.length > 0
+      ? sql`${sql.join(
+          conditions.map((c) => sql`(${c})`),
+          sql` AND `,
+        )}`
+      : undefined
 
   const [totalResult, rows] = await Promise.all([
     db.select({ count: count() }).from(feedback).where(whereClause),
-    db.select({
-      id: feedback.id,
-      userId: feedback.userId,
-      userEmail: feedback.userEmail,
-      type: feedback.type,
-      subject: feedback.subject,
-      content: feedback.content,
-      status: feedback.status,
-      adminNotes: feedback.adminNotes,
-      createdAt: feedback.createdAt,
-      updatedAt: feedback.updatedAt,
-      userName: users.name,
-    })
+    db
+      .select({
+        id: feedback.id,
+        userId: feedback.userId,
+        userEmail: feedback.userEmail,
+        type: feedback.type,
+        subject: feedback.subject,
+        content: feedback.content,
+        status: feedback.status,
+        adminNotes: feedback.adminNotes,
+        createdAt: feedback.createdAt,
+        updatedAt: feedback.updatedAt,
+        userName: users.name,
+      })
       .from(feedback)
       .leftJoin(users, eq(feedback.userId, users.id))
       .where(whereClause)

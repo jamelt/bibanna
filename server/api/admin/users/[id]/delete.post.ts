@@ -1,7 +1,6 @@
 import { db } from '~/server/database/client'
 import { users } from '~/server/database/schema'
-import { eq } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { requireAdmin, logAdminAction } from '~/server/utils/auth'
 import { z } from 'zod'
 
@@ -19,7 +18,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (userId === admin.id) {
-    throw createError({ statusCode: 400, message: 'You cannot delete your own account through admin tools' })
+    throw createError({
+      statusCode: 400,
+      message: 'You cannot delete your own account through admin tools',
+    })
   }
 
   const body = await readBody(event)
@@ -43,11 +45,18 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  await logAdminAction(admin.id, 'user.hard_delete', 'user', userId, {
-    targetEmail: targetUser.email,
-    targetName: targetUser.name,
-    reason: parsed.reason,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.hard_delete',
+    'user',
+    userId,
+    {
+      targetEmail: targetUser.email,
+      targetName: targetUser.name,
+      reason: parsed.reason,
+    },
+    ip,
+  )
 
   await db.delete(users).where(eq(users.id, userId))
 

@@ -17,11 +17,9 @@ export function useStarredProjects() {
       const data = await $fetch<StarredProject[]>('/api/projects/starred')
       starredProjects.value = data
       initialized.value = true
-    }
-    catch {
+    } catch {
       starredProjects.value = []
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -34,17 +32,15 @@ export function useStarredProjects() {
       )
 
       if (result.isStarred) {
-        if (!starredProjects.value.find(p => p.id === result.id)) {
+        if (!starredProjects.value.find((p) => p.id === result.id)) {
           await fetchStarred()
         }
-      }
-      else {
-        starredProjects.value = starredProjects.value.filter(p => p.id !== result.id)
+      } else {
+        starredProjects.value = starredProjects.value.filter((p) => p.id !== result.id)
       }
 
       return result
-    }
-    catch {
+    } catch {
       throw new Error('Failed to toggle star')
     }
   }

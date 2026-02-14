@@ -48,16 +48,16 @@ const filteredStyles = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(
-      style =>
-        style.name.toLowerCase().includes(query)
-        || style.shortName?.toLowerCase().includes(query)
-        || style.description?.toLowerCase().includes(query)
-        || style.fields?.some((f: string) => f.includes(query)),
+      (style) =>
+        style.name.toLowerCase().includes(query) ||
+        style.shortName?.toLowerCase().includes(query) ||
+        style.description?.toLowerCase().includes(query) ||
+        style.fields?.some((f: string) => f.includes(query)),
     )
   }
 
   if (selectedCategory.value) {
-    result = result.filter(style => style.category === selectedCategory.value)
+    result = result.filter((style) => style.category === selectedCategory.value)
   }
 
   return result
@@ -66,7 +66,7 @@ const filteredStyles = computed(() => {
 const selectedStyleLabel = computed(() => {
   if (!styles.value) return props.modelValue
   const all = [...styles.value.defaultStyles, ...styles.value.customStyles]
-  const found = all.find(s => s.id === props.modelValue)
+  const found = all.find((s) => s.id === props.modelValue)
   return found?.shortName || found?.name || props.modelValue
 })
 
@@ -78,9 +78,9 @@ function selectStyle(styleId: string) {
 function getCategoryColor(category: string): string {
   const colors: Record<string, string> = {
     'author-date': 'blue',
-    'numeric': 'green',
-    'note': 'purple',
-    'label': 'orange',
+    numeric: 'green',
+    note: 'purple',
+    label: 'orange',
   }
   return colors[category] || 'gray'
 }
@@ -115,11 +115,24 @@ function getCategoryColor(category: string): string {
     </div>
 
     <!-- Selected style action bar -->
-    <div class="mx-3 my-2 rounded-lg shrink-0 overflow-hidden" :class="props.isSelectedDefault ? 'bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-200 dark:ring-primary-800' : 'bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700'">
+    <div
+      class="mx-3 my-2 rounded-lg shrink-0 overflow-hidden"
+      :class="
+        props.isSelectedDefault
+          ? 'bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-200 dark:ring-primary-800'
+          : 'bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700'
+      "
+    >
       <div class="px-3 py-2.5 flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <p class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none mb-1">Selected</p>
-          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ selectedStyleLabel }}</p>
+          <p
+            class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 leading-none mb-1"
+          >
+            Selected
+          </p>
+          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+            {{ selectedStyleLabel }}
+          </p>
         </div>
         <UButton
           v-if="!props.isSelectedDefault"
@@ -133,7 +146,10 @@ function getCategoryColor(category: string): string {
         >
           Set Default
         </UButton>
-        <span v-else class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0">
+        <span
+          v-else
+          class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0"
+        >
           <UIcon name="i-heroicons-star-solid" class="w-4 h-4" />
           Default
         </span>
@@ -141,11 +157,12 @@ function getCategoryColor(category: string): string {
     </div>
 
     <!-- Toggle custom styles -->
-    <div v-if="styles?.customStyles?.length" class="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+    <div
+      v-if="styles?.customStyles?.length"
+      class="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0"
+    >
       <USwitch v-model="showCustom" size="sm" />
-      <span class="text-xs text-gray-500">
-        Custom ({{ styles.customStyles.length }})
-      </span>
+      <span class="text-xs text-gray-500"> Custom ({{ styles.customStyles.length }}) </span>
     </div>
 
     <!-- Loading state -->
@@ -171,7 +188,11 @@ function getCategoryColor(category: string): string {
           <div class="flex items-center gap-2 min-w-0">
             <span
               class="text-sm truncate"
-              :class="props.modelValue === style.id ? 'font-medium text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300'"
+              :class="
+                props.modelValue === style.id
+                  ? 'font-medium text-primary-700 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-300'
+              "
             >
               {{ style.shortName || style.name }}
             </span>
@@ -190,12 +211,7 @@ function getCategoryColor(category: string): string {
             >
               {{ style.category }}
             </UBadge>
-            <UBadge
-              v-if="!style.isDefault"
-              color="purple"
-              variant="subtle"
-              size="xs"
-            >
+            <UBadge v-if="!style.isDefault" color="purple" variant="subtle" size="xs">
               Custom
             </UBadge>
             <UBadge
@@ -209,10 +225,7 @@ function getCategoryColor(category: string): string {
           </div>
         </button>
 
-        <p
-          v-if="filteredStyles.length === 0"
-          class="text-center text-sm text-gray-500 py-8 px-3"
-        >
+        <p v-if="filteredStyles.length === 0" class="text-center text-sm text-gray-500 py-8 px-3">
           No styles found
         </p>
       </div>

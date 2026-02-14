@@ -1,144 +1,127 @@
-import type { Author, EntryMetadata, EntryType } from "~/shared/types";
-import type { EntrySuggestion, SearchRequest, SourceAdapter } from "../types";
+import type { Author, EntryMetadata, EntryType } from '~/shared/types'
+import type { EntrySuggestion, SearchRequest, SourceAdapter } from '../types'
 
-const CROSSREF_API = "https://api.crossref.org";
-const REQUEST_TIMEOUT = 8000;
+const CROSSREF_API = 'https://api.crossref.org'
+const REQUEST_TIMEOUT = 8000
 
 export const crossrefAdapter: SourceAdapter = {
-  name: "crossref",
-  supportedFields: ["any", "title", "author", "publisher", "journal", "year"],
+  name: 'crossref',
+  supportedFields: ['any', 'title', 'author', 'publisher', 'journal', 'year'],
 
   async search(request: SearchRequest): Promise<EntrySuggestion[]> {
-    const { query, field, maxResults, offset } = request;
+    const { query, field, maxResults, offset } = request
 
-    const params = new URLSearchParams();
-    params.set("rows", String(maxResults));
-    params.set("offset", String(offset));
+    const params = new URLSearchParams()
+    params.set('rows', String(maxResults))
+    params.set('offset', String(offset))
 
     switch (field) {
-      case "author":
-        params.set("query.author", query);
-        break;
-      case "publisher":
-        params.set("query.publisher-name", query);
-        break;
-      case "journal":
-        params.set("query.container-title", query);
-        break;
-      case "year": {
-        const year = parseYear(query);
+      case 'author':
+        params.set('query.author', query)
+        break
+      case 'publisher':
+        params.set('query.publisher-name', query)
+        break
+      case 'journal':
+        params.set('query.container-title', query)
+        break
+      case 'year': {
+        const year = parseYear(query)
         if (year) {
-          params.set(
-            "filter",
-            `from-pub-date:${year},until-pub-date:${year}`,
-          );
+          params.set('filter', `from-pub-date:${year},until-pub-date:${year}`)
         } else {
-          params.set("query", query);
+          params.set('query', query)
         }
-        break;
+        break
       }
-      case "title":
-        params.set("query.bibliographic", query);
-        break;
+      case 'title':
+        params.set('query.bibliographic', query)
+        break
       default:
-        params.set("query", query);
-        break;
+        params.set('query', query)
+        break
     }
 
-    return fetchCrossrefWorks(params);
+    return fetchCrossrefWorks(params)
   },
-};
+}
 
-async function fetchCrossrefWorks(
-  params: URLSearchParams,
-): Promise<EntrySuggestion[]> {
+async function fetchCrossrefWorks(params: URLSearchParams): Promise<EntrySuggestion[]> {
   try {
-    const response = await fetch(
-      `${CROSSREF_API}/works?${params.toString()}`,
-      {
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "AnnoBib/1.0 (mailto:support@annobib.dev)",
-        },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+    const response = await fetch(`${CROSSREF_API}/works?${params.toString()}`, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'AnnoBib/1.0 (mailto:support@annobib.dev)',
       },
-    );
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+    })
 
-    if (!response.ok) return [];
+    if (!response.ok) return []
 
-    const data: any = await response.json();
-    const items: any[] = data?.message?.items ?? [];
+    const data: any = await response.json()
+    const items: any[] = data?.message?.items ?? []
 
     return items
       .map((item) => crossrefWorkToSuggestion(item))
-      .filter((s): s is EntrySuggestion => !!s);
+      .filter((s): s is EntrySuggestion => !!s)
   } catch {
-    return [];
+    return []
   }
 }
 
-export async function lookupByDoi(
-  doi: string,
-): Promise<EntrySuggestion | null> {
-  const trimmed = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+export async function lookupByDoi(doi: string): Promise<EntrySuggestion | null> {
+  const trimmed = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
 
   try {
-    const response = await fetch(
-      `${CROSSREF_API}/works/${encodeURIComponent(trimmed)}`,
-      {
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "AnnoBib/1.0 (mailto:support@annobib.dev)",
-        },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+    const response = await fetch(`${CROSSREF_API}/works/${encodeURIComponent(trimmed)}`, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'AnnoBib/1.0 (mailto:support@annobib.dev)',
       },
-    );
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+    })
 
-    if (!response.ok) return null;
+    if (!response.ok) return null
 
-    const data: any = await response.json();
-    const work = data?.message;
-    if (!work) return null;
+    const data: any = await response.json()
+    const work = data?.message
+    if (!work) return null
 
-    return crossrefWorkToSuggestion(work);
+    return crossrefWorkToSuggestion(work)
   } catch {
-    return null;
+    return null
   }
 }
 
-export function crossrefWorkToSuggestion(
-  work: any,
-): EntrySuggestion | null {
-  const title: string | undefined = Array.isArray(work.title)
-    ? work.title[0]
-    : work.title;
-  if (!title) return null;
+export function crossrefWorkToSuggestion(work: any): EntrySuggestion | null {
+  const title: string | undefined = Array.isArray(work.title) ? work.title[0] : work.title
+  if (!title) return null
 
   const authors: Author[] = Array.isArray(work.author)
     ? work.author.map((a: any) => {
-        const given = String(a.given ?? "").trim();
-        const family = String(a.family ?? "").trim();
+        const given = String(a.given ?? '').trim()
+        const family = String(a.family ?? '').trim()
         return {
           firstName: given,
-          lastName: family || given || "Unknown",
-        };
+          lastName: family || given || 'Unknown',
+        }
       })
-    : [];
+    : []
 
-  const year = extractYearFromCrossref(work);
+  const year = extractYearFromCrossref(work)
 
   const journal =
-    (Array.isArray(work["container-title"]) && work["container-title"][0]) ||
-    work["container-title"];
+    (Array.isArray(work['container-title']) && work['container-title'][0]) ||
+    work['container-title']
 
-  const type = String(work.type ?? "").toLowerCase();
+  const type = String(work.type ?? '').toLowerCase()
 
-  let entryType: EntryType = "journal_article";
-  if (type.includes("book")) entryType = "book";
-  else if (type.includes("dataset")) entryType = "dataset";
-  else if (type.includes("proceedings") || type.includes("conference"))
-    entryType = "conference_paper";
-  else if (type.includes("report")) entryType = "report";
+  let entryType: EntryType = 'journal_article'
+  if (type.includes('book')) entryType = 'book'
+  else if (type.includes('dataset')) entryType = 'dataset'
+  else if (type.includes('proceedings') || type.includes('conference'))
+    entryType = 'conference_paper'
+  else if (type.includes('report')) entryType = 'report'
 
   const metadata: EntryMetadata = {
     doi: work.DOI,
@@ -150,51 +133,45 @@ export function crossrefWorkToSuggestion(
     publisher: work.publisher,
     language: Array.isArray(work.language) ? work.language[0] : work.language,
     citationCount:
-      typeof work["is-referenced-by-count"] === "number"
-        ? work["is-referenced-by-count"]
+      typeof work['is-referenced-by-count'] === 'number'
+        ? work['is-referenced-by-count']
         : undefined,
-  };
+  }
 
   return {
     id: work.DOI || work.URL || title,
-    source: "crossref",
+    source: 'crossref',
     title,
     authors,
     year,
     entryType,
     metadata,
-  };
+  }
 }
 
 function extractYearFromCrossref(work: any): number | undefined {
   const dateParts =
-    work?.issued?.["date-parts"] ||
-    work?.published?.["date-parts"] ||
-    work?.created?.["date-parts"];
+    work?.issued?.['date-parts'] || work?.published?.['date-parts'] || work?.created?.['date-parts']
 
   if (
     Array.isArray(dateParts) &&
     Array.isArray(dateParts[0]) &&
-    typeof dateParts[0][0] === "number"
+    typeof dateParts[0][0] === 'number'
   ) {
-    return dateParts[0][0];
+    return dateParts[0][0]
   }
 
-  const printed = work?.["published-print"]?.["date-parts"];
-  if (
-    Array.isArray(printed) &&
-    Array.isArray(printed[0]) &&
-    typeof printed[0][0] === "number"
-  ) {
-    return printed[0][0];
+  const printed = work?.['published-print']?.['date-parts']
+  if (Array.isArray(printed) && Array.isArray(printed[0]) && typeof printed[0][0] === 'number') {
+    return printed[0][0]
   }
 
-  return undefined;
+  return undefined
 }
 
 function parseYear(value: string): number | undefined {
-  const match = value.match(/(\d{4})/);
-  if (!match) return undefined;
-  const year = Number.parseInt(match[1], 10);
-  return Number.isFinite(year) ? year : undefined;
+  const match = value.match(/(\d{4})/)
+  if (!match) return undefined
+  const year = Number.parseInt(match[1], 10)
+  return Number.isFinite(year) ? year : undefined
 }

@@ -122,7 +122,7 @@ function generateCiteKey(entry: Entry): string {
     .toLowerCase()
     .replace(/[^a-z\s]/g, '')
     .split(/\s+/)
-    .filter(w => !['the', 'a', 'an', 'of', 'in', 'on', 'for', 'and', 'or'].includes(w))
+    .filter((w) => !['the', 'a', 'an', 'of', 'in', 'on', 'for', 'and', 'or'].includes(w))
 
   const titlePart = titleWords[0] || 'untitled'
 
@@ -253,7 +253,10 @@ function mapBibtexType(bibtexType: string): EntryType {
 
 function parseAuthors(authorsStr: string): Author[] {
   return authorsStr.split(' and ').map((authorStr) => {
-    const parts = authorStr.trim().split(',').map(p => p.trim())
+    const parts = authorStr
+      .trim()
+      .split(',')
+      .map((p) => p.trim())
 
     if (parts.length >= 2) {
       const part0 = parts[0] ?? ''
@@ -265,8 +268,7 @@ function parseAuthors(authorsStr: string): Author[] {
         firstName: unescapeBibtex(firstName),
         middleName: nameParts.slice(1).join(' ') || undefined,
       }
-    }
-    else {
+    } else {
       const nameParts = authorStr.trim().split(/\s+/)
       const lastName = nameParts[nameParts.length - 1] ?? ''
       const firstName = nameParts[0] ?? ''

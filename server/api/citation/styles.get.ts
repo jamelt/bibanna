@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const defaultStyles = getDefaultStyles()
 
-  let customStyles: typeof citationStyles.$inferSelect[] = []
+  let customStyles: (typeof citationStyles.$inferSelect)[] = []
 
   if (user) {
     customStyles = await db.query.citationStyles.findMany({
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   }
 
   return {
-    defaultStyles: defaultStyles.map(style => ({
+    defaultStyles: defaultStyles.map((style) => ({
       id: style.id,
       name: style.name,
       shortName: style.shortName,
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       description: style.description,
       isDefault: true,
     })),
-    customStyles: customStyles.map(style => ({
+    customStyles: customStyles.map((style) => ({
       id: style.id,
       name: style.name,
       description: style.description,

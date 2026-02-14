@@ -7,7 +7,8 @@ import { project1Config } from './seed-data/project1-sources'
 import { project2Config } from './seed-data/project2-sources'
 import type { SeedEntry, SeedProjectConfig } from './seed-data/types'
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
 const userEmail = process.argv[2]
 
 async function hashPassword(raw: string): Promise<string> {
@@ -15,7 +16,7 @@ async function hashPassword(raw: string): Promise<string> {
   const data = encoder.encode(raw)
   const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 async function getOrCreateUser(
@@ -24,9 +25,7 @@ async function getOrCreateUser(
   password: string,
   name: string,
 ): Promise<string> {
-  const existing = await db.execute(
-    sql`SELECT id FROM users WHERE email = ${email}`,
-  )
+  const existing = await db.execute(sql`SELECT id FROM users WHERE email = ${email}`)
   if (existing.length > 0) {
     console.log(`  Found existing user: ${email}`)
     return existing[0].id as string
@@ -63,7 +62,10 @@ async function seedProjectConfig(
       continue
     }
 
-    const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const slug = p.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
     const created = await db.execute(
       sql`INSERT INTO projects (user_id, name, description, color, is_starred, is_archived, slug, settings)
           VALUES (${userId}, ${p.name}, ${p.description}, ${p.color}, ${p.isStarred ?? false}, ${p.isArchived ?? false}, ${slug}, '{}')
@@ -108,8 +110,7 @@ async function seedProjectConfig(
     let entryId: string
     if (existingEntry.length > 0) {
       entryId = existingEntry[0].id as string
-    }
-    else {
+    } else {
       const created = await db.execute(
         sql`INSERT INTO entries (user_id, entry_type, title, authors, year, metadata, custom_fields, notes, is_favorite)
             VALUES (
@@ -177,7 +178,7 @@ async function seedProjectConfig(
       )
       if (existingScore.length === 0) {
         const vs = entry.veritasScore
-        const dsArray = `{${vs.dataSources.map(s => `"${s}"`).join(',')}}`
+        const dsArray = `{${vs.dataSources.map((s) => `"${s}"`).join(',')}}`
         await db.execute(
           sql`INSERT INTO veritas_scores (entry_id, overall_score, confidence, label, factors, data_sources, calculated_at, expires_at, user_override, user_override_reason)
               VALUES (
@@ -264,16 +265,96 @@ async function createExcelPreset(db: ReturnType<typeof drizzle>, userId: string)
   }
 
   const columns = [
-    { id: 'title', field: 'title', header: 'Title', width: 40, format: 'text', enabled: true, order: 0 },
-    { id: 'authors', field: 'authors', header: 'Authors', width: 30, format: 'text', enabled: true, order: 1 },
-    { id: 'year', field: 'year', header: 'Year', width: 8, format: 'number', enabled: true, order: 2 },
-    { id: 'entryType', field: 'entryType', header: 'Type', width: 15, format: 'text', enabled: true, order: 3 },
-    { id: 'tags', field: 'tags', header: 'Tags', width: 25, format: 'tags', enabled: true, order: 4 },
-    { id: 'doi', field: 'metadata.doi', header: 'DOI', width: 25, format: 'hyperlink', enabled: true, order: 5 },
-    { id: 'isbn', field: 'metadata.isbn', header: 'ISBN', width: 18, format: 'text', enabled: true, order: 6 },
-    { id: 'publisher', field: 'metadata.publisher', header: 'Publisher', width: 20, format: 'text', enabled: true, order: 7 },
-    { id: 'journal', field: 'metadata.journal', header: 'Journal', width: 25, format: 'text', enabled: true, order: 8 },
-    { id: 'notes', field: 'notes', header: 'Notes', width: 40, format: 'text', enabled: true, order: 9 },
+    {
+      id: 'title',
+      field: 'title',
+      header: 'Title',
+      width: 40,
+      format: 'text',
+      enabled: true,
+      order: 0,
+    },
+    {
+      id: 'authors',
+      field: 'authors',
+      header: 'Authors',
+      width: 30,
+      format: 'text',
+      enabled: true,
+      order: 1,
+    },
+    {
+      id: 'year',
+      field: 'year',
+      header: 'Year',
+      width: 8,
+      format: 'number',
+      enabled: true,
+      order: 2,
+    },
+    {
+      id: 'entryType',
+      field: 'entryType',
+      header: 'Type',
+      width: 15,
+      format: 'text',
+      enabled: true,
+      order: 3,
+    },
+    {
+      id: 'tags',
+      field: 'tags',
+      header: 'Tags',
+      width: 25,
+      format: 'tags',
+      enabled: true,
+      order: 4,
+    },
+    {
+      id: 'doi',
+      field: 'metadata.doi',
+      header: 'DOI',
+      width: 25,
+      format: 'hyperlink',
+      enabled: true,
+      order: 5,
+    },
+    {
+      id: 'isbn',
+      field: 'metadata.isbn',
+      header: 'ISBN',
+      width: 18,
+      format: 'text',
+      enabled: true,
+      order: 6,
+    },
+    {
+      id: 'publisher',
+      field: 'metadata.publisher',
+      header: 'Publisher',
+      width: 20,
+      format: 'text',
+      enabled: true,
+      order: 7,
+    },
+    {
+      id: 'journal',
+      field: 'metadata.journal',
+      header: 'Journal',
+      width: 25,
+      format: 'text',
+      enabled: true,
+      order: 8,
+    },
+    {
+      id: 'notes',
+      field: 'notes',
+      header: 'Notes',
+      width: 40,
+      format: 'text',
+      enabled: true,
+      order: 9,
+    },
   ]
 
   const options = {
@@ -317,13 +398,28 @@ async function main() {
     console.log('--- Setting up users ---')
     const primaryEmail = userEmail?.toLowerCase() || 'seed@annobib.dev'
     const primaryUserId = await getOrCreateUser(db, primaryEmail, 'seed123', 'Seed User')
-    const secondaryUserId = await getOrCreateUser(db, 'collaborator@annobib.dev', 'collab123', 'Research Collaborator')
+    const secondaryUserId = await getOrCreateUser(
+      db,
+      'collaborator@annobib.dev',
+      'collab123',
+      'Research Collaborator',
+    )
 
     // Project 1: Post-Labor Economy
-    const p1 = await seedProjectConfig(db, primaryUserId, project1Config, 'Post-Labor Economy & Digital Commons')
+    const p1 = await seedProjectConfig(
+      db,
+      primaryUserId,
+      project1Config,
+      'Post-Labor Economy & Digital Commons',
+    )
 
     // Project 2: Human Cooperation & Welfare
-    const p2 = await seedProjectConfig(db, primaryUserId, project2Config, 'Human Cooperation & Welfare Institutions')
+    const p2 = await seedProjectConfig(
+      db,
+      primaryUserId,
+      project2Config,
+      'Human Cooperation & Welfare Institutions',
+    )
 
     // Shares
     const p1MainId = p1.projectIds[project1Config.projects[0].key]
@@ -343,8 +439,7 @@ async function main() {
     if (!userEmail) {
       console.log(`\n  Login with: email=seed@annobib.dev password=seed123`)
     }
-  }
-  finally {
+  } finally {
     await client.end()
   }
 }

@@ -8,18 +8,21 @@ definePageMeta({
 
 const { hasFeature } = useSubscription()
 
-const { data: projects, pending } = await useFetch<{ items: Project[]; total: number }>('/api/projects', {
-  query: { pageSize: 50 },
-})
+const { data: projects, pending } = await useFetch<{ items: Project[]; total: number }>(
+  '/api/projects',
+  {
+    query: { pageSize: 50 },
+  },
+)
 
 const projectsWithEntries = computed(() => {
   if (!projects.value?.items) return []
-  return projects.value.items.filter(p => (p.entryCount ?? 0) > 0 && !p.isArchived)
+  return projects.value.items.filter((p) => (p.entryCount ?? 0) > 0 && !p.isArchived)
 })
 
 const emptyProjects = computed(() => {
   if (!projects.value?.items) return []
-  return projects.value.items.filter(p => (p.entryCount ?? 0) === 0 && !p.isArchived)
+  return projects.value.items.filter((p) => (p.entryCount ?? 0) === 0 && !p.isArchived)
 })
 </script>
 
@@ -27,9 +30,7 @@ const emptyProjects = computed(() => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Mind Maps
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Mind Maps</h1>
         <p class="mt-1 text-gray-500">
           Visualize relationships between your sources, authors, and topics
         </p>
@@ -37,9 +38,14 @@ const emptyProjects = computed(() => {
     </div>
 
     <!-- Upgrade prompt for free users -->
-    <UCard v-if="!hasFeature('mindMaps')" class="bg-linear-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 border-primary-200 dark:border-primary-800">
+    <UCard
+      v-if="!hasFeature('mindMaps')"
+      class="bg-linear-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 border-primary-200 dark:border-primary-800"
+    >
       <div class="flex flex-col md:flex-row items-center gap-6">
-        <div class="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+        <div
+          class="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0"
+        >
           <UIcon name="i-heroicons-share" class="w-10 h-10 text-primary-600" />
         </div>
         <div class="flex-1 text-center md:text-left">
@@ -47,13 +53,11 @@ const emptyProjects = computed(() => {
             Unlock Mind Map Visualization
           </h2>
           <p class="mt-2 text-gray-600 dark:text-gray-400">
-            Upgrade to Light or Pro to visualize your research with interactive mind maps. 
-            See connections between entries, authors, and topics at a glance.
+            Upgrade to Light or Pro to visualize your research with interactive mind maps. See
+            connections between entries, authors, and topics at a glance.
           </p>
           <div class="mt-4">
-            <UButton to="/app/subscription" color="primary">
-              Upgrade Now
-            </UButton>
+            <UButton to="/app/subscription" color="primary"> Upgrade Now </UButton>
           </div>
         </div>
       </div>
@@ -69,7 +73,7 @@ const emptyProjects = computed(() => {
       <h2 class="text-lg font-medium text-gray-900 dark:text-white">
         Select a project to view its mind map
       </h2>
-      
+
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <NuxtLink
           v-for="project in projectsWithEntries"
@@ -77,7 +81,7 @@ const emptyProjects = computed(() => {
           :to="`/app/projects/${project.id}/mindmap`"
           class="group"
         >
-          <UCard 
+          <UCard
             :ui="{ body: { padding: 'p-4' } }"
             class="h-full transition-all hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700"
           >
@@ -93,7 +97,9 @@ const emptyProjects = computed(() => {
                 />
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-600">
+                <h3
+                  class="font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-600"
+                >
                   {{ project.name }}
                 </h3>
                 <p class="text-sm text-gray-500 mt-1">
@@ -103,9 +109,9 @@ const emptyProjects = computed(() => {
                   {{ project.description }}
                 </p>
               </div>
-              <UIcon 
-                name="i-heroicons-arrow-right" 
-                class="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors shrink-0" 
+              <UIcon
+                name="i-heroicons-arrow-right"
+                class="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors shrink-0"
               />
             </div>
           </UCard>
@@ -115,7 +121,10 @@ const emptyProjects = computed(() => {
 
     <!-- No projects with entries -->
     <UCard v-else class="text-center py-12">
-      <UIcon name="i-heroicons-folder-open" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+      <UIcon
+        name="i-heroicons-folder-open"
+        class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600"
+      />
       <h2 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
         No projects with entries yet
       </h2>
@@ -123,12 +132,8 @@ const emptyProjects = computed(() => {
         Create a project and add some entries to start visualizing your research with mind maps.
       </p>
       <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-        <UButton to="/app/projects" variant="outline">
-          View Projects
-        </UButton>
-        <UButton to="/app/library" color="primary">
-          Go to Library
-        </UButton>
+        <UButton to="/app/projects" variant="outline"> View Projects </UButton>
+        <UButton to="/app/library" color="primary"> Go to Library </UButton>
       </div>
     </UCard>
 

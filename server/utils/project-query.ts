@@ -1,4 +1,5 @@
-import { eq, or, and, SQL } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
+import { eq, or, and } from 'drizzle-orm'
 import { projects } from '~/server/database/schema'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -8,10 +9,7 @@ export function buildProjectWhere(projectIdOrSlug: string, userId: string): SQL 
 
   return and(
     isUUID
-      ? or(
-          eq(projects.id, projectIdOrSlug),
-          eq(projects.slug, projectIdOrSlug),
-        )
+      ? or(eq(projects.id, projectIdOrSlug), eq(projects.slug, projectIdOrSlug))
       : eq(projects.slug, projectIdOrSlug),
     eq(projects.userId, userId),
   )!

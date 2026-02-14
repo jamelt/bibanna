@@ -34,7 +34,10 @@ async function signUp(page: Page, testId: string): Promise<void> {
 }
 
 async function createEntry(page: Page, title: string): Promise<void> {
-  await page.getByRole('button', { name: /Add Entry/i }).first().click()
+  await page
+    .getByRole('button', { name: /Add Entry/i })
+    .first()
+    .click()
   await expect(page.getByRole('heading', { name: /Add Entry/i })).toBeVisible({ timeout: 5000 })
   const titleInput = page.getByLabel('Title')
   await titleInput.fill(title)

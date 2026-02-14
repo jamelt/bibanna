@@ -42,10 +42,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, parsed.data.entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, parsed.data.entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {

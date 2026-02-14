@@ -30,10 +30,7 @@ export default defineEventHandler(async (event) => {
   const { entryIds, styleId } = parsed.data
 
   const userEntries = await db.query.entries.findMany({
-    where: and(
-      eq(entries.userId, user.id),
-      inArray(entries.id, entryIds),
-    ),
+    where: and(eq(entries.userId, user.id), inArray(entries.id, entryIds)),
   })
 
   if (userEntries.length === 0) {
@@ -51,18 +48,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const customStyle = await db.query.citationStyles.findFirst({
-    where: and(
-      eq(citationStyles.id, styleId),
-      eq(citationStyles.userId, user.id),
-    ),
+    where: and(eq(citationStyles.id, styleId), eq(citationStyles.userId, user.id)),
   })
 
   if (!customStyle) {
     const publicStyle = await db.query.citationStyles.findFirst({
-      where: and(
-        eq(citationStyles.id, styleId),
-        eq(citationStyles.isPublic, true),
-      ),
+      where: and(eq(citationStyles.id, styleId), eq(citationStyles.isPublic, true)),
     })
 
     if (!publicStyle) {
@@ -72,16 +63,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    return await formatWithCustomStyle(
-      userEntries as Entry[],
-      publicStyle.cslXml,
-      publicStyle.name,
-    )
+    return await formatWithCustomStyle(userEntries as Entry[], publicStyle.cslXml, publicStyle.name)
   }
 
-  return await formatWithCustomStyle(
-    userEntries as Entry[],
-    customStyle.cslXml,
-    customStyle.name,
-  )
+  return await formatWithCustomStyle(userEntries as Entry[], customStyle.cslXml, customStyle.name)
 })

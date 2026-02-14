@@ -19,9 +19,7 @@ const allAdapters: SourceAdapter[] = [
 ]
 
 function selectAdapters(field: FieldQualifier): SourceAdapter[] {
-  return allAdapters.filter((adapter) =>
-    adapter.supportedFields.includes(field),
-  )
+  return allAdapters.filter((adapter) => adapter.supportedFields.includes(field))
 }
 
 describe('Search Router - Adapter Selection', () => {

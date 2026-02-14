@@ -39,8 +39,7 @@ export async function getOrCreateStripeProducts(): Promise<Record<string, Stripe
 
     if (existingProducts.data.length > 0) {
       product = existingProducts.data[0]
-    }
-    else {
+    } else {
       product = await stripe.products.create({
         name: plan.stripe.productName,
         description: plan.stripe.productDescription,
@@ -53,12 +52,8 @@ export async function getOrCreateStripeProducts(): Promise<Record<string, Stripe
       active: true,
     })
 
-    let priceMonthly = existingPrices.data.find(
-      p => p.recurring?.interval === 'month',
-    )
-    let priceYearly = existingPrices.data.find(
-      p => p.recurring?.interval === 'year',
-    )
+    let priceMonthly = existingPrices.data.find((p) => p.recurring?.interval === 'month')
+    let priceYearly = existingPrices.data.find((p) => p.recurring?.interval === 'year')
 
     if (!priceMonthly) {
       priceMonthly = await stripe.prices.create({
@@ -162,7 +157,10 @@ export async function reactivateSubscription(subscriptionId: string): Promise<St
   })
 }
 
-export function getTierFromPriceId(priceId: string, products: Record<string, StripeProduct>): SubscriptionTier {
+export function getTierFromPriceId(
+  priceId: string,
+  products: Record<string, StripeProduct>,
+): SubscriptionTier {
   for (const [tier, product] of Object.entries(products)) {
     if (product.priceIdMonthly === priceId || product.priceIdYearly === priceId) {
       return tier as SubscriptionTier

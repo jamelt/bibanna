@@ -64,12 +64,11 @@ export async function getSemanticScholarData(entry: Entry): Promise<SemanticScho
 
     if (entry.metadata?.doi) {
       url = `${SEMANTIC_SCHOLAR_API}/paper/DOI:${entry.metadata.doi}?fields=paperId,title,citationCount,influentialCitationCount,authors.hIndex,venue,year,isOpenAccess,fieldsOfStudy,publicationTypes`
-    }
-    else {
+    } else {
       const searchUrl = `${SEMANTIC_SCHOLAR_API}/paper/search?query=${encodeURIComponent(entry.title)}&limit=1&fields=paperId,title,citationCount,influentialCitationCount,authors.hIndex,venue,year,isOpenAccess,fieldsOfStudy`
       const searchResponse = await fetch(searchUrl, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       })
 
@@ -83,15 +82,14 @@ export async function getSemanticScholarData(entry: Entry): Promise<SemanticScho
 
     const response = await fetch(url, {
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     })
 
     if (!response.ok) return null
 
     return response.json()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Semantic Scholar API error:', error)
     return null
   }
@@ -103,15 +101,14 @@ export async function getOpenAlexData(entry: Entry): Promise<OpenAlexData | null
 
     if (entry.metadata?.doi) {
       url = `${OPENALEX_API}/works/doi:${entry.metadata.doi}`
-    }
-    else {
+    } else {
       url = `${OPENALEX_API}/works?filter=title.search:${encodeURIComponent(entry.title)}&per_page=1`
     }
 
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'AnnoBib/1.0 (mailto:support@annobib.dev)',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     })
 
@@ -121,12 +118,10 @@ export async function getOpenAlexData(entry: Entry): Promise<OpenAlexData | null
 
     if (entry.metadata?.doi) {
       return data
-    }
-    else {
+    } else {
       return data.results?.[0] || null
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('OpenAlex API error:', error)
     return null
   }
@@ -140,7 +135,7 @@ export async function getCrossRefData(entry: Entry): Promise<CrossRefData | null
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'AnnoBib/1.0 (mailto:support@annobib.dev)',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     })
 
@@ -148,8 +143,7 @@ export async function getCrossRefData(entry: Entry): Promise<CrossRefData | null
 
     const data = await response.json()
     return data.message
-  }
-  catch (error) {
+  } catch (error) {
     console.error('CrossRef API error:', error)
     return null
   }
@@ -183,9 +177,7 @@ export function calculateAuthorScore(
 ): number {
   if (!authors || authors.length === 0) return 50
 
-  const hIndices = authors
-    .map(a => a.hIndex)
-    .filter((h): h is number => h !== undefined)
+  const hIndices = authors.map((a) => a.hIndex).filter((h): h is number => h !== undefined)
 
   if (hIndices.length === 0) return 50
 
@@ -201,8 +193,8 @@ export function calculateAuthorScore(
   else if (maxHIndex >= 5) score = 60
 
   if (institutions) {
-    const hasEducation = institutions.some(i => i.type === 'education')
-    const hasHealthcare = institutions.some(i => i.type === 'healthcare')
+    const hasEducation = institutions.some((i) => i.type === 'education')
+    const hasHealthcare = institutions.some((i) => i.type === 'healthcare')
     if (hasEducation || hasHealthcare) {
       score = Math.min(100, score + 5)
     }

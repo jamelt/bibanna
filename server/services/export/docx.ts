@@ -171,7 +171,7 @@ export async function generateDocx(
         }
 
         if (opts.annotationStyle === 'bullets') {
-          const sentences = content.split(/(?<=[.!?])\s+/).filter(s => s.trim())
+          const sentences = content.split(/(?<=[.!?])\s+/).filter((s) => s.trim())
           for (const sentence of sentences) {
             bibliographyChildren.push(
               new Paragraph({
@@ -188,8 +188,7 @@ export async function generateDocx(
               }),
             )
           }
-        }
-        else {
+        } else {
           bibliographyChildren.push(
             new Paragraph({
               spacing: { line: spacing, before: 60, after: 120 },
@@ -206,9 +205,7 @@ export async function generateDocx(
         }
       }
 
-      bibliographyChildren.push(
-        new Paragraph({ spacing: { after: 120 } }),
-      )
+      bibliographyChildren.push(new Paragraph({ spacing: { after: 120 } }))
     }
   }
 
@@ -237,9 +234,7 @@ export async function generateDocx(
           bottom: inchesToTwip(opts.margins.bottom),
           left: inchesToTwip(opts.margins.left),
         },
-        pageNumbers: opts.pageNumbers
-          ? { start: 1, formatType: NumberFormat.DECIMAL }
-          : undefined,
+        pageNumbers: opts.pageNumbers ? { start: 1, formatType: NumberFormat.DECIMAL } : undefined,
       },
     },
     headers: {
@@ -300,7 +295,7 @@ function buildCitationRuns(entry: Entry, font: string, fontSize: number): TextRu
       if (year) runs.push(new TextRun({ text: `${year}. `, font, size }))
       runs.push(new TextRun({ text: `${entry.title}.`, font, size }))
       if (entry.metadata?.journal) {
-        let journalText = ` ${entry.metadata.journal}`
+        const journalText = ` ${entry.metadata.journal}`
         runs.push(new TextRun({ text: journalText, font, size, italics: true }))
         let details = ''
         if (entry.metadata?.volume) {

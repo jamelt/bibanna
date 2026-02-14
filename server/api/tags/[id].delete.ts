@@ -14,10 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingTag = await db.query.tags.findFirst({
-    where: and(
-      eq(tags.id, tagId),
-      eq(tags.userId, user.id),
-    ),
+    where: and(eq(tags.id, tagId), eq(tags.userId, user.id)),
   })
 
   if (!existingTag) {
@@ -27,12 +24,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db
-    .delete(tags)
-    .where(and(
-      eq(tags.id, tagId),
-      eq(tags.userId, user.id),
-    ))
+  await db.delete(tags).where(and(eq(tags.id, tagId), eq(tags.userId, user.id)))
 
   return { success: true, deletedId: tagId }
 })

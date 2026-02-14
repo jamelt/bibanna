@@ -1,413 +1,393 @@
 <script setup lang="ts">
-import { useDebounceFn, useMediaQuery } from "@vueuse/core";
-import type { Author, EntryType, EntryMetadata } from "~/shared/types";
-import { ENTRY_TYPE_LABELS } from "~/shared/types";
+import { useDebounceFn, useMediaQuery } from '@vueuse/core'
+import type { Author, EntryType, EntryMetadata } from '~/shared/types'
+import { ENTRY_TYPE_LABELS } from '~/shared/types'
 
-const isMobile = useMediaQuery("(max-width: 640px)");
+const isMobile = useMediaQuery('(max-width: 640px)')
 
 interface EntrySuggestion {
-  id: string;
+  id: string
   source:
-    | "crossref"
-    | "openlibrary"
-    | "url"
-    | "pubmed"
-    | "openalex"
-    | "semantic_scholar"
-    | "google_books"
-    | "loc";
-  title: string;
-  authors: Author[];
-  year?: number;
-  entryType: EntryType;
-  metadata: EntryMetadata;
+    | 'crossref'
+    | 'openlibrary'
+    | 'url'
+    | 'pubmed'
+    | 'openalex'
+    | 'semantic_scholar'
+    | 'google_books'
+    | 'loc'
+  title: string
+  authors: Author[]
+  year?: number
+  entryType: EntryType
+  metadata: EntryMetadata
 }
 
 interface SuggestResponse {
-  suggestions: EntrySuggestion[];
-  hasMore: boolean;
-  total: number;
+  suggestions: EntrySuggestion[]
+  hasMore: boolean
+  total: number
 }
 
-type DetectedKind = "doi" | "isbn" | "url" | "pmid" | "title";
-type FieldQualifier = "any" | "author" | "title" | "publisher" | "journal" | "subject" | "year";
+type DetectedKind = 'doi' | 'isbn' | 'url' | 'pmid' | 'title'
+type FieldQualifier = 'any' | 'author' | 'title' | 'publisher' | 'journal' | 'subject' | 'year'
 type QuickAddStatus =
-  | "idle"
-  | "typing"
-  | "loading"
-  | "loaded"
-  | "preview"
-  | "creating"
-  | "success"
-  | "error";
+  | 'idle'
+  | 'typing'
+  | 'loading'
+  | 'loaded'
+  | 'preview'
+  | 'creating'
+  | 'success'
+  | 'error'
 
 const props = defineProps<{
-  open: boolean;
-  defaultProjectId?: string;
-}>();
+  open: boolean
+  defaultProjectId?: string
+}>()
 
 const emit = defineEmits<{
-  "update:open": [value: boolean];
-  created: [entry: any];
-}>();
+  'update:open': [value: boolean]
+  created: [entry: any]
+}>()
 
 const isOpen = computed({
   get: () => props.open,
-  set: (value) => emit("update:open", value),
-});
+  set: (value) => emit('update:open', value),
+})
 
-const toast = useToast();
+const toast = useToast()
 
-const query = ref("");
-const detectedKind = ref<DetectedKind>("title");
-const status = ref<QuickAddStatus>("idle");
-const suggestions = ref<EntrySuggestion[]>([]);
-const highlightedIndex = ref(-1);
-const selectedSuggestion = ref<EntrySuggestion | null>(null);
-const errorMessage = ref<string | null>(null);
-const isCreating = ref(false);
+const query = ref('')
+const detectedKind = ref<DetectedKind>('title')
+const status = ref<QuickAddStatus>('idle')
+const suggestions = ref<EntrySuggestion[]>([])
+const highlightedIndex = ref(-1)
+const selectedSuggestion = ref<EntrySuggestion | null>(null)
+const errorMessage = ref<string | null>(null)
+const isCreating = ref(false)
 
-const selectedProjectId = ref<string | null>(props.defaultProjectId ?? null);
+const selectedProjectId = ref<string | null>(props.defaultProjectId ?? null)
 
-const { data: projects } = useFetch("/api/projects", { lazy: true });
+const { data: projects } = useFetch('/api/projects', { lazy: true })
 
-const inputRef = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLElement | null>(null)
 
-const activeQualifier = ref<FieldQualifier>("any");
-const showSlashDropdown = ref(false);
-const slashFilterText = ref("");
+const activeQualifier = ref<FieldQualifier>('any')
+const showSlashDropdown = ref(false)
+const slashFilterText = ref('')
 
 interface QualifierOption {
-  key: FieldQualifier;
-  label: string;
-  shortcut: string;
-  color: string;
+  key: FieldQualifier
+  label: string
+  shortcut: string
+  color: string
 }
 
 const qualifierOptions: QualifierOption[] = [
-  { key: "author", label: "Author", shortcut: "/a", color: "info" },
-  { key: "title", label: "Title", shortcut: "/t", color: "neutral" },
-  { key: "publisher", label: "Publisher", shortcut: "/p", color: "primary" },
-  { key: "journal", label: "Journal", shortcut: "/j", color: "success" },
-  { key: "subject", label: "Subject", shortcut: "/s", color: "warning" },
-  { key: "year", label: "Year", shortcut: "/y", color: "error" },
-];
+  { key: 'author', label: 'Author', shortcut: '/a', color: 'info' },
+  { key: 'title', label: 'Title', shortcut: '/t', color: 'neutral' },
+  { key: 'publisher', label: 'Publisher', shortcut: '/p', color: 'primary' },
+  { key: 'journal', label: 'Journal', shortcut: '/j', color: 'success' },
+  { key: 'subject', label: 'Subject', shortcut: '/s', color: 'warning' },
+  { key: 'year', label: 'Year', shortcut: '/y', color: 'error' },
+]
 
 const SLASH_MAP: Record<string, FieldQualifier> = {
-  a: "author",
-  t: "title",
-  p: "publisher",
-  j: "journal",
-  s: "subject",
-  y: "year",
-};
+  a: 'author',
+  t: 'title',
+  p: 'publisher',
+  j: 'journal',
+  s: 'subject',
+  y: 'year',
+}
 
 const COLON_PREFIX_MAP: Record<string, FieldQualifier> = {
-  author: "author",
-  title: "title",
-  publisher: "publisher",
-  journal: "journal",
-  subject: "subject",
-  year: "year",
-};
+  author: 'author',
+  title: 'title',
+  publisher: 'publisher',
+  journal: 'journal',
+  subject: 'subject',
+  year: 'year',
+}
 
 const qualifierColorMap: Record<FieldQualifier, string> = {
-  any: "neutral",
-  author: "info",
-  title: "neutral",
-  publisher: "primary",
-  journal: "success",
-  subject: "warning",
-  year: "error",
-};
+  any: 'neutral',
+  author: 'info',
+  title: 'neutral',
+  publisher: 'primary',
+  journal: 'success',
+  subject: 'warning',
+  year: 'error',
+}
 
 const qualifierLabelMap: Record<FieldQualifier, string> = {
-  any: "Any",
-  author: "Author",
-  title: "Title",
-  publisher: "Publisher",
-  journal: "Journal",
-  subject: "Subject",
-  year: "Year",
-};
+  any: 'Any',
+  author: 'Author',
+  title: 'Title',
+  publisher: 'Publisher',
+  journal: 'Journal',
+  subject: 'Subject',
+  year: 'Year',
+}
 
 const filteredQualifierOptions = computed(() => {
-  if (!slashFilterText.value) return qualifierOptions;
-  const filter = slashFilterText.value.toLowerCase();
+  if (!slashFilterText.value) return qualifierOptions
+  const filter = slashFilterText.value.toLowerCase()
   return qualifierOptions.filter(
-    (opt) =>
-      opt.label.toLowerCase().startsWith(filter) ||
-      opt.shortcut.slice(1).startsWith(filter),
-  );
-});
+    (opt) => opt.label.toLowerCase().startsWith(filter) || opt.shortcut.slice(1).startsWith(filter),
+  )
+})
 
-const slashHighlightIndex = ref(0);
+const slashHighlightIndex = ref(0)
 
 function selectQualifier(qualifier: FieldQualifier) {
-  activeQualifier.value = qualifier;
-  showSlashDropdown.value = false;
-  slashFilterText.value = "";
-  slashHighlightIndex.value = 0;
+  activeQualifier.value = qualifier
+  showSlashDropdown.value = false
+  slashFilterText.value = ''
+  slashHighlightIndex.value = 0
 
-  query.value = "";
+  query.value = ''
 
   nextTick(() => {
-    const el = inputRef.value;
+    const el = inputRef.value
     if (el) {
-      const input = el.querySelector?.("input") || el;
-      (input as HTMLElement).focus?.();
+      const input = el.querySelector?.('input') || el
+      ;(input as HTMLElement).focus?.()
     }
-  });
+  })
 }
 
 function clearQualifier() {
-  activeQualifier.value = "any";
-  showSlashDropdown.value = false;
-  slashFilterText.value = "";
-  slashHighlightIndex.value = 0;
+  activeQualifier.value = 'any'
+  showSlashDropdown.value = false
+  slashFilterText.value = ''
+  slashHighlightIndex.value = 0
 }
 
 function parseColonPrefix(value: string): { qualifier: FieldQualifier; cleanQuery: string } | null {
-  const match = value.match(/^(\w+):\s*(.*)/);
-  if (!match) return null;
-  const prefix = match[1].toLowerCase();
-  const qualifier = COLON_PREFIX_MAP[prefix];
-  if (!qualifier) return null;
-  return { qualifier, cleanQuery: match[2] || "" };
+  const match = value.match(/^(\w+):\s*(.*)/)
+  if (!match) return null
+  const prefix = match[1].toLowerCase()
+  const qualifier = COLON_PREFIX_MAP[prefix]
+  if (!qualifier) return null
+  return { qualifier, cleanQuery: match[2] || '' }
 }
 
 function detectInputKind(value: string): DetectedKind {
-  const trimmed = value.trim();
-  if (!trimmed) return "title";
-  if (/^10\.\d{4,9}\/\S+$/i.test(trimmed) || /doi\.org\//i.test(trimmed))
-    return "doi";
-  if (/^https?:\/\//i.test(trimmed)) return "url";
-  const numericOnly = trimmed.replace(/[-\s]/g, "");
-  if (
-    (numericOnly.length === 10 || numericOnly.length === 13) &&
-    /^[0-9Xx]+$/.test(numericOnly)
-  )
-    return "isbn";
-  if (
-    /^\d{5,12}$/.test(trimmed) ||
-    /pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i.test(trimmed)
-  )
-    return "pmid";
-  return "title";
+  const trimmed = value.trim()
+  if (!trimmed) return 'title'
+  if (/^10\.\d{4,9}\/\S+$/i.test(trimmed) || /doi\.org\//i.test(trimmed)) return 'doi'
+  if (/^https?:\/\//i.test(trimmed)) return 'url'
+  const numericOnly = trimmed.replace(/[-\s]/g, '')
+  if ((numericOnly.length === 10 || numericOnly.length === 13) && /^[0-9Xx]+$/.test(numericOnly))
+    return 'isbn'
+  if (/^\d{5,12}$/.test(trimmed) || /pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i.test(trimmed))
+    return 'pmid'
+  return 'title'
 }
 
 const kindLabels: Record<DetectedKind, string> = {
-  doi: "DOI",
-  isbn: "ISBN",
-  url: "URL",
-  pmid: "PMID",
-  title: "Title",
-};
+  doi: 'DOI',
+  isbn: 'ISBN',
+  url: 'URL',
+  pmid: 'PMID',
+  title: 'Title',
+}
 
 const sourceLabels: Record<string, string> = {
-  crossref: "Crossref",
-  openlibrary: "OpenLibrary",
-  url: "URL",
-  pubmed: "PubMed",
-  openalex: "OpenAlex",
-  semantic_scholar: "Semantic Scholar",
-  google_books: "Google Books",
-  loc: "Library of Congress",
-};
+  crossref: 'Crossref',
+  openlibrary: 'OpenLibrary',
+  url: 'URL',
+  pubmed: 'PubMed',
+  openalex: 'OpenAlex',
+  semantic_scholar: 'Semantic Scholar',
+  google_books: 'Google Books',
+  loc: 'Library of Congress',
+}
 
 const sourceColors: Record<string, string> = {
-  crossref: "blue",
-  openlibrary: "green",
-  url: "purple",
-  pubmed: "orange",
-  openalex: "cyan",
-  semantic_scholar: "violet",
-  google_books: "red",
-  loc: "amber",
-};
+  crossref: 'blue',
+  openlibrary: 'green',
+  url: 'purple',
+  pubmed: 'orange',
+  openalex: 'cyan',
+  semantic_scholar: 'violet',
+  google_books: 'red',
+  loc: 'amber',
+}
 
 function formatAuthorsShort(authors: Author[]): string {
-  if (!authors || authors.length === 0) return "Unknown";
+  if (!authors || authors.length === 0) return 'Unknown'
   if (authors.length === 1) {
-    return authors[0]?.lastName || "Unknown";
+    return authors[0]?.lastName || 'Unknown'
   }
   if (authors.length === 2) {
-    return `${authors[0]?.lastName} & ${authors[1]?.lastName}`;
+    return `${authors[0]?.lastName} & ${authors[1]?.lastName}`
   }
-  return `${authors[0]?.lastName} et al.`;
+  return `${authors[0]?.lastName} et al.`
 }
 
 function formatAuthorsFull(authors: Author[]): string {
-  if (!authors || authors.length === 0) return "Unknown Author";
+  if (!authors || authors.length === 0) return 'Unknown Author'
   return authors
     .map(
       (a) =>
-        `${a.lastName}${a.firstName ? `, ${a.firstName}` : ""}${a.middleName ? ` ${a.middleName}` : ""}`,
+        `${a.lastName}${a.firstName ? `, ${a.firstName}` : ''}${a.middleName ? ` ${a.middleName}` : ''}`,
     )
-    .join("; ");
+    .join('; ')
 }
 
 function getMissingFields(suggestion: EntrySuggestion): string[] {
-  const missing: string[] = [];
-  if (!suggestion.authors || suggestion.authors.length === 0)
-    missing.push("Authors");
-  if (!suggestion.year) missing.push("Year");
-  if (!suggestion.metadata?.publisher && suggestion.entryType === "book")
-    missing.push("Publisher");
-  if (
-    !suggestion.metadata?.journal &&
-    suggestion.entryType === "journal_article"
-  )
-    missing.push("Journal");
-  return missing;
+  const missing: string[] = []
+  if (!suggestion.authors || suggestion.authors.length === 0) missing.push('Authors')
+  if (!suggestion.year) missing.push('Year')
+  if (!suggestion.metadata?.publisher && suggestion.entryType === 'book') missing.push('Publisher')
+  if (!suggestion.metadata?.journal && suggestion.entryType === 'journal_article')
+    missing.push('Journal')
+  return missing
 }
 
-const hasMore = ref(false);
-const totalResults = ref(0);
+const hasMore = ref(false)
+const totalResults = ref(0)
 
 const debouncedSuggest = useDebounceFn(async (value: string) => {
-  const trimmed = value.trim();
+  const trimmed = value.trim()
   if (!trimmed) {
-    suggestions.value = [];
-    hasMore.value = false;
-    totalResults.value = 0;
-    status.value = "idle";
-    return;
+    suggestions.value = []
+    hasMore.value = false
+    totalResults.value = 0
+    status.value = 'idle'
+    return
   }
 
-  status.value = "loading";
-  errorMessage.value = null;
+  status.value = 'loading'
+  errorMessage.value = null
 
   try {
-    const kind = detectInputKind(trimmed);
-    const maxResults = kind === "title" ? 8 : 5;
-    const field = activeQualifier.value !== "any" ? activeQualifier.value : undefined;
+    const kind = detectInputKind(trimmed)
+    const maxResults = kind === 'title' ? 8 : 5
+    const field = activeQualifier.value !== 'any' ? activeQualifier.value : undefined
 
-    const response = await $fetch<SuggestResponse>(
-      "/api/entries/suggest",
-      {
-        method: "POST",
-        body: { query: trimmed, maxResults, field },
-      },
-    );
+    const response = await $fetch<SuggestResponse>('/api/entries/suggest', {
+      method: 'POST',
+      body: { query: trimmed, maxResults, field },
+    })
 
-    suggestions.value = response.suggestions;
-    hasMore.value = response.hasMore;
-    totalResults.value = response.total;
-    highlightedIndex.value = suggestions.value.length > 0 ? 0 : -1;
-    status.value = suggestions.value.length > 0 ? "loaded" : "error";
+    suggestions.value = response.suggestions
+    hasMore.value = response.hasMore
+    totalResults.value = response.total
+    highlightedIndex.value = suggestions.value.length > 0 ? 0 : -1
+    status.value = suggestions.value.length > 0 ? 'loaded' : 'error'
 
     if (suggestions.value.length === 0) {
-      errorMessage.value = "no_results";
+      errorMessage.value = 'no_results'
     }
   } catch (err: any) {
-    status.value = "error";
-    errorMessage.value = err.data?.message || "network";
-    suggestions.value = [];
+    status.value = 'error'
+    errorMessage.value = err.data?.message || 'network'
+    suggestions.value = []
   }
-}, 300);
+}, 300)
 
-const loadingMore = ref(false);
-const sentinelRef = ref<HTMLElement | null>(null);
+const loadingMore = ref(false)
+const sentinelRef = ref<HTMLElement | null>(null)
 
 async function loadMore() {
-  if (loadingMore.value || !hasMore.value || !query.value.trim()) return;
+  if (loadingMore.value || !hasMore.value || !query.value.trim()) return
 
-  loadingMore.value = true;
-  const currentOffset = suggestions.value.length;
-  const field = activeQualifier.value !== "any" ? activeQualifier.value : undefined;
+  loadingMore.value = true
+  const currentOffset = suggestions.value.length
+  const field = activeQualifier.value !== 'any' ? activeQualifier.value : undefined
 
   try {
-    const response = await $fetch<SuggestResponse>(
-      "/api/entries/suggest",
-      {
-        method: "POST",
-        body: {
-          query: query.value.trim(),
-          maxResults: 8,
-          offset: currentOffset,
-          field,
-        },
+    const response = await $fetch<SuggestResponse>('/api/entries/suggest', {
+      method: 'POST',
+      body: {
+        query: query.value.trim(),
+        maxResults: 8,
+        offset: currentOffset,
+        field,
       },
-    );
+    })
 
-    suggestions.value = [...suggestions.value, ...response.suggestions];
-    hasMore.value = response.hasMore;
-    totalResults.value = response.total;
+    suggestions.value = [...suggestions.value, ...response.suggestions]
+    hasMore.value = response.hasMore
+    totalResults.value = response.total
   } catch {
-    hasMore.value = false;
+    hasMore.value = false
   } finally {
-    loadingMore.value = false;
+    loadingMore.value = false
   }
 }
 
 watch(query, (value) => {
-  detectedKind.value = detectInputKind(value);
-  selectedSuggestion.value = null;
+  detectedKind.value = detectInputKind(value)
+  selectedSuggestion.value = null
 
-  if (value === "/" && activeQualifier.value === "any") {
-    showSlashDropdown.value = true;
-    slashFilterText.value = "";
-    slashHighlightIndex.value = 0;
-    return;
+  if (value === '/' && activeQualifier.value === 'any') {
+    showSlashDropdown.value = true
+    slashFilterText.value = ''
+    slashHighlightIndex.value = 0
+    return
   }
 
-  if (showSlashDropdown.value && value.startsWith("/")) {
-    const afterSlash = value.slice(1);
+  if (showSlashDropdown.value && value.startsWith('/')) {
+    const afterSlash = value.slice(1)
 
     if (afterSlash.length === 1 && SLASH_MAP[afterSlash.toLowerCase()]) {
-      const qualifier = SLASH_MAP[afterSlash.toLowerCase()]!;
-      selectQualifier(qualifier);
-      return;
+      const qualifier = SLASH_MAP[afterSlash.toLowerCase()]!
+      selectQualifier(qualifier)
+      return
     }
 
-    slashFilterText.value = afterSlash;
-    slashHighlightIndex.value = 0;
-    return;
+    slashFilterText.value = afterSlash
+    slashHighlightIndex.value = 0
+    return
   }
 
-  if (showSlashDropdown.value && !value.startsWith("/")) {
-    showSlashDropdown.value = false;
-    slashFilterText.value = "";
+  if (showSlashDropdown.value && !value.startsWith('/')) {
+    showSlashDropdown.value = false
+    slashFilterText.value = ''
   }
 
-  if (activeQualifier.value === "any" && value.length > 2) {
-    const colonParsed = parseColonPrefix(value);
+  if (activeQualifier.value === 'any' && value.length > 2) {
+    const colonParsed = parseColonPrefix(value)
     if (colonParsed) {
-      activeQualifier.value = colonParsed.qualifier;
-      query.value = colonParsed.cleanQuery;
-      return;
+      activeQualifier.value = colonParsed.qualifier
+      query.value = colonParsed.cleanQuery
+      return
     }
   }
 
   if (value.trim()) {
-    status.value = "typing";
-    debouncedSuggest(value);
+    status.value = 'typing'
+    debouncedSuggest(value)
   } else {
-    status.value = "idle";
-    suggestions.value = [];
-    highlightedIndex.value = -1;
+    status.value = 'idle'
+    suggestions.value = []
+    highlightedIndex.value = -1
   }
-});
+})
 
 function selectSuggestion(suggestion: EntrySuggestion) {
-  selectedSuggestion.value = suggestion;
-  status.value = "preview";
+  selectedSuggestion.value = suggestion
+  status.value = 'preview'
 }
 
 function clearPreview() {
-  selectedSuggestion.value = null;
-  status.value = suggestions.value.length > 0 ? "loaded" : "idle";
+  selectedSuggestion.value = null
+  status.value = suggestions.value.length > 0 ? 'loaded' : 'idle'
 }
 
 async function addToLibrary() {
-  if (!selectedSuggestion.value) return;
+  if (!selectedSuggestion.value) return
 
-  isCreating.value = true;
-  status.value = "creating";
+  isCreating.value = true
+  status.value = 'creating'
 
   try {
-    const s = selectedSuggestion.value;
+    const s = selectedSuggestion.value
 
     const payload: Record<string, unknown> = {
       entryType: s.entryType,
@@ -415,48 +395,48 @@ async function addToLibrary() {
       authors: s.authors,
       year: s.year,
       metadata: s.metadata,
-    };
+    }
 
     if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value];
+      payload.projectIds = [selectedProjectId.value]
     }
 
-    const entry = await $fetch("/api/entries", {
-      method: "POST",
+    const entry = await $fetch('/api/entries', {
+      method: 'POST',
       body: payload,
-    });
+    })
 
-    status.value = "success";
-    emit("created", entry);
+    status.value = 'success'
+    emit('created', entry)
 
     toast.add({
-      title: "Added to library",
+      title: 'Added to library',
       description: s.title,
-      color: "success",
-    });
+      color: 'success',
+    })
 
-    resetAndClose();
+    resetAndClose()
   } catch (err: any) {
     if (err.statusCode === 409) {
-      status.value = "error";
-      errorMessage.value = `duplicate:${err.data?.message || "A similar entry already exists."}`;
-      isCreating.value = false;
-      return;
+      status.value = 'error'
+      errorMessage.value = `duplicate:${err.data?.message || 'A similar entry already exists.'}`
+      isCreating.value = false
+      return
     }
-    status.value = "error";
-    errorMessage.value = err.data?.message || "Failed to create entry";
-    isCreating.value = false;
+    status.value = 'error'
+    errorMessage.value = err.data?.message || 'Failed to create entry'
+    isCreating.value = false
   }
 }
 
 async function forceAddToLibrary() {
-  if (!selectedSuggestion.value) return;
+  if (!selectedSuggestion.value) return
 
-  isCreating.value = true;
-  status.value = "creating";
+  isCreating.value = true
+  status.value = 'creating'
 
   try {
-    const s = selectedSuggestion.value;
+    const s = selectedSuggestion.value
 
     const payload: Record<string, unknown> = {
       entryType: s.entryType,
@@ -464,258 +444,252 @@ async function forceAddToLibrary() {
       authors: s.authors,
       year: s.year,
       metadata: s.metadata,
-    };
-
-    if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value];
     }
 
-    const entry = await $fetch("/api/entries?skipDedupe=true", {
-      method: "POST",
-      body: payload,
-    });
+    if (selectedProjectId.value) {
+      payload.projectIds = [selectedProjectId.value]
+    }
 
-    status.value = "success";
-    emit("created", entry);
+    const entry = await $fetch('/api/entries?skipDedupe=true', {
+      method: 'POST',
+      body: payload,
+    })
+
+    status.value = 'success'
+    emit('created', entry)
 
     toast.add({
-      title: "Added to library",
+      title: 'Added to library',
       description: s.title,
-      color: "success",
-    });
+      color: 'success',
+    })
 
-    resetAndClose();
+    resetAndClose()
   } catch (err: any) {
-    status.value = "error";
-    errorMessage.value = err.data?.message || "Failed to create entry";
-    isCreating.value = false;
+    status.value = 'error'
+    errorMessage.value = err.data?.message || 'Failed to create entry'
+    isCreating.value = false
   }
 }
 
 async function addAnyway() {
-  const trimmed = query.value.trim();
-  if (!trimmed) return;
+  const trimmed = query.value.trim()
+  if (!trimmed) return
 
-  isCreating.value = true;
-  status.value = "creating";
+  isCreating.value = true
+  status.value = 'creating'
 
   try {
-    const kind = detectedKind.value;
+    const kind = detectedKind.value
     const payload: Record<string, unknown> = {
-      entryType: "website" as EntryType,
+      entryType: 'website' as EntryType,
       title: trimmed,
       authors: [],
       metadata: {} as EntryMetadata,
-    };
+    }
 
-    if (kind === "url") {
-      payload.entryType = "website";
-      payload.metadata = { url: trimmed };
-    } else if (kind === "doi") {
-      payload.entryType = "journal_article";
+    if (kind === 'url') {
+      payload.entryType = 'website'
+      payload.metadata = { url: trimmed }
+    } else if (kind === 'doi') {
+      payload.entryType = 'journal_article'
       payload.metadata = {
-        doi: trimmed.replace(/^https?:\/\/(dx\.)?doi\.org\//i, ""),
-      };
-    } else if (kind === "isbn") {
-      payload.entryType = "book";
-      payload.metadata = { isbn: trimmed.replace(/[-\s]/g, "") };
+        doi: trimmed.replace(/^https?:\/\/(dx\.)?doi\.org\//i, ''),
+      }
+    } else if (kind === 'isbn') {
+      payload.entryType = 'book'
+      payload.metadata = { isbn: trimmed.replace(/[-\s]/g, '') }
     }
 
     if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value];
+      payload.projectIds = [selectedProjectId.value]
     }
 
-    const entry = await $fetch("/api/entries", {
-      method: "POST",
+    const entry = await $fetch('/api/entries', {
+      method: 'POST',
       body: payload,
-    });
+    })
 
-    status.value = "success";
-    emit("created", entry);
+    status.value = 'success'
+    emit('created', entry)
 
     toast.add({
-      title: "Added to library",
-      description: "You can edit the details later.",
-      color: "success",
-    });
+      title: 'Added to library',
+      description: 'You can edit the details later.',
+      color: 'success',
+    })
 
-    resetAndClose();
+    resetAndClose()
   } catch (err: any) {
-    status.value = "error";
-    errorMessage.value = err.data?.message || "Failed to create entry";
-    isCreating.value = false;
+    status.value = 'error'
+    errorMessage.value = err.data?.message || 'Failed to create entry'
+    isCreating.value = false
   }
 }
 
 function openEditDetails() {
-  resetAndClose();
-  navigateTo("/app/library?action=add");
+  resetAndClose()
+  navigateTo('/app/library?action=add')
 }
 
 function resetForm() {
-  query.value = "";
-  detectedKind.value = "title";
-  status.value = "idle";
-  suggestions.value = [];
-  highlightedIndex.value = -1;
-  selectedSuggestion.value = null;
-  errorMessage.value = null;
-  isCreating.value = false;
-  selectedProjectId.value = props.defaultProjectId ?? null;
-  activeQualifier.value = "any";
-  showSlashDropdown.value = false;
-  slashFilterText.value = "";
-  hasMore.value = false;
-  totalResults.value = 0;
+  query.value = ''
+  detectedKind.value = 'title'
+  status.value = 'idle'
+  suggestions.value = []
+  highlightedIndex.value = -1
+  selectedSuggestion.value = null
+  errorMessage.value = null
+  isCreating.value = false
+  selectedProjectId.value = props.defaultProjectId ?? null
+  activeQualifier.value = 'any'
+  showSlashDropdown.value = false
+  slashFilterText.value = ''
+  hasMore.value = false
+  totalResults.value = 0
 }
 
 function resetAndClose() {
-  resetForm();
-  isOpen.value = false;
+  resetForm()
+  isOpen.value = false
 }
 
 function handleKeydown(e: KeyboardEvent) {
   if (showSlashDropdown.value) {
-    const opts = filteredQualifierOptions.value;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      slashHighlightIndex.value = Math.min(
-        slashHighlightIndex.value + 1,
-        opts.length - 1,
-      );
-      return;
+    const opts = filteredQualifierOptions.value
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      slashHighlightIndex.value = Math.min(slashHighlightIndex.value + 1, opts.length - 1)
+      return
     }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      slashHighlightIndex.value = Math.max(slashHighlightIndex.value - 1, 0);
-      return;
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      slashHighlightIndex.value = Math.max(slashHighlightIndex.value - 1, 0)
+      return
     }
-    if (e.key === "Enter" && opts.length > 0) {
-      e.preventDefault();
-      const selected = opts[slashHighlightIndex.value] || opts[0];
-      if (selected) selectQualifier(selected.key);
-      return;
+    if (e.key === 'Enter' && opts.length > 0) {
+      e.preventDefault()
+      const selected = opts[slashHighlightIndex.value] || opts[0]
+      if (selected) selectQualifier(selected.key)
+      return
     }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      showSlashDropdown.value = false;
-      slashFilterText.value = "";
-      query.value = "";
-      return;
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      showSlashDropdown.value = false
+      slashFilterText.value = ''
+      query.value = ''
+      return
     }
-    return;
+    return
   }
 
-  if (
-    e.key === "Backspace" &&
-    query.value === "" &&
-    activeQualifier.value !== "any"
-  ) {
-    e.preventDefault();
-    clearQualifier();
-    return;
+  if (e.key === 'Backspace' && query.value === '' && activeQualifier.value !== 'any') {
+    e.preventDefault()
+    clearQualifier()
+    return
   }
 
-  if (e.key === "Escape" && activeQualifier.value !== "any") {
-    e.preventDefault();
-    clearQualifier();
-    return;
+  if (e.key === 'Escape' && activeQualifier.value !== 'any') {
+    e.preventDefault()
+    clearQualifier()
+    return
   }
 
-  if (status.value === "preview") {
-    const target = e.target as HTMLElement;
-    if (target?.closest("[data-slot='content'], [data-slot='item'], [data-slot='input'], [role='listbox'], [role='option']")) {
-      return;
+  if (status.value === 'preview') {
+    const target = e.target as HTMLElement
+    if (
+      target?.closest(
+        "[data-slot='content'], [data-slot='item'], [data-slot='input'], [role='listbox'], [role='option']",
+      )
+    ) {
+      return
     }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      clearPreview();
-      return;
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      clearPreview()
+      return
     }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addToLibrary();
-      return;
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addToLibrary()
+      return
     }
-    return;
+    return
   }
 
-  const list = suggestions.value;
-  if (list.length === 0) return;
+  const list = suggestions.value
+  if (list.length === 0) return
 
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    highlightedIndex.value = Math.min(
-      highlightedIndex.value + 1,
-      list.length - 1,
-    );
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0);
-  } else if (e.key === "Enter" && highlightedIndex.value >= 0) {
-    e.preventDefault();
-    const item = list[highlightedIndex.value];
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    highlightedIndex.value = Math.min(highlightedIndex.value + 1, list.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0)
+  } else if (e.key === 'Enter' && highlightedIndex.value >= 0) {
+    e.preventDefault()
+    const item = list[highlightedIndex.value]
     if (item) {
-      selectSuggestion(item);
+      selectSuggestion(item)
     }
   }
 }
 
 watch(isOpen, (open) => {
   if (!open) {
-    resetForm();
+    resetForm()
   } else {
-    selectedProjectId.value = props.defaultProjectId ?? null;
+    selectedProjectId.value = props.defaultProjectId ?? null
     nextTick(() => {
-      const el = inputRef.value;
+      const el = inputRef.value
       if (el) {
-        const input = el.querySelector?.("input") || el;
-        (input as HTMLElement).focus?.();
+        const input = el.querySelector?.('input') || el
+        ;(input as HTMLElement).focus?.()
       }
-    });
+    })
   }
-});
+})
 
-let scrollObserver: IntersectionObserver | null = null;
+let scrollObserver: IntersectionObserver | null = null
 
 watch(sentinelRef, (el) => {
   if (scrollObserver) {
-    scrollObserver.disconnect();
-    scrollObserver = null;
+    scrollObserver.disconnect()
+    scrollObserver = null
   }
   if (el) {
     scrollObserver = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          loadMore();
+          loadMore()
         }
       },
       { threshold: 0.1 },
-    );
-    scrollObserver.observe(el);
+    )
+    scrollObserver.observe(el)
   }
-});
+})
 
 onMounted(() => {
   function handleGlobalKeydown(e: KeyboardEvent) {
-    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-      e.preventDefault();
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault()
       if (isOpen.value) {
-        resetAndClose();
+        resetAndClose()
       } else {
-        isOpen.value = true;
+        isOpen.value = true
       }
     }
   }
-  window.addEventListener("keydown", handleGlobalKeydown);
+  window.addEventListener('keydown', handleGlobalKeydown)
   onUnmounted(() => {
-    window.removeEventListener("keydown", handleGlobalKeydown);
+    window.removeEventListener('keydown', handleGlobalKeydown)
     if (scrollObserver) {
-      scrollObserver.disconnect();
-      scrollObserver = null;
+      scrollObserver.disconnect()
+      scrollObserver = null
     }
-  });
-});
+  })
+})
 </script>
 
 <template>
@@ -731,25 +705,19 @@ onMounted(() => {
     <template #content>
       <div
         class="flex flex-col bg-white dark:bg-gray-900 overflow-hidden"
-        :class="
-          isMobile ? 'h-full w-full' : 'min-h-112 max-h-[min(90vh,44rem)] rounded-lg'
-        "
+        :class="isMobile ? 'h-full w-full' : 'min-h-112 max-h-[min(90vh,44rem)] rounded-lg'"
         @keydown="handleKeydown"
       >
         <!-- Header -->
         <div
           class="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 shrink-0"
         >
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Add a source
-          </h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add a source</h2>
           <div class="flex items-center gap-2">
             <kbd
               class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 rounded"
             >
-              <span class="text-xs">{{
-                navigator?.platform?.includes("Mac") ? "⌘" : "Ctrl"
-              }}</span
+              <span class="text-xs">{{ navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl' }}</span
               >K
             </kbd>
             <UButton
@@ -844,11 +812,7 @@ onMounted(() => {
                   @mouseenter="slashHighlightIndex = idx"
                 >
                   <div class="flex items-center gap-2.5">
-                    <UBadge
-                      :color="opt.color"
-                      variant="subtle"
-                      size="sm"
-                    >
+                    <UBadge :color="opt.color" variant="subtle" size="sm">
                       {{ opt.label }}
                     </UBadge>
                     <span class="text-xs text-gray-400 dark:text-gray-500">
@@ -872,18 +836,22 @@ onMounted(() => {
           </div>
 
           <!-- Field qualifier pills -->
-          <div
-            v-if="status !== 'preview'"
-            class="flex items-center gap-1.5 mt-2.5 flex-wrap"
-          >
+          <div v-if="status !== 'preview'" class="flex items-center gap-1.5 mt-2.5 flex-wrap">
             <UBadge
-              v-for="opt in [{ key: 'any' as FieldQualifier, label: 'Any', shortcut: '', color: 'neutral' }, ...qualifierOptions]"
+              v-for="opt in [
+                { key: 'any' as FieldQualifier, label: 'Any', shortcut: '', color: 'neutral' },
+                ...qualifierOptions,
+              ]"
               :key="opt.key"
               :color="activeQualifier === opt.key ? opt.color : 'neutral'"
               :variant="activeQualifier === opt.key ? 'subtle' : 'outline'"
               size="sm"
               class="cursor-pointer select-none transition-all"
-              :class="activeQualifier === opt.key ? 'ring-1 ring-current/20 font-medium' : 'opacity-70 hover:opacity-100'"
+              :class="
+                activeQualifier === opt.key
+                  ? 'ring-1 ring-current/20 font-medium'
+                  : 'opacity-70 hover:opacity-100'
+              "
               @click="opt.key === 'any' ? clearQualifier() : selectQualifier(opt.key)"
             >
               {{ opt.label }}
@@ -898,10 +866,7 @@ onMounted(() => {
         <!-- Scrollable body -->
         <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 pb-4 min-h-64">
           <!-- Loading skeleton -->
-          <div
-            v-if="status === 'loading' || status === 'typing'"
-            class="space-y-2 py-2"
-          >
+          <div v-if="status === 'loading' || status === 'typing'" class="space-y-2 py-2">
             <div
               v-for="i in 3"
               :key="i"
@@ -915,10 +880,7 @@ onMounted(() => {
           </div>
 
           <!-- Suggestions list -->
-          <div
-            v-else-if="status === 'loaded' && !selectedSuggestion"
-            class="space-y-1 py-2"
-          >
+          <div v-else-if="status === 'loaded' && !selectedSuggestion" class="space-y-1 py-2">
             <button
               v-for="(suggestion, index) in suggestions"
               :key="suggestion.id"
@@ -934,14 +896,10 @@ onMounted(() => {
             >
               <div class="flex items-start gap-2 sm:gap-3">
                 <div class="flex-1 min-w-0">
-                  <p
-                    class="font-medium text-gray-900 dark:text-white line-clamp-2 text-sm"
-                  >
+                  <p class="font-medium text-gray-900 dark:text-white line-clamp-2 text-sm">
                     {{ suggestion.title }}
                   </p>
-                  <p
-                    class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate"
-                  >
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                     {{ formatAuthorsShort(suggestion.authors) }}
                     <span v-if="suggestion.year"> · {{ suggestion.year }}</span>
                   </p>
@@ -956,16 +914,8 @@ onMounted(() => {
                   >
                     {{ sourceLabels[suggestion.source] || suggestion.source }}
                   </UBadge>
-                  <UBadge
-                    variant="subtle"
-                    color="neutral"
-                    size="xs"
-                    class="hidden sm:inline-flex"
-                  >
-                    {{
-                      ENTRY_TYPE_LABELS[suggestion.entryType] ||
-                      suggestion.entryType
-                    }}
+                  <UBadge variant="subtle" color="neutral" size="xs" class="hidden sm:inline-flex">
+                    {{ ENTRY_TYPE_LABELS[suggestion.entryType] || suggestion.entryType }}
                   </UBadge>
                 </div>
               </div>
@@ -977,16 +927,11 @@ onMounted(() => {
             </button>
 
             <!-- Load more sentinel -->
-            <div
-              v-if="hasMore"
-              ref="sentinelRef"
-              class="flex justify-center py-3"
-            >
-              <div
-                v-if="loadingMore"
-                class="flex items-center gap-2 text-xs text-gray-400"
-              >
-                <div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 dark:border-gray-600 border-t-primary-500" />
+            <div v-if="hasMore" ref="sentinelRef" class="flex justify-center py-3">
+              <div v-if="loadingMore" class="flex items-center gap-2 text-xs text-gray-400">
+                <div
+                  class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 dark:border-gray-600 border-t-primary-500"
+                />
                 Loading more results…
               </div>
               <button
@@ -1001,10 +946,7 @@ onMounted(() => {
           </div>
 
           <!-- Preview card -->
-          <div
-            v-else-if="status === 'preview' && selectedSuggestion"
-            class="py-2 space-y-4"
-          >
+          <div v-else-if="status === 'preview' && selectedSuggestion" class="py-2 space-y-4">
             <div class="flex items-center gap-2">
               <UButton
                 variant="ghost"
@@ -1021,9 +963,7 @@ onMounted(() => {
               <div class="space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex-1">
-                    <h3
-                      class="font-semibold text-gray-900 dark:text-white text-base"
-                    >
+                    <h3 class="font-semibold text-gray-900 dark:text-white text-base">
                       {{ selectedSuggestion.title }}
                     </h3>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1044,37 +984,27 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <dl
-                  class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm"
-                >
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div v-if="selectedSuggestion.year">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      Year
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">Year</dt>
                     <dd class="text-gray-900 dark:text-white">
                       {{ selectedSuggestion.year }}
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.journal">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      Journal
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">Journal</dt>
                     <dd class="text-gray-900 dark:text-white">
                       {{ selectedSuggestion.metadata.journal }}
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.publisher">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      Publisher
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">Publisher</dt>
                     <dd class="text-gray-900 dark:text-white">
                       {{ selectedSuggestion.metadata.publisher }}
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.doi">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      DOI
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">DOI</dt>
                     <dd>
                       <a
                         :href="`https://doi.org/${selectedSuggestion.metadata.doi}`"
@@ -1086,30 +1016,24 @@ onMounted(() => {
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.isbn">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      ISBN
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">ISBN</dt>
                     <dd class="text-gray-900 dark:text-white font-mono text-xs">
                       {{ selectedSuggestion.metadata.isbn }}
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.volume">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      Volume/Issue
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">Volume/Issue</dt>
                     <dd class="text-gray-900 dark:text-white">
                       {{ selectedSuggestion.metadata.volume
                       }}{{
                         selectedSuggestion.metadata.issue
                           ? `(${selectedSuggestion.metadata.issue})`
-                          : ""
+                          : ''
                       }}
                     </dd>
                   </div>
                   <div v-if="selectedSuggestion.metadata?.pages">
-                    <dt class="text-gray-500 dark:text-gray-400 text-xs">
-                      Pages
-                    </dt>
+                    <dt class="text-gray-500 dark:text-gray-400 text-xs">Pages</dt>
                     <dd class="text-gray-900 dark:text-white">
                       {{ selectedSuggestion.metadata.pages }}
                     </dd>
@@ -1120,9 +1044,7 @@ onMounted(() => {
                   v-if="getMissingFields(selectedSuggestion).length"
                   class="flex flex-wrap gap-1.5"
                 >
-                  <span class="text-xs text-amber-600 dark:text-amber-400"
-                    >Missing:</span
-                  >
+                  <span class="text-xs text-amber-600 dark:text-amber-400">Missing:</span>
                   <UBadge
                     v-for="field in getMissingFields(selectedSuggestion)"
                     :key="field"
@@ -1138,7 +1060,14 @@ onMounted(() => {
 
             <!-- Project selection -->
             <UCard :ui="{ body: { padding: 'p-4' } }">
-              <UFormField label="Add to project (optional)" :help="selectedProjectId ? 'Entry will be added to your library and this project' : 'Entry will be added to your library only'">
+              <UFormField
+                label="Add to project (optional)"
+                :help="
+                  selectedProjectId
+                    ? 'Entry will be added to your library and this project'
+                    : 'Entry will be added to your library only'
+                "
+              >
                 <USelectMenu
                   v-model="selectedProjectId"
                   :items="
@@ -1172,9 +1101,7 @@ onMounted(() => {
 
           <!-- Duplicate warning -->
           <div
-            v-else-if="
-              status === 'error' && errorMessage?.startsWith('duplicate:')
-            "
+            v-else-if="status === 'error' && errorMessage?.startsWith('duplicate:')"
             class="py-6 space-y-3"
           >
             <UAlert
@@ -1183,30 +1110,17 @@ onMounted(() => {
               :title="errorMessage.replace('duplicate:', '')"
             />
             <div class="flex justify-center gap-2">
-              <UButton
-                variant="outline"
-                color="neutral"
-                size="sm"
-                @click="clearPreview"
-              >
+              <UButton variant="outline" color="neutral" size="sm" @click="clearPreview">
                 Go back
               </UButton>
-              <UButton
-                color="primary"
-                size="sm"
-                :loading="isCreating"
-                @click="forceAddToLibrary"
-              >
+              <UButton color="primary" size="sm" :loading="isCreating" @click="forceAddToLibrary">
                 Add anyway
               </UButton>
             </div>
           </div>
 
           <!-- Error / no results -->
-          <div
-            v-else-if="status === 'error'"
-            class="py-8 text-center space-y-3"
-          >
+          <div v-else-if="status === 'error'" class="py-8 text-center space-y-3">
             <UIcon
               :name="
                 errorMessage === 'no_results'
@@ -1217,11 +1131,11 @@ onMounted(() => {
             />
             <p class="text-sm text-gray-600 dark:text-gray-400">
               {{
-                errorMessage === "no_results"
+                errorMessage === 'no_results'
                   ? "We couldn't find a match for that query."
-                  : errorMessage === "network"
+                  : errorMessage === 'network'
                     ? "Can't reach metadata services right now."
-                    : errorMessage || "Something went wrong."
+                    : errorMessage || 'Something went wrong.'
               }}
             </p>
             <div class="flex justify-center gap-2">
@@ -1230,28 +1144,20 @@ onMounted(() => {
                 color="neutral"
                 size="sm"
                 @click="
-                  query = '';
-                  status = 'idle';
+                  query = ''
+                  status = 'idle'
                 "
               >
                 Try again
               </UButton>
-              <UButton
-                color="primary"
-                size="sm"
-                @click="addAnyway"
-                :loading="isCreating"
-              >
+              <UButton color="primary" size="sm" :loading="isCreating" @click="addAnyway">
                 Add anyway
               </UButton>
             </div>
           </div>
 
           <!-- Idle state -->
-          <div
-            v-else-if="status === 'idle' && !query.trim()"
-            class="py-10 text-center"
-          >
+          <div v-else-if="status === 'idle' && !query.trim()" class="py-10 text-center">
             <UIcon
               name="i-heroicons-book-open"
               class="w-12 h-12 mx-auto text-gray-200 dark:text-gray-700"
@@ -1260,12 +1166,10 @@ onMounted(() => {
               Paste a DOI, ISBN, URL, or type a title to search
             </p>
             <div class="mt-4 flex justify-center gap-3 text-xs text-gray-400">
-              <span
-                class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono"
+              <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono"
                 >10.1234/example</span
               >
-              <span
-                class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono"
+              <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded font-mono"
                 >978-0-13-468599-1</span
               >
             </div>
@@ -1277,28 +1181,14 @@ onMounted(() => {
           v-if="status === 'preview' && selectedSuggestion"
           class="px-4 sm:px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3 shrink-0"
         >
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            @click="openEditDetails"
-          >
+          <UButton variant="ghost" color="neutral" size="sm" @click="openEditDetails">
             Edit details
           </UButton>
           <div class="flex gap-2">
-            <UButton
-              variant="outline"
-              color="neutral"
-              size="sm"
-              @click="resetAndClose"
-            >
+            <UButton variant="outline" color="neutral" size="sm" @click="resetAndClose">
               Cancel
             </UButton>
-            <UButton
-              color="primary"
-              :loading="isCreating"
-              @click="addToLibrary"
-            >
+            <UButton color="primary" :loading="isCreating" @click="addToLibrary">
               Add to library
             </UButton>
           </div>
@@ -1309,12 +1199,7 @@ onMounted(() => {
           v-else-if="status !== 'idle' || query.trim()"
           class="px-4 sm:px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end shrink-0"
         >
-          <UButton
-            variant="outline"
-            color="neutral"
-            size="sm"
-            @click="resetAndClose"
-          >
+          <UButton variant="outline" color="neutral" size="sm" @click="resetAndClose">
             Cancel
           </UButton>
         </div>

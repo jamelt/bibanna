@@ -1,4 +1,8 @@
-import { parseVoiceCommand, parseSimpleCommand, identifyEntryType } from '~/server/services/voice/command-parser'
+import {
+  parseVoiceCommand,
+  parseSimpleCommand,
+  identifyEntryType,
+} from '~/server/services/voice/command-parser'
 import { z } from 'zod'
 
 const parseSchema = z.object({

@@ -15,14 +15,12 @@ export default defineEventHandler(async (event) => {
   try {
     if (shareId === 'public') {
       await revokePublicLink(projectId, user.id)
-    }
-    else {
+    } else {
       await removeShare(shareId, user.id)
     }
 
     return { success: true }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     throw createError({
       statusCode: 403,
       message: error.message,

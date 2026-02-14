@@ -14,8 +14,7 @@ export default defineEventHandler(async (event) => {
   try {
     const shares = await getProjectShares(projectId, user.id)
     return shares
-  }
-  catch (error: any) {
+  } catch (error: any) {
     throw createError({
       statusCode: 403,
       message: error.message,

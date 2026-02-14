@@ -42,8 +42,18 @@ describe('titleSimilarity', () => {
 describe('rankAndDedupe', () => {
   it('deduplicates by DOI', () => {
     const suggestions = [
-      makeSuggestion({ id: '1', source: 'crossref', title: 'Paper A', metadata: { doi: '10.1234/test' } }),
-      makeSuggestion({ id: '2', source: 'openalex', title: 'Paper A', metadata: { doi: '10.1234/test' } }),
+      makeSuggestion({
+        id: '1',
+        source: 'crossref',
+        title: 'Paper A',
+        metadata: { doi: '10.1234/test' },
+      }),
+      makeSuggestion({
+        id: '2',
+        source: 'openalex',
+        title: 'Paper A',
+        metadata: { doi: '10.1234/test' },
+      }),
     ]
 
     const result = rankAndDedupe('Paper A', suggestions, 'title')

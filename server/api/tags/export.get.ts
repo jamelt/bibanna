@@ -15,13 +15,16 @@ export default defineEventHandler(async (event) => {
       description: tags.description,
       groupName: tags.groupName,
       createdAt: tags.createdAt,
-      entryCount: sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as('entry_count'),
+      entryCount:
+        sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as(
+          'entry_count',
+        ),
     })
     .from(tags)
     .where(eq(tags.userId, user.id))
     .orderBy(asc(tags.name))
 
-  const data = userTags.map(t => ({
+  const data = userTags.map((t) => ({
     name: t.name,
     color: t.color,
     description: t.description || '',
@@ -35,12 +38,14 @@ export default defineEventHandler(async (event) => {
     const csvRows = [headers.join(',')]
     for (const row of data) {
       csvRows.push(
-        headers.map((h) => {
-          const val = String((row as Record<string, unknown>)[h] ?? '')
-          return val.includes(',') || val.includes('"') || val.includes('\n')
-            ? `"${val.replace(/"/g, '""')}"`
-            : val
-        }).join(','),
+        headers
+          .map((h) => {
+            const val = String((row as Record<string, unknown>)[h] ?? '')
+            return val.includes(',') || val.includes('"') || val.includes('\n')
+              ? `"${val.replace(/"/g, '""')}"`
+              : val
+          })
+          .join(','),
       )
     }
 

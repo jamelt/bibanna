@@ -31,16 +31,27 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [updated] = await db.update(users).set({
-    subscriptionTier: parsed.tier,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId)).returning()
+  const [updated] = await db
+    .update(users)
+    .set({
+      subscriptionTier: parsed.tier,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning()
 
-  await logAdminAction(admin.id, 'user.grant_tier', 'user', userId, {
-    previousTier: targetUser.subscriptionTier,
-    newTier: parsed.tier,
-    reason: parsed.reason,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.grant_tier',
+    'user',
+    userId,
+    {
+      previousTier: targetUser.subscriptionTier,
+      newTier: parsed.tier,
+      reason: parsed.reason,
+    },
+    ip,
+  )
 
   return updated
 })

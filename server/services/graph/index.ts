@@ -1,7 +1,6 @@
 import { db } from '~/server/database/client'
-import { sql } from 'drizzle-orm'
+import { sql, eq, inArray } from 'drizzle-orm'
 import { entries, entryProjects, tags, entryTags } from '~/server/database/schema'
-import { eq, inArray } from 'drizzle-orm'
 
 export interface GraphNode {
   id: string
@@ -29,29 +28,32 @@ export async function initializeGraphExtension(): Promise<void> {
     await db.execute(sql`CREATE EXTENSION IF NOT EXISTS age`)
     await db.execute(sql`LOAD 'age'`)
     await db.execute(sql`SET search_path = ag_catalog, "$user", public`)
-    
+
     const graphExists = await db.execute<{ count: number }>(
-      sql`SELECT count(*) FROM ag_catalog.ag_graph WHERE name = 'annobib_graph'`
+      sql`SELECT count(*) FROM ag_catalog.ag_graph WHERE name = 'annobib_graph'`,
     )
-    
+
     if (graphExists[0]?.count === 0) {
       await db.execute(sql`SELECT create_graph('annobib_graph')`)
     }
-    
+
     console.log('Apache AGE graph extension initialized')
   } catch (error) {
     console.error('Failed to initialize graph extension:', error)
   }
 }
 
-export async function createEntryVertex(entryId: string, entry: {
-  title: string
-  entryType: string
-  year?: number
-  authors?: Array<{ firstName: string; lastName: string }>
-}): Promise<void> {
-  const authorNames = entry.authors?.map(a => `${a.firstName} ${a.lastName}`).join(', ') || ''
-  
+export async function createEntryVertex(
+  entryId: string,
+  entry: {
+    title: string
+    entryType: string
+    year?: number
+    authors?: Array<{ firstName: string; lastName: string }>
+  },
+): Promise<void> {
+  const authorNames = entry.authors?.map((a) => `${a.firstName} ${a.lastName}`).join(', ') || ''
+
   await db.execute(sql`
     SELECT * FROM cypher('annobib_graph', $$
       MERGE (e:Entry {id: ${entryId}})
@@ -80,7 +82,7 @@ export async function createCitationEdge(
 
 export async function createAuthorVertex(authorName: string): Promise<string> {
   const authorId = `author:${authorName.toLowerCase().replace(/\s+/g, '_')}`
-  
+
   await db.execute(sql`
     SELECT * FROM cypher('annobib_graph', $$
       MERGE (a:Author {id: ${authorId}})
@@ -88,7 +90,7 @@ export async function createAuthorVertex(authorName: string): Promise<string> {
       RETURN a
     $$) AS (a agtype)
   `)
-  
+
   return authorId
 }
 
@@ -105,7 +107,7 @@ export async function linkEntryToAuthor(entryId: string, authorId: string): Prom
 
 export async function createTopicVertex(topic: string): Promise<string> {
   const topicId = `topic:${topic.toLowerCase().replace(/\s+/g, '_')}`
-  
+
   await db.execute(sql`
     SELECT * FROM cypher('annobib_graph', $$
       MERGE (t:Topic {id: ${topicId}})
@@ -113,7 +115,7 @@ export async function createTopicVertex(topic: string): Promise<string> {
       RETURN t
     $$) AS (t agtype)
   `)
-  
+
   return topicId
 }
 
@@ -151,7 +153,7 @@ export async function getCitationNetwork(entryId: string, depth: number = 2): Pr
       RETURN path
     $$) AS (path agtype)
   `)
-  
+
   return parseGraphResult(result)
 }
 
@@ -163,7 +165,7 @@ export async function getRelatedEntriesByAuthor(entryId: string): Promise<GraphD
       RETURN DISTINCT related
     $$) AS (e agtype)
   `)
-  
+
   return parseGraphResult(result)
 }
 
@@ -175,7 +177,7 @@ export async function getRelatedEntriesByTopic(entryId: string): Promise<GraphDa
       RETURN DISTINCT related
     $$) AS (e agtype)
   `)
-  
+
   return parseGraphResult(result)
 }
 
@@ -189,15 +191,17 @@ export async function findShortestPath(
       RETURN path
     $$) AS (path agtype)
   `)
-  
+
   return parseGraphResult(result)
 }
 
-export async function getTopicClusters(projectId: string): Promise<Array<{
-  topic: string
-  entries: string[]
-  count: number
-}>> {
+export async function getTopicClusters(projectId: string): Promise<
+  Array<{
+    topic: string
+    entries: string[]
+    count: number
+  }>
+> {
   const result = await db.execute<{ topic: string; entries: string[]; count: number }>(sql`
     SELECT * FROM cypher('annobib_graph', $$
       MATCH (e:Entry)-[:HAS_TOPIC]->(t:Topic)
@@ -206,8 +210,8 @@ export async function getTopicClusters(projectId: string): Promise<Array<{
       ORDER BY count DESC
     $$) AS (topic agtype, entries agtype, count agtype)
   `)
-  
-  return result.map(r => ({
+
+  return result.map((r) => ({
     topic: r.topic,
     entries: r.entries,
     count: r.count,
@@ -221,7 +225,7 @@ export async function syncProjectToGraph(projectId: string, userId: string): Pro
       entry: true,
     },
   })
-  
+
   for (const { entry } of projectEntries) {
     await createEntryVertex(entry.id, {
       title: entry.title,
@@ -229,21 +233,21 @@ export async function syncProjectToGraph(projectId: string, userId: string): Pro
       year: entry.year || undefined,
       authors: entry.authors as Array<{ firstName: string; lastName: string }>,
     })
-    
+
     if (entry.authors) {
       for (const author of entry.authors as Array<{ firstName: string; lastName: string }>) {
         const authorId = await createAuthorVertex(`${author.firstName} ${author.lastName}`)
         await linkEntryToAuthor(entry.id, authorId)
       }
     }
-    
+
     const entryTagRecords = await db.query.entryTags.findMany({
       where: eq(entryTags.entryId, entry.id),
       with: {
         tag: true,
       },
     })
-    
+
     for (const { tag } of entryTagRecords) {
       const topicId = await createTopicVertex(tag.name)
       await linkEntryToTopic(entry.id, topicId)
@@ -255,11 +259,11 @@ function parseGraphResult(result: any[]): GraphData {
   const nodes: GraphNode[] = []
   const edges: GraphEdge[] = []
   const nodeIds = new Set<string>()
-  
+
   for (const row of result) {
     try {
       const parsed = JSON.parse(JSON.stringify(row))
-      
+
       if (parsed.vertices) {
         for (const vertex of parsed.vertices) {
           if (!nodeIds.has(vertex.id)) {
@@ -273,7 +277,7 @@ function parseGraphResult(result: any[]): GraphData {
           }
         }
       }
-      
+
       if (parsed.edges) {
         for (const edge of parsed.edges) {
           edges.push({
@@ -289,6 +293,6 @@ function parseGraphResult(result: any[]): GraphData {
       continue
     }
   }
-  
+
   return { nodes, edges }
 }

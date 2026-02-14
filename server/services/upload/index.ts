@@ -43,7 +43,12 @@ export async function uploadFile(
   },
   options: UploadOptions,
 ): Promise<UploadResult> {
-  const { projectId, userId, maxSizeMB = DEFAULT_MAX_SIZE_MB, allowedTypes = DEFAULT_ALLOWED_TYPES } = options
+  const {
+    projectId,
+    userId,
+    maxSizeMB = DEFAULT_MAX_SIZE_MB,
+    allowedTypes = DEFAULT_ALLOWED_TYPES,
+  } = options
 
   if (!allowedTypes.includes(file.type)) {
     throw createError({
@@ -87,23 +92,28 @@ export async function uploadFile(
     console.error('Content extraction failed:', error)
   }
 
-  const [upload] = await db.insert(projectUploads).values({
-    projectId,
-    userId,
-    filename: file.filename,
-    contentType: file.type,
-    size: file.data.length,
-    gcsPath,
-    extractedText,
-    metadata,
-    status: 'completed',
-  }).returning()
+  const [upload] = await db
+    .insert(projectUploads)
+    .values({
+      projectId,
+      userId,
+      filename: file.filename,
+      contentType: file.type,
+      size: file.data.length,
+      gcsPath,
+      extractedText,
+      metadata,
+      status: 'completed',
+    })
+    .returning()
 
   if (extractedText) {
     try {
       if (file.type === 'application/pdf') {
         await ingestPDF(file.data, file.filename, projectId, upload.id, userId)
-      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ) {
         await ingestDOCX(file.data, file.filename, projectId, upload.id, userId)
       } else {
         await ingestPlainText(extractedText, file.filename, projectId, upload.id, userId)
@@ -171,7 +181,10 @@ export async function deleteUpload(uploadId: string, userId: string): Promise<vo
   await db.delete(projectUploads).where(eq(projectUploads.id, uploadId))
 }
 
-async function extractContent(buffer: Buffer, contentType: string): Promise<{
+async function extractContent(
+  buffer: Buffer,
+  contentType: string,
+): Promise<{
   text: string
   metadata?: Record<string, unknown>
 }> {
@@ -193,7 +206,7 @@ async function extractPdfContent(buffer: Buffer): Promise<{
   metadata?: Record<string, unknown>
 }> {
   const data = await pdfParse(buffer)
-  
+
   return {
     text: data.text,
     metadata: {
@@ -208,28 +221,30 @@ async function extractDocxContent(buffer: Buffer): Promise<{
   metadata?: Record<string, unknown>
 }> {
   const result = await mammoth.extractRawText({ buffer })
-  
+
   return {
     text: result.value,
   }
 }
 
-export async function listProjectUploads(projectId: string, userId: string): Promise<Array<{
-  id: string
-  filename: string
-  contentType: string
-  size: number
-  createdAt: Date
-}>> {
+export async function listProjectUploads(
+  projectId: string,
+  userId: string,
+): Promise<
+  Array<{
+    id: string
+    filename: string
+    contentType: string
+    size: number
+    createdAt: Date
+  }>
+> {
   const uploads = await db.query.projectUploads.findMany({
-    where: (pu, { eq, and }) => and(
-      eq(pu.projectId, projectId),
-      eq(pu.userId, userId),
-    ),
+    where: (pu, { eq, and }) => and(eq(pu.projectId, projectId), eq(pu.userId, userId)),
     orderBy: (pu, { desc }) => [desc(pu.createdAt)],
   })
 
-  return uploads.map(u => ({
+  return uploads.map((u) => ({
     id: u.id,
     filename: u.filename,
     contentType: u.contentType,

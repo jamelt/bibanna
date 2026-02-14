@@ -33,9 +33,9 @@ export default defineEventHandler(async (event) => {
     .from(entryProjects)
     .where(eq(entryProjects.projectId, project.id))
 
-  const entryIds = projectEntryIds.map(e => e.entryId)
+  const entryIds = projectEntryIds.map((e) => e.entryId)
 
-  let projectEntries: typeof entries.$inferSelect[] = []
+  let projectEntries: (typeof entries.$inferSelect)[] = []
   if (entryIds.length > 0) {
     projectEntries = await db.query.entries.findMany({
       where: inArray(entries.id, entryIds),
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
       name: owner?.name || 'Anonymous',
     },
     permission,
-    entries: projectEntries.map(entry => ({
+    entries: projectEntries.map((entry) => ({
       id: entry.id,
       title: entry.title,
       authors: entry.authors,

@@ -51,14 +51,16 @@ describe('EntryFormModal', () => {
 
   it('formats authors correctly', () => {
     const formatAuthors = (authors: Array<{ firstName: string; lastName: string }>) => {
-      return authors.map(a => `${a.lastName}, ${a.firstName}`).join('; ')
+      return authors.map((a) => `${a.lastName}, ${a.firstName}`).join('; ')
     }
 
     expect(formatAuthors([{ firstName: 'John', lastName: 'Doe' }])).toBe('Doe, John')
-    expect(formatAuthors([
-      { firstName: 'John', lastName: 'Doe' },
-      { firstName: 'Jane', lastName: 'Smith' },
-    ])).toBe('Doe, John; Smith, Jane')
+    expect(
+      formatAuthors([
+        { firstName: 'John', lastName: 'Doe' },
+        { firstName: 'Jane', lastName: 'Smith' },
+      ]),
+    ).toBe('Doe, John; Smith, Jane')
   })
 
   it('handles entry type specific fields', () => {
@@ -86,9 +88,9 @@ describe('EntryFormModal', () => {
     }) => {
       const authors = formData.authorsText
         .split(',')
-        .map(name => name.trim())
+        .map((name) => name.trim())
         .filter(Boolean)
-        .map(name => {
+        .map((name) => {
           const parts = name.split(' ')
           return {
             firstName: parts.slice(0, -1).join(' '),

@@ -25,10 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingEntry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!existingEntry) {
@@ -53,7 +50,7 @@ export default defineEventHandler(async (event) => {
     await db.delete(entryProjects).where(eq(entryProjects.entryId, entryId))
     if (projectIds.length > 0) {
       await db.insert(entryProjects).values(
-        projectIds.map(projectId => ({
+        projectIds.map((projectId) => ({
           entryId,
           projectId,
         })),
@@ -65,7 +62,7 @@ export default defineEventHandler(async (event) => {
     await db.delete(entryTags).where(eq(entryTags.entryId, entryId))
     if (tagIds.length > 0) {
       await db.insert(entryTags).values(
-        tagIds.map(tagId => ({
+        tagIds.map((tagId) => ({
           entryId,
           tagId,
         })),

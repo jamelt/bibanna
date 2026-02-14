@@ -15,13 +15,16 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const parsed = feedbackSchema.parse(body)
 
-  const [created] = await db.insert(feedback).values({
-    userId: user?.id,
-    userEmail: user?.email || parsed.email,
-    type: parsed.type,
-    subject: parsed.subject,
-    content: parsed.content,
-  }).returning()
+  const [created] = await db
+    .insert(feedback)
+    .values({
+      userId: user?.id,
+      userEmail: user?.email || parsed.email,
+      type: parsed.type,
+      subject: parsed.subject,
+      content: parsed.content,
+    })
+    .returning()
 
   return { id: created?.id, message: 'Thank you for your feedback!' }
 })

@@ -14,9 +14,13 @@ export function useQuickAdd() {
     defaultProjectId.value = undefined
   }
 
-  watch(() => route.query.action, (action) => {
-    isOpen.value = action === 'quick-add'
-  }, { immediate: true })
+  watch(
+    () => route.query.action,
+    (action) => {
+      isOpen.value = action === 'quick-add'
+    },
+    { immediate: true },
+  )
 
   watch(isOpen, (open) => {
     if (!open) {

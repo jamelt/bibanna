@@ -18,8 +18,9 @@ const isSavingDefault = ref(false)
 const isSelectedDefault = computed(() => selectedStyleId.value === defaultCitationStyle.value)
 
 const selectedStyleName = computed(() => {
-  const style = styles.value?.defaultStyles?.find((s: any) => s.id === selectedStyleId.value)
-    || styles.value?.customStyles?.find((s: any) => s.id === selectedStyleId.value)
+  const style =
+    styles.value?.defaultStyles?.find((s: any) => s.id === selectedStyleId.value) ||
+    styles.value?.customStyles?.find((s: any) => s.id === selectedStyleId.value)
   return style?.shortName || style?.name || selectedStyleId.value
 })
 
@@ -27,11 +28,9 @@ async function handleSetDefault() {
   isSavingDefault.value = true
   try {
     await setDefaultCitationStyle(selectedStyleId.value)
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('Failed to set default style:', error)
-  }
-  finally {
+  } finally {
     isSavingDefault.value = false
   }
 }
@@ -52,11 +51,9 @@ async function handleSaveStyle(cslXml: string, config: { name: string; descripti
 
     showBuilder.value = false
     await refresh()
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('Failed to save style:', error)
-  }
-  finally {
+  } finally {
     isCreating.value = false
   }
 }
@@ -69,8 +66,7 @@ async function deleteStyle(styleId: string) {
       method: 'DELETE',
     })
     await refresh()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to delete style:', error)
   }
 }
@@ -81,9 +77,7 @@ async function deleteStyle(styleId: string) {
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Citation Styles
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Citation Styles</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
           Choose from 20+ built-in styles or create your own
         </p>
@@ -101,10 +95,15 @@ async function deleteStyle(styleId: string) {
     </div>
 
     <!-- Master-detail layout (desktop) -->
-    <div class="hidden lg:block rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900" style="height: calc(100vh - 220px); min-height: 500px;">
+    <div
+      class="hidden lg:block rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900"
+      style="height: calc(100vh - 220px); min-height: 500px"
+    >
       <div class="flex h-full">
         <!-- Left: Style list sidebar -->
-        <div class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 bg-gray-50/50 dark:bg-gray-800/30">
+        <div
+          class="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 bg-gray-50/50 dark:bg-gray-800/30"
+        >
           <div class="flex-1 min-h-0 flex flex-col">
             <CitationStylePicker
               v-model="selectedStyleId"
@@ -124,7 +123,10 @@ async function deleteStyle(styleId: string) {
     </div>
 
     <!-- Mobile layout -->
-    <div class="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 flex flex-col" style="height: calc(100vh - 260px); min-height: 400px;">
+    <div
+      class="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 flex flex-col"
+      style="height: calc(100vh - 260px); min-height: 400px"
+    >
       <div class="flex-1 min-h-0 flex flex-col">
         <CitationStylePicker
           v-model="selectedStyleId"
@@ -155,7 +157,9 @@ async function deleteStyle(styleId: string) {
     <USlideover v-model:open="showMobilePreview">
       <template #content="{ close }">
         <div class="flex flex-col h-full bg-white dark:bg-gray-900">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div
+            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0"
+          >
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
               {{ selectedStyleName }}
             </h3>
@@ -177,9 +181,7 @@ async function deleteStyle(styleId: string) {
     <!-- Custom Styles List -->
     <UCard v-if="styles?.customStyles?.length">
       <template #header>
-        <h2 class="font-semibold text-gray-900 dark:text-white">
-          My Custom Styles
-        </h2>
+        <h2 class="font-semibold text-gray-900 dark:text-white">My Custom Styles</h2>
       </template>
 
       <div class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -197,9 +199,7 @@ async function deleteStyle(styleId: string) {
             </p>
           </div>
           <div class="flex items-center gap-2">
-            <UBadge v-if="style.isPublic" color="green" variant="subtle">
-              Public
-            </UBadge>
+            <UBadge v-if="style.isPublic" color="green" variant="subtle"> Public </UBadge>
             <UButton
               variant="ghost"
               size="sm"
@@ -239,10 +239,7 @@ async function deleteStyle(styleId: string) {
             </div>
           </template>
 
-          <CitationStyleBuilder
-            @save="handleSaveStyle"
-            @cancel="showBuilder = false"
-          />
+          <CitationStyleBuilder @save="handleSaveStyle" @cancel="showBuilder = false" />
         </UCard>
       </template>
     </UModal>

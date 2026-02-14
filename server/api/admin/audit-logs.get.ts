@@ -33,24 +33,23 @@ export default defineEventHandler(async (event) => {
     conditions.push(eq(adminAuditLogs.targetId, parsed.targetId))
   }
 
-  const whereClause = conditions.length > 0
-    ? and(...conditions)
-    : undefined
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const [totalResult, rows] = await Promise.all([
     db.select({ count: count() }).from(adminAuditLogs).where(whereClause),
-    db.select({
-      id: adminAuditLogs.id,
-      adminId: adminAuditLogs.adminId,
-      action: adminAuditLogs.action,
-      targetType: adminAuditLogs.targetType,
-      targetId: adminAuditLogs.targetId,
-      details: adminAuditLogs.details,
-      ipAddress: adminAuditLogs.ipAddress,
-      createdAt: adminAuditLogs.createdAt,
-      adminName: users.name,
-      adminEmail: users.email,
-    })
+    db
+      .select({
+        id: adminAuditLogs.id,
+        adminId: adminAuditLogs.adminId,
+        action: adminAuditLogs.action,
+        targetType: adminAuditLogs.targetType,
+        targetId: adminAuditLogs.targetId,
+        details: adminAuditLogs.details,
+        ipAddress: adminAuditLogs.ipAddress,
+        createdAt: adminAuditLogs.createdAt,
+        adminName: users.name,
+        adminEmail: users.email,
+      })
       .from(adminAuditLogs)
       .leftJoin(users, eq(adminAuditLogs.adminId, users.id))
       .where(whereClause)

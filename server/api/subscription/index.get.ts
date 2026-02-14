@@ -18,7 +18,10 @@ export default defineEventHandler(async (event) => {
   const limits = getTierLimits(user.subscriptionTier)
 
   const paidPlans = getPaidPlansForDisplay()
-  const products: Record<string, { name: string; description: string; priceMonthly: number; priceYearly: number }> = {}
+  const products: Record<
+    string,
+    { name: string; description: string; priceMonthly: number; priceYearly: number }
+  > = {}
   for (const plan of paidPlans) {
     if (plan.pricing) {
       products[plan.id] = {

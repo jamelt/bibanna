@@ -8,7 +8,9 @@ import { z } from 'zod'
 const chatSchema = z.object({
   message: z.string().min(1).max(5000),
   conversationId: z.string().uuid().optional(),
-  mode: z.enum(['general', 'fact-check', 'brainstorm', 'synthesize', 'gap-analysis']).default('general'),
+  mode: z
+    .enum(['general', 'fact-check', 'brainstorm', 'synthesize', 'gap-analysis'])
+    .default('general'),
 })
 
 export default defineEventHandler(async (event) => {
@@ -37,10 +39,7 @@ export default defineEventHandler(async (event) => {
   const { message, conversationId, mode } = parsed.data
 
   const project = await db.query.projects.findFirst({
-    where: and(
-      eq(projects.id, projectId),
-      eq(projects.userId, user.id),
-    ),
+    where: and(eq(projects.id, projectId), eq(projects.userId, user.id)),
   })
 
   if (!project) {
@@ -68,8 +67,7 @@ export default defineEventHandler(async (event) => {
     }
 
     conversation = existing
-  }
-  else {
+  } else {
     const [newConversation] = await db
       .insert(companionConversations)
       .values({
@@ -98,23 +96,14 @@ export default defineEventHandler(async (event) => {
   const conversationHistory = previousMessages
     .reverse()
     .slice(0, -1)
-    .map(msg => ({
+    .map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }))
 
-  const response = await generateRAGResponse(
-    message,
-    projectId,
-    conversationHistory,
-    mode,
-  )
+  const response = await generateRAGResponse(message, projectId, conversationHistory, mode)
 
-  const followUpQuestions = await generateFollowUpQuestions(
-    message,
-    response.answer,
-    projectId,
-  )
+  const followUpQuestions = await generateFollowUpQuestions(message, response.answer, projectId)
 
   const [assistantMessage] = await db
     .insert(companionMessages)

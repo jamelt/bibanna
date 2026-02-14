@@ -1,5 +1,13 @@
 import { db } from '~/server/database/client'
-import { entries, annotations, entryTags, entryProjects, tags, projects, veritasScores } from '~/server/database/schema'
+import {
+  entries,
+  annotations,
+  entryTags,
+  entryProjects,
+  tags,
+  projects,
+  veritasScores,
+} from '~/server/database/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
@@ -14,10 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {

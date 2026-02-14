@@ -11,7 +11,7 @@ console.log('🔍 Checking for running dev server processes...\n')
 try {
   const psOutput = execSync(
     `ps aux | grep "${projectRoot}" | grep -E "nuxt|node|esbuild" | grep -v grep | grep -v cleanup`,
-    { encoding: 'utf-8' }
+    { encoding: 'utf-8' },
   ).trim()
 
   if (!psOutput) {
@@ -32,7 +32,7 @@ try {
   }
 
   console.log(`\n🛑 Killing ${pids.length} process(es)...`)
-  
+
   for (const pid of pids) {
     try {
       execSync(`kill ${pid}`, { stdio: 'ignore' })

@@ -1,9 +1,6 @@
 const STORAGE_PREFIX = 'annobib:viewMode:'
 
-export function useViewPreferences<T extends string>(
-  pageKey: string,
-  defaultMode: T,
-) {
+export function useViewPreferences<T extends string>(pageKey: string, defaultMode: T) {
   const storageKey = `${STORAGE_PREFIX}${pageKey}`
   const viewMode = ref<T>(defaultMode) as Ref<T>
 

@@ -12,9 +12,7 @@ const selectedEntryId = ref<string | null>(null)
 
 function formatAuthors(authors: any[]): string {
   if (!authors?.length) return 'Unknown'
-  return authors
-    .map(a => `${a.firstName || ''} ${a.lastName}`.trim())
-    .join(', ')
+  return authors.map((a) => `${a.firstName || ''} ${a.lastName}`.trim()).join(', ')
 }
 </script>
 
@@ -26,14 +24,15 @@ function formatAuthors(authors: any[]): string {
     </div>
 
     <!-- Error / Not Found -->
-    <div v-else-if="error || !sharedProject" class="flex flex-col items-center justify-center h-screen">
+    <div
+      v-else-if="error || !sharedProject"
+      class="flex flex-col items-center justify-center h-screen"
+    >
       <UIcon name="i-heroicons-link-slash" class="w-16 h-16 text-gray-300" />
       <h1 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
         Link not found or expired
       </h1>
-      <p class="mt-2 text-gray-500">
-        This shared link may have been revoked or has expired.
-      </p>
+      <p class="mt-2 text-gray-500">This shared link may have been revoked or has expired.</p>
       <NuxtLink to="/" class="mt-4 text-primary-600 hover:text-primary-700">
         Go to homepage
       </NuxtLink>
@@ -61,9 +60,7 @@ function formatAuthors(authors: any[]): string {
               </p>
             </div>
             <NuxtLink to="/signup">
-              <UButton color="primary">
-                Sign up to create your own
-              </UButton>
+              <UButton color="primary"> Sign up to create your own </UButton>
             </NuxtLink>
           </div>
         </div>
@@ -75,12 +72,8 @@ function formatAuthors(authors: any[]): string {
           <!-- Entries list -->
           <div class="lg:col-span-2">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Bibliography
-              </h2>
-              <span class="text-sm text-gray-500">
-                {{ sharedProject.entryCount }} entries
-              </span>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bibliography</h2>
+              <span class="text-sm text-gray-500"> {{ sharedProject.entryCount }} entries </span>
             </div>
 
             <div v-if="sharedProject.entries.length === 0" class="text-center py-12">
@@ -100,18 +93,24 @@ function formatAuthors(authors: any[]): string {
                   <div
                     class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                     :class="[
-                      entry.entryType === 'book' ? 'bg-blue-100 text-blue-600' :
-                      entry.entryType === 'journal_article' ? 'bg-green-100 text-green-600' :
-                      entry.entryType === 'website' ? 'bg-purple-100 text-purple-600' :
-                      'bg-gray-100 text-gray-600'
+                      entry.entryType === 'book'
+                        ? 'bg-blue-100 text-blue-600'
+                        : entry.entryType === 'journal_article'
+                          ? 'bg-green-100 text-green-600'
+                          : entry.entryType === 'website'
+                            ? 'bg-purple-100 text-purple-600'
+                            : 'bg-gray-100 text-gray-600',
                     ]"
                   >
                     <UIcon
                       :name="
-                        entry.entryType === 'book' ? 'i-heroicons-book-open' :
-                        entry.entryType === 'journal_article' ? 'i-heroicons-document-text' :
-                        entry.entryType === 'website' ? 'i-heroicons-globe-alt' :
-                        'i-heroicons-document'
+                        entry.entryType === 'book'
+                          ? 'i-heroicons-book-open'
+                          : entry.entryType === 'journal_article'
+                            ? 'i-heroicons-document-text'
+                            : entry.entryType === 'website'
+                              ? 'i-heroicons-globe-alt'
+                              : 'i-heroicons-document'
                       "
                       class="w-5 h-5"
                     />
@@ -137,9 +136,7 @@ function formatAuthors(authors: any[]): string {
           <div>
             <UCard>
               <template #header>
-                <h3 class="font-semibold text-gray-900 dark:text-white">
-                  About this project
-                </h3>
+                <h3 class="font-semibold text-gray-900 dark:text-white">About this project</h3>
               </template>
 
               <dl class="space-y-4 text-sm">
@@ -153,7 +150,9 @@ function formatAuthors(authors: any[]): string {
                 </div>
                 <div>
                   <dt class="text-gray-500">Your access</dt>
-                  <dd class="text-gray-900 dark:text-white capitalize">{{ sharedProject.permission }}</dd>
+                  <dd class="text-gray-900 dark:text-white capitalize">
+                    {{ sharedProject.permission }}
+                  </dd>
                 </div>
                 <div>
                   <dt class="text-gray-500">Created</dt>
@@ -165,13 +164,9 @@ function formatAuthors(authors: any[]): string {
 
               <template #footer>
                 <div class="text-center">
-                  <p class="text-sm text-gray-500 mb-3">
-                    Want to create your own bibliographies?
-                  </p>
+                  <p class="text-sm text-gray-500 mb-3">Want to create your own bibliographies?</p>
                   <NuxtLink to="/signup">
-                    <UButton block variant="soft">
-                      Create free account
-                    </UButton>
+                    <UButton block variant="soft"> Create free account </UButton>
                   </NuxtLink>
                 </div>
               </template>
@@ -184,7 +179,8 @@ function formatAuthors(authors: any[]): string {
       <footer class="border-t border-gray-200 dark:border-gray-700 py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
           <p>
-            Powered by <NuxtLink to="/" class="text-primary-600 hover:text-primary-700">AnnoBib</NuxtLink>
+            Powered by
+            <NuxtLink to="/" class="text-primary-600 hover:text-primary-700">AnnoBib</NuxtLink>
             · The modern bibliography manager for researchers
           </p>
         </div>

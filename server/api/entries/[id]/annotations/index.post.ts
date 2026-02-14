@@ -25,10 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {
@@ -43,7 +40,7 @@ export default defineEventHandler(async (event) => {
     .from(annotations)
     .where(eq(annotations.entryId, entryId))
 
-  const sortOrder = parsed.data.sortOrder ?? (Number(maxSortOrder?.max ?? -1) + 1)
+  const sortOrder = parsed.data.sortOrder ?? Number(maxSortOrder?.max ?? -1) + 1
 
   const [newAnnotation] = await db
     .insert(annotations)

@@ -16,7 +16,9 @@ onMounted(() => {
   >
     <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 shrink-0" />
     <span class="flex-1 text-left truncate">Search entries, projects, tags...</span>
-    <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-[10px] font-medium text-gray-400 dark:text-gray-500">
+    <kbd
+      class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-[10px] font-medium text-gray-400 dark:text-gray-500"
+    >
       {{ isMac ? '⌘' : 'Ctrl' }}/
     </kbd>
   </button>

@@ -1,4 +1,4 @@
-import Stripe from 'stripe'
+import type Stripe from 'stripe'
 import { db } from '~/server/database/client'
 import { users, subscriptions } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
@@ -26,13 +26,8 @@ export default defineEventHandler(async (event) => {
   let stripeEvent: Stripe.Event
 
   try {
-    stripeEvent = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      config.stripeWebhookSecret,
-    )
-  }
-  catch (err: any) {
+    stripeEvent = stripe.webhooks.constructEvent(body, signature, config.stripeWebhookSecret)
+  } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message)
     throw createError({
       statusCode: 400,
@@ -94,34 +89,34 @@ async function handleCheckoutCompleted(
     return
   }
 
-  await db
-    .update(users)
-    .set({ stripeCustomerId: customerId })
-    .where(eq(users.id, userId))
+  await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId))
 
   const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
   const priceId = stripeSubscription.items.data[0]?.price.id
   const tier = priceId ? getTierFromPriceId(priceId, products) : DEFAULT_TIER
 
-  await db.insert(subscriptions).values({
-    userId,
-    stripeSubscriptionId: subscriptionId,
-    tier,
-    status: mapStripeStatus(stripeSubscription.status) as any,
-    currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-    cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-  }).onConflictDoUpdate({
-    target: subscriptions.stripeSubscriptionId,
-    set: {
+  await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      stripeSubscriptionId: subscriptionId,
       tier,
       status: mapStripeStatus(stripeSubscription.status) as any,
       currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
       currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
       cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-      updatedAt: new Date(),
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.stripeSubscriptionId,
+      set: {
+        tier,
+        status: mapStripeStatus(stripeSubscription.status) as any,
+        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+        updatedAt: new Date(),
+      },
+    })
 
   await db
     .update(users)
@@ -159,20 +154,11 @@ async function handleSubscriptionUpdated(
   const tier = priceId ? getTierFromPriceId(priceId, products) : DEFAULT_TIER
   const status = mapStripeStatus(subscription.status)
 
-  await db.insert(subscriptions).values({
-    userId: subscription.metadata.userId!,
-    stripeSubscriptionId: subscription.id,
-    tier,
-    status: status as any,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    stripePriceId: priceId || null,
-    unitAmount: priceItem?.unit_amount ?? null,
-    billingInterval: priceItem?.recurring?.interval || null,
-  }).onConflictDoUpdate({
-    target: subscriptions.stripeSubscriptionId,
-    set: {
+  await db
+    .insert(subscriptions)
+    .values({
+      userId: subscription.metadata.userId!,
+      stripeSubscriptionId: subscription.id,
       tier,
       status: status as any,
       currentPeriodStart: new Date(subscription.current_period_start * 1000),
@@ -181,11 +167,24 @@ async function handleSubscriptionUpdated(
       stripePriceId: priceId || null,
       unitAmount: priceItem?.unit_amount ?? null,
       billingInterval: priceItem?.recurring?.interval || null,
-      updatedAt: new Date(),
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.stripeSubscriptionId,
+      set: {
+        tier,
+        status: status as any,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        stripePriceId: priceId || null,
+        unitAmount: priceItem?.unit_amount ?? null,
+        billingInterval: priceItem?.recurring?.interval || null,
+        updatedAt: new Date(),
+      },
+    })
 
-  const effectiveTier = status === 'active' || status === 'trialing' || status === 'past_due' ? tier : DEFAULT_TIER
+  const effectiveTier =
+    status === 'active' || status === 'trialing' || status === 'past_due' ? tier : DEFAULT_TIER
 
   await db
     .update(users)
@@ -259,8 +258,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const graceEndsAt = new Date()
   graceEndsAt.setDate(graceEndsAt.getDate() + GRACE_PERIOD_DAYS)
 
-  const paymentError = invoice.last_finalization_error?.message
-    || (invoice.status_transitions?.finalized_at ? 'Payment failed' : 'Payment method declined')
+  const paymentError =
+    invoice.last_finalization_error?.message ||
+    (invoice.status_transitions?.finalized_at ? 'Payment failed' : 'Payment method declined')
 
   await db
     .update(subscriptions)

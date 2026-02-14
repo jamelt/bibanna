@@ -12,11 +12,11 @@ export default defineEventHandler(async (event) => {
   })
 
   return {
-    systemPresets: systemPresets.map(p => ({
+    systemPresets: systemPresets.map((p) => ({
       ...p,
       isSystem: true,
     })),
-    userPresets: userPresets.map(p => ({
+    userPresets: userPresets.map((p) => ({
       ...p,
       isSystem: false,
     })),

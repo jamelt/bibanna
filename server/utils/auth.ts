@@ -3,7 +3,13 @@ import { db } from '../database/client'
 import { users, adminAuditLogs } from '../database/schema'
 import { eq } from 'drizzle-orm'
 import type { UserRole } from '~/shared/types'
-import { type SubscriptionTier, getTierLimits, PAID_TIER_IDS, isValidTier, DEFAULT_TIER } from '~/shared/subscriptions'
+import {
+  type SubscriptionTier,
+  getTierLimits,
+  PAID_TIER_IDS,
+  isValidTier,
+  DEFAULT_TIER,
+} from '~/shared/subscriptions'
 
 export interface AuthUser {
   id: string
@@ -103,8 +109,7 @@ export async function logAdminAction(
 export async function optionalAuth(event: H3Event): Promise<AuthUser | null> {
   try {
     return await requireAuth(event)
-  }
-  catch {
+  } catch {
     return null
   }
 }

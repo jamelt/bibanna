@@ -22,7 +22,9 @@ function isActive(to: string) {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-area-bottom md:hidden">
+  <nav
+    class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-area-bottom md:hidden"
+  >
     <div class="flex items-center justify-around h-16">
       <NuxtLink
         v-for="item in navItems"
@@ -34,7 +36,7 @@ function isActive(to: string) {
             ? 'text-white'
             : isActive(item.to)
               ? 'text-primary-600 dark:text-primary-400'
-              : 'text-gray-500 dark:text-gray-400'
+              : 'text-gray-500 dark:text-gray-400',
         ]"
       >
         <div

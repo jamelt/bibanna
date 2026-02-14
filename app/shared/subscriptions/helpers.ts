@@ -1,13 +1,19 @@
-import { SUBSCRIPTION_PLANS, type SubscriptionTier, type SubscriptionPlan, type PlanLimits, type PlanPricing, type PlanUI } from './plans'
+import {
+  SUBSCRIPTION_PLANS,
+  type SubscriptionTier,
+  type SubscriptionPlan,
+  type PlanLimits,
+  type PlanPricing,
+  type PlanUI,
+} from './plans'
 
-const sortedPlans = Object.values(SUBSCRIPTION_PLANS)
-  .sort((a, b) => a.sortOrder - b.sortOrder)
+const sortedPlans = Object.values(SUBSCRIPTION_PLANS).sort((a, b) => a.sortOrder - b.sortOrder)
 
-export const TIER_IDS = sortedPlans.map(p => p.id) as SubscriptionTier[]
+export const TIER_IDS = sortedPlans.map((p) => p.id) as SubscriptionTier[]
 
 export const PAID_TIER_IDS = sortedPlans
-  .filter(p => p.pricing !== null)
-  .map(p => p.id) as SubscriptionTier[]
+  .filter((p) => p.pricing !== null)
+  .map((p) => p.id) as SubscriptionTier[]
 
 export const DEFAULT_TIER: SubscriptionTier = 'free'
 
@@ -65,7 +71,7 @@ export function getAllPlansForDisplay(): SubscriptionPlan[] {
 }
 
 export function getPaidPlansForDisplay(): SubscriptionPlan[] {
-  return sortedPlans.filter(p => p.pricing !== null)
+  return sortedPlans.filter((p) => p.pricing !== null)
 }
 
 export function isPaidTier(tierId: SubscriptionTier): boolean {

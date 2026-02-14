@@ -8,7 +8,17 @@ definePageMeta({
 
 const router = useRouter()
 const toast = useToast()
-const { tags, fetchTags, createTag, deleteTag: removeTag, mergeTags, optimisticRemove, optimisticRestore, permanentDelete, TAG_COLORS } = useTags()
+const {
+  tags,
+  fetchTags,
+  createTag,
+  deleteTag: removeTag,
+  mergeTags,
+  optimisticRemove,
+  optimisticRestore,
+  permanentDelete,
+  TAG_COLORS,
+} = useTags()
 
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -53,13 +63,19 @@ onMounted(() => {
 
   const savedPinned = localStorage.getItem('pinned-tag-ids')
   if (savedPinned) {
-    try { pinnedTagIds.value = new Set(JSON.parse(savedPinned)) }
-    catch { /* ignore */ }
+    try {
+      pinnedTagIds.value = new Set(JSON.parse(savedPinned))
+    } catch {
+      /* ignore */
+    }
   }
   const savedRecent = localStorage.getItem('recent-tag-ids')
   if (savedRecent) {
-    try { recentTagIds.value = JSON.parse(savedRecent) }
-    catch { /* ignore */ }
+    try {
+      recentTagIds.value = JSON.parse(savedRecent)
+    } catch {
+      /* ignore */
+    }
   }
 
   document.addEventListener('keydown', handleKeydown)
@@ -89,9 +105,8 @@ function clearSelection() {
 function toggleSelectAll() {
   if (selectedIds.value.size === paginatedTags.value.length) {
     selectedIds.value = new Set()
-  }
-  else {
-    selectedIds.value = new Set(paginatedTags.value.map(t => t.id))
+  } else {
+    selectedIds.value = new Set(paginatedTags.value.map((t) => t.id))
   }
 }
 
@@ -118,9 +133,8 @@ const filteredAndSortedTags = computed(() => {
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.trim().toLowerCase()
-    result = result.filter(t =>
-      t.name.toLowerCase().includes(q)
-      || t.description?.toLowerCase().includes(q),
+    result = result.filter(
+      (t) => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q),
     )
   }
 
@@ -160,7 +174,7 @@ watch([searchQuery, sortBy], () => {
   focusedIndex.value = -1
 })
 
-const hasGroups = computed(() => paginatedTags.value.some(t => t.groupName))
+const hasGroups = computed(() => paginatedTags.value.some((t) => t.groupName))
 
 const collapsedGroups = ref(new Set<string>())
 
@@ -201,8 +215,7 @@ const displayItems = computed((): DisplayItem[] => {
     if (tag.groupName) {
       if (!groups.has(tag.groupName)) groups.set(tag.groupName, [])
       groups.get(tag.groupName)!.push(tag)
-    }
-    else {
+    } else {
       ungrouped.push(tag)
     }
   }
@@ -213,15 +226,33 @@ const displayItems = computed((): DisplayItem[] => {
     items.push({ isHeader: true, groupName: gn, groupCount: gt.length, tag: null, flatIndex: -1 })
     if (!collapsedGroups.value.has(gn)) {
       for (const tag of gt) {
-        items.push({ isHeader: false, groupName: '', groupCount: 0, tag, flatIndex: flatIndexMap.get(tag.id) ?? -1 })
+        items.push({
+          isHeader: false,
+          groupName: '',
+          groupCount: 0,
+          tag,
+          flatIndex: flatIndexMap.get(tag.id) ?? -1,
+        })
       }
     }
   }
 
   if (ungrouped.length > 0) {
-    items.push({ isHeader: true, groupName: 'Ungrouped', groupCount: ungrouped.length, tag: null, flatIndex: -1 })
+    items.push({
+      isHeader: true,
+      groupName: 'Ungrouped',
+      groupCount: ungrouped.length,
+      tag: null,
+      flatIndex: -1,
+    })
     for (const tag of ungrouped) {
-      items.push({ isHeader: false, groupName: '', groupCount: 0, tag, flatIndex: flatIndexMap.get(tag.id) ?? -1 })
+      items.push({
+        isHeader: false,
+        groupName: '',
+        groupCount: 0,
+        tag,
+        flatIndex: flatIndexMap.get(tag.id) ?? -1,
+      })
     }
   }
 
@@ -237,24 +268,24 @@ function togglePin(tagId: string) {
 }
 
 function trackRecentTag(tagId: string) {
-  const ids = [tagId, ...recentTagIds.value.filter(id => id !== tagId)].slice(0, 5)
+  const ids = [tagId, ...recentTagIds.value.filter((id) => id !== tagId)].slice(0, 5)
   recentTagIds.value = ids
   if (import.meta.client) localStorage.setItem('recent-tag-ids', JSON.stringify(ids))
 }
 
-const pinnedTags = computed(() => tags.value.filter(t => pinnedTagIds.value.has(t.id)))
+const pinnedTags = computed(() => tags.value.filter((t) => pinnedTagIds.value.has(t.id)))
 
 const recentTags = computed(() => {
   return recentTagIds.value
-    .map(id => tags.value.find(t => t.id === id))
+    .map((id) => tags.value.find((t) => t.id === id))
     .filter((t): t is Tag => !!t && !pinnedTagIds.value.has(t.id))
     .slice(0, 5)
 })
 
 const mergePreviewCount = computed(() => {
   if (!mergeTargetId.value || mergeSourceIds.value.length === 0) return 0
-  const target = tags.value.find(t => t.id === mergeTargetId.value)
-  const sources = tags.value.filter(t => mergeSourceIds.value.includes(t.id))
+  const target = tags.value.find((t) => t.id === mergeTargetId.value)
+  const sources = tags.value.filter((t) => mergeSourceIds.value.includes(t.id))
   return (target?.entryCount ?? 0) + sources.reduce((sum, t) => sum + (t.entryCount ?? 0), 0)
 })
 
@@ -264,7 +295,11 @@ function getTagVisualWeight(entryCount: number): string {
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 async function handleQuickCreate() {
@@ -274,7 +309,10 @@ async function handleQuickCreate() {
   isQuickCreating.value = true
   try {
     const names = value.includes(',')
-      ? value.split(',').map(s => s.trim()).filter(Boolean)
+      ? value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [value]
 
     let created = 0
@@ -282,8 +320,7 @@ async function handleQuickCreate() {
       try {
         await createTag(name)
         created++
-      }
-      catch (e: any) {
+      } catch (e: any) {
         if (!e.data?.message?.includes('already exists')) {
           toast.add({ title: `Failed to create "${name}"`, color: 'error' })
         }
@@ -297,8 +334,7 @@ async function handleQuickCreate() {
       })
     }
     quickCreateInput.value = ''
-  }
-  finally {
+  } finally {
     isQuickCreating.value = false
   }
 }
@@ -349,8 +385,7 @@ async function handleDeleteTag() {
   const timeout = setTimeout(async () => {
     try {
       await permanentDelete(tagToDelete.id)
-    }
-    catch {
+    } catch {
       optimisticRestore(tagToDelete)
       toast.add({ title: 'Failed to delete tag', color: 'error' })
     }
@@ -362,16 +397,18 @@ async function handleDeleteTag() {
   toast.add({
     title: `"${tagToDelete.name}" deleted`,
     color: 'neutral',
-    actions: [{
-      label: 'Undo',
-      color: 'primary' as const,
-      variant: 'solid' as const,
-      click: () => {
-        clearTimeout(timeout)
-        optimisticRestore(tagToDelete)
-        pendingDeleteTimeout.value = null
+    actions: [
+      {
+        label: 'Undo',
+        color: 'primary' as const,
+        variant: 'solid' as const,
+        click: () => {
+          clearTimeout(timeout)
+          optimisticRestore(tagToDelete)
+          pendingDeleteTimeout.value = null
+        },
       },
-    }],
+    ],
     duration: 5000,
   })
 }
@@ -381,8 +418,11 @@ async function handleBulkDelete() {
   const count = selectedIds.value.size
 
   for (const id of selectedIds.value) {
-    try { await removeTag(id) }
-    catch { /* continue */ }
+    try {
+      await removeTag(id)
+    } catch {
+      /* continue */
+    }
   }
 
   toast.add({ title: `${count} tag(s) deleted`, color: 'success' })
@@ -415,15 +455,13 @@ async function handleMerge() {
     })
     isMergeModalOpen.value = false
     clearSelection()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     toast.add({
       title: 'Failed to merge tags',
       description: e.data?.message || 'An error occurred',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isMerging.value = false
   }
 }
@@ -450,7 +488,7 @@ function handleDetailDelete(tag: Tag) {
 }
 
 function handleAnalyticsTagClick(tagId: string) {
-  const tag = tags.value.find(t => t.id === tagId)
+  const tag = tags.value.find((t) => t.id === tagId)
   if (tag) openDetailPanel(tag)
 }
 
@@ -459,17 +497,21 @@ function handleAnalyticsTagPairClick(tagIdA: string, tagIdB: string) {
 }
 
 const mergeTargetOptions = computed(() => {
-  return tags.value.filter(t => !mergeSourceIds.value.includes(t.id))
+  return tags.value.filter((t) => !mergeSourceIds.value.includes(t.id))
 })
 
 const mergeSourceOptions = computed(() => {
-  return tags.value.filter(t => t.id !== mergeTargetId.value)
+  return tags.value.filter((t) => t.id !== mergeTargetId.value)
 })
 
 function getDropdownItems(tag: Tag) {
   return [
     [
-      { label: 'Details', icon: 'i-heroicons-information-circle', onSelect: () => openDetailPanel(tag) },
+      {
+        label: 'Details',
+        icon: 'i-heroicons-information-circle',
+        onSelect: () => openDetailPanel(tag),
+      },
       {
         label: pinnedTagIds.value.has(tag.id) ? 'Unpin' : 'Pin',
         icon: pinnedTagIds.value.has(tag.id) ? 'i-heroicons-star' : 'i-heroicons-star',
@@ -479,7 +521,12 @@ function getDropdownItems(tag: Tag) {
       { label: 'View entries', icon: 'i-heroicons-book-open', onSelect: () => viewEntries(tag) },
     ],
     [
-      { label: 'Delete', icon: 'i-heroicons-trash', color: 'error' as const, onSelect: () => openDeleteModal(tag) },
+      {
+        label: 'Delete',
+        icon: 'i-heroicons-trash',
+        color: 'error' as const,
+        onSelect: () => openDeleteModal(tag),
+      },
     ],
   ]
 }
@@ -498,8 +545,7 @@ async function exportTags(format: 'json' | 'csv') {
     a.click()
     URL.revokeObjectURL(url)
     toast.add({ title: `Tags exported as ${format.toUpperCase()}`, color: 'success' })
-  }
-  catch {
+  } catch {
     toast.add({ title: 'Export failed', color: 'error' })
   }
 }
@@ -516,10 +562,13 @@ async function handleImport() {
       return
     }
 
-    const result = await $fetch<{ imported: number; skipped: number; updated: number }>('/api/tags/import', {
-      method: 'POST',
-      body: { tags: tagsData, strategy: importStrategy.value },
-    })
+    const result = await $fetch<{ imported: number; skipped: number; updated: number }>(
+      '/api/tags/import',
+      {
+        method: 'POST',
+        body: { tags: tagsData, strategy: importStrategy.value },
+      },
+    )
 
     const parts = []
     if (result.imported > 0) parts.push(`${result.imported} imported`)
@@ -530,15 +579,13 @@ async function handleImport() {
     isImportModalOpen.value = false
     importText.value = ''
     fetchTags(true)
-  }
-  catch (e: any) {
+  } catch (e: any) {
     toast.add({
       title: 'Import failed',
       description: e.data?.message || e.message || 'Invalid JSON format',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isImporting.value = false
   }
 }
@@ -568,11 +615,25 @@ function handleDragEnd() {
 function getHeaderMenuItems() {
   return [
     [
-      { label: 'Export as JSON', icon: 'i-heroicons-arrow-down-tray', onSelect: () => exportTags('json') },
-      { label: 'Export as CSV', icon: 'i-heroicons-table-cells', onSelect: () => exportTags('csv') },
+      {
+        label: 'Export as JSON',
+        icon: 'i-heroicons-arrow-down-tray',
+        onSelect: () => exportTags('json'),
+      },
+      {
+        label: 'Export as CSV',
+        icon: 'i-heroicons-table-cells',
+        onSelect: () => exportTags('csv'),
+      },
     ],
     [
-      { label: 'Import tags', icon: 'i-heroicons-arrow-up-tray', onSelect: () => { isImportModalOpen.value = true } },
+      {
+        label: 'Import tags',
+        icon: 'i-heroicons-arrow-up-tray',
+        onSelect: () => {
+          isImportModalOpen.value = true
+        },
+      },
     ],
   ]
 }
@@ -580,7 +641,7 @@ function getHeaderMenuItems() {
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
     if (e.key === 'Escape') {
-      (e.target as HTMLElement).blur()
+      ;(e.target as HTMLElement).blur()
       searchQuery.value = ''
     }
     return
@@ -639,9 +700,7 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Tags
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tags</h1>
         <p class="text-gray-500 dark:text-gray-400">
           {{ tags.length }} {{ tags.length === 1 ? 'tag' : 'tags' }}
         </p>
@@ -651,14 +710,22 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
           <button
             class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+            :class="
+              viewMode === 'grid'
+                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            "
             @click="viewMode = 'grid'"
           >
             <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4" />
           </button>
           <button
             class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+            :class="
+              viewMode === 'list'
+                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            "
             @click="viewMode = 'list'"
           >
             <UIcon name="i-heroicons-list-bullet" class="w-4 h-4" />
@@ -759,7 +826,9 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Pinned & Recent -->
     <div v-if="pinnedTags.length > 0 || recentTags.length > 0" class="space-y-3">
       <div v-if="pinnedTags.length > 0">
-        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+        <h3
+          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2"
+        >
           Pinned
         </h3>
         <div class="flex flex-wrap gap-2">
@@ -775,7 +844,9 @@ function handleKeydown(e: KeyboardEvent) {
         </div>
       </div>
       <div v-if="recentTags.length > 0">
-        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+        <h3
+          class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2"
+        >
           Recent
         </h3>
         <div class="flex flex-wrap gap-2">
@@ -803,9 +874,7 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Empty state: no tags -->
     <div v-if="!tags.length" class="text-center py-12">
       <UIcon name="i-heroicons-tag" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        No tags yet
-      </h3>
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No tags yet</h3>
       <p class="mt-2 text-gray-500 dark:text-gray-400">
         Type tag names above to create them instantly
       </p>
@@ -813,19 +882,13 @@ function handleKeydown(e: KeyboardEvent) {
 
     <!-- Empty search results -->
     <div v-else-if="filteredAndSortedTags.length === 0" class="text-center py-12">
-      <UIcon name="i-heroicons-magnifying-glass" class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        No matching tags
-      </h3>
-      <p class="mt-2 text-gray-500 dark:text-gray-400">
-        No tags match "{{ searchQuery }}"
-      </p>
-      <UButton
-        class="mt-4"
-        variant="outline"
-        color="neutral"
-        @click="searchQuery = ''"
-      >
+      <UIcon
+        name="i-heroicons-magnifying-glass"
+        class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600"
+      />
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No matching tags</h3>
+      <p class="mt-2 text-gray-500 dark:text-gray-400">No tags match "{{ searchQuery }}"</p>
+      <UButton class="mt-4" variant="outline" color="neutral" @click="searchQuery = ''">
         Clear search
       </UButton>
     </div>
@@ -854,10 +917,16 @@ function handleKeydown(e: KeyboardEvent) {
           @click="toggleGroup(item.groupName)"
         >
           <UIcon
-            :name="collapsedGroups.has(item.groupName) ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-down'"
+            :name="
+              collapsedGroups.has(item.groupName)
+                ? 'i-heroicons-chevron-right'
+                : 'i-heroicons-chevron-down'
+            "
             class="w-4 h-4 text-gray-400"
           />
-          <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <h3
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
             {{ item.groupName }}
           </h3>
           <span class="text-xs text-gray-400">{{ item.groupCount }}</span>
@@ -869,7 +938,10 @@ function handleKeydown(e: KeyboardEvent) {
           class="relative p-3 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer group"
           :class="[
             { 'ring-2 ring-primary-500': focusedIndex === item.flatIndex && !isSelecting },
-            { 'ring-2 ring-primary-300 dark:ring-primary-600 scale-[1.02]': draggedTagId && draggedTagId !== item.tag?.id },
+            {
+              'ring-2 ring-primary-300 dark:ring-primary-600 scale-[1.02]':
+                draggedTagId && draggedTagId !== item.tag?.id,
+            },
             { 'opacity-50 scale-95': draggedTagId === item.tag?.id },
             getTagVisualWeight(item.tag?.entryCount ?? 0),
           ]"
@@ -879,14 +951,24 @@ function handleKeydown(e: KeyboardEvent) {
           @drop="handleDrop(item.tag!, $event)"
           @dragend="handleDragEnd"
         >
-          <div v-if="isSelecting" class="absolute top-2 left-2 z-10" @click.stop="toggleSelect(item.tag!.id)">
+          <div
+            v-if="isSelecting"
+            class="absolute top-2 left-2 z-10"
+            @click.stop="toggleSelect(item.tag!.id)"
+          >
             <div
               class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer"
-              :class="selectedIds.has(item.tag!.id)
-                ? 'bg-primary-600 border-primary-600'
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary-400'"
+              :class="
+                selectedIds.has(item.tag!.id)
+                  ? 'bg-primary-600 border-primary-600'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary-400'
+              "
             >
-              <UIcon v-if="selectedIds.has(item.tag!.id)" name="i-heroicons-check" class="w-3 h-3 text-white" />
+              <UIcon
+                v-if="selectedIds.has(item.tag!.id)"
+                name="i-heroicons-check"
+                class="w-3 h-3 text-white"
+              />
             </div>
           </div>
 
@@ -897,7 +979,9 @@ function handleKeydown(e: KeyboardEvent) {
                 :style="{ backgroundColor: item.tag!.color }"
               />
               <UTooltip :text="item.tag!.name">
-                <span class="font-medium text-sm text-gray-900 dark:text-white line-clamp-2 leading-tight">
+                <span
+                  class="font-medium text-sm text-gray-900 dark:text-white line-clamp-2 leading-tight"
+                >
                   {{ item.tag!.name }}
                 </span>
               </UTooltip>
@@ -916,11 +1000,15 @@ function handleKeydown(e: KeyboardEvent) {
               />
             </UDropdownMenu>
           </div>
-          <p v-if="item.tag!.description" class="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-6 line-clamp-1">
+          <p
+            v-if="item.tag!.description"
+            class="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-6 line-clamp-1"
+          >
             {{ item.tag!.description }}
           </p>
           <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-6">
-            {{ item.tag!.entryCount ?? 0 }} {{ (item.tag!.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}
+            {{ item.tag!.entryCount ?? 0 }}
+            {{ (item.tag!.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}
           </p>
         </UCard>
       </div>
@@ -948,10 +1036,16 @@ function handleKeydown(e: KeyboardEvent) {
           @click="toggleGroup(item.groupName)"
         >
           <UIcon
-            :name="collapsedGroups.has(item.groupName) ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-down'"
+            :name="
+              collapsedGroups.has(item.groupName)
+                ? 'i-heroicons-chevron-right'
+                : 'i-heroicons-chevron-down'
+            "
             class="w-4 h-4 text-gray-400"
           />
-          <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <h3
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
             {{ item.groupName }}
           </h3>
           <span class="text-xs text-gray-400">{{ item.groupCount }}</span>
@@ -962,8 +1056,13 @@ function handleKeydown(e: KeyboardEvent) {
           draggable="true"
           class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group transition-colors"
           :class="[
-            { 'bg-primary-50 dark:bg-primary-900/10': focusedIndex === item.flatIndex && !isSelecting },
-            { 'bg-primary-50 dark:bg-primary-900/10': draggedTagId && draggedTagId !== item.tag?.id },
+            {
+              'bg-primary-50 dark:bg-primary-900/10':
+                focusedIndex === item.flatIndex && !isSelecting,
+            },
+            {
+              'bg-primary-50 dark:bg-primary-900/10': draggedTagId && draggedTagId !== item.tag?.id,
+            },
             { 'opacity-50': draggedTagId === item.tag?.id },
             getTagVisualWeight(item.tag?.entryCount ?? 0),
           ]"
@@ -976,11 +1075,17 @@ function handleKeydown(e: KeyboardEvent) {
           <div v-if="isSelecting" class="shrink-0" @click.stop="toggleSelect(item.tag!.id)">
             <div
               class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer"
-              :class="selectedIds.has(item.tag!.id)
-                ? 'bg-primary-600 border-primary-600'
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary-400'"
+              :class="
+                selectedIds.has(item.tag!.id)
+                  ? 'bg-primary-600 border-primary-600'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary-400'
+              "
             >
-              <UIcon v-if="selectedIds.has(item.tag!.id)" name="i-heroicons-check" class="w-3 h-3 text-white" />
+              <UIcon
+                v-if="selectedIds.has(item.tag!.id)"
+                name="i-heroicons-check"
+                class="w-3 h-3 text-white"
+              />
             </div>
           </div>
 
@@ -992,15 +1097,22 @@ function handleKeydown(e: KeyboardEvent) {
             <span class="font-medium text-sm text-gray-900 dark:text-white">
               {{ item.tag!.name }}
             </span>
-            <span v-if="item.tag!.description" class="ml-3 text-xs text-gray-400 dark:text-gray-500">
+            <span
+              v-if="item.tag!.description"
+              class="ml-3 text-xs text-gray-400 dark:text-gray-500"
+            >
               {{ item.tag!.description }}
             </span>
           </div>
-          <span v-if="item.tag!.groupName" class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 shrink-0 hidden lg:block">
+          <span
+            v-if="item.tag!.groupName"
+            class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 shrink-0 hidden lg:block"
+          >
             {{ item.tag!.groupName }}
           </span>
           <span class="text-xs text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
-            {{ item.tag!.entryCount ?? 0 }} {{ (item.tag!.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}
+            {{ item.tag!.entryCount ?? 0 }}
+            {{ (item.tag!.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}
           </span>
           <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:block">
             {{ formatDate(item.tag!.createdAt) }}
@@ -1025,7 +1137,9 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        Showing {{ (currentPage - 1) * pageSize + 1 }}&ndash;{{ Math.min(currentPage * pageSize, filteredAndSortedTags.length) }}
+        Showing {{ (currentPage - 1) * pageSize + 1 }}&ndash;{{
+          Math.min(currentPage * pageSize, filteredAndSortedTags.length)
+        }}
         of {{ filteredAndSortedTags.length }}
       </p>
       <div class="flex items-center gap-1">
@@ -1066,7 +1180,10 @@ function handleKeydown(e: KeyboardEvent) {
       >
         <span class="text-sm font-medium">{{ selectedIds.size }} selected</span>
         <div class="w-px h-5 bg-gray-700 dark:bg-gray-300" />
-        <button class="text-sm hover:text-red-400 transition-colors flex items-center gap-1.5" @click="handleBulkDelete">
+        <button
+          class="text-sm hover:text-red-400 transition-colors flex items-center gap-1.5"
+          @click="handleBulkDelete"
+        >
           <UIcon name="i-heroicons-trash" class="w-4 h-4" />
           Delete
         </button>
@@ -1106,35 +1223,32 @@ function handleKeydown(e: KeyboardEvent) {
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div
+                class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
+              >
+                <UIcon
+                  name="i-heroicons-exclamation-triangle"
+                  class="w-5 h-5 text-red-600 dark:text-red-400"
+                />
               </div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Delete Tag
-              </h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Tag</h2>
             </div>
           </template>
 
           <p class="text-gray-600 dark:text-gray-400">
-            Are you sure you want to delete <strong class="text-gray-900 dark:text-white">{{ selectedTag?.name }}</strong>?
-            This will remove the tag from {{ selectedTag?.entryCount ?? 0 }} {{ (selectedTag?.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}.
-            The entries themselves will not be deleted.
+            Are you sure you want to delete
+            <strong class="text-gray-900 dark:text-white">{{ selectedTag?.name }}</strong
+            >? This will remove the tag from {{ selectedTag?.entryCount ?? 0 }}
+            {{ (selectedTag?.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}. The entries themselves
+            will not be deleted.
           </p>
 
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton
-                variant="outline"
-                color="neutral"
-                @click="isDeleteModalOpen = false"
-              >
+              <UButton variant="outline" color="neutral" @click="isDeleteModalOpen = false">
                 Cancel
               </UButton>
-              <UButton
-                color="error"
-                :loading="isDeleting"
-                @click="handleDeleteTag"
-              >
+              <UButton color="error" :loading="isDeleting" @click="handleDeleteTag">
                 Delete Tag
               </UButton>
             </div>
@@ -1149,13 +1263,16 @@ function handleKeydown(e: KeyboardEvent) {
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-arrows-pointing-in" class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div
+                class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center"
+              >
+                <UIcon
+                  name="i-heroicons-arrows-pointing-in"
+                  class="w-5 h-5 text-primary-600 dark:text-primary-400"
+                />
               </div>
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Merge Tags
-                </h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Merge Tags</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                   Combine tags into one, reassigning all entries
                 </p>
@@ -1205,16 +1322,18 @@ function handleKeydown(e: KeyboardEvent) {
 
             <div v-if="mergeSourceIds.length > 0 && mergeTargetId" class="space-y-3">
               <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                <h4
+                  class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2"
+                >
                   Preview
                 </h4>
                 <div class="flex items-center gap-2">
                   <span
                     class="w-3 h-3 rounded-full"
-                    :style="{ backgroundColor: tags.find(t => t.id === mergeTargetId)?.color }"
+                    :style="{ backgroundColor: tags.find((t) => t.id === mergeTargetId)?.color }"
                   />
                   <span class="font-medium text-sm text-gray-900 dark:text-white">
-                    {{ tags.find(t => t.id === mergeTargetId)?.name }}
+                    {{ tags.find((t) => t.id === mergeTargetId)?.name }}
                   </span>
                   <span class="ml-auto text-xs text-gray-400 tabular-nums">
                     ~{{ mergePreviewCount }} entries after merge
@@ -1232,11 +1351,7 @@ function handleKeydown(e: KeyboardEvent) {
 
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton
-                variant="outline"
-                color="neutral"
-                @click="isMergeModalOpen = false"
-              >
+              <UButton variant="outline" color="neutral" @click="isMergeModalOpen = false">
                 Cancel
               </UButton>
               <UButton
@@ -1259,9 +1374,7 @@ function handleKeydown(e: KeyboardEvent) {
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Import Tags
-              </h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Import Tags</h2>
               <UButton
                 icon="i-heroicons-x-mark"
                 variant="ghost"
@@ -1273,10 +1386,15 @@ function handleKeydown(e: KeyboardEvent) {
 
           <div class="space-y-4">
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Paste a JSON array of tags. Each tag should have at least a <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">name</code> field.
-              Optional fields: <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">color</code>,
-              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">description</code>,
-              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">groupName</code>.
+              Paste a JSON array of tags. Each tag should have at least a
+              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">name</code>
+              field. Optional fields:
+              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">color</code>,
+              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded"
+                >description</code
+              >,
+              <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">groupName</code
+              >.
             </p>
 
             <UTextarea
@@ -1289,11 +1407,21 @@ function handleKeydown(e: KeyboardEvent) {
             <UFormField label="Duplicate handling">
               <div class="flex gap-4">
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
-                  <input v-model="importStrategy" type="radio" value="skip" class="text-primary-600">
+                  <input
+                    v-model="importStrategy"
+                    type="radio"
+                    value="skip"
+                    class="text-primary-600"
+                  />
                   Skip existing
                 </label>
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
-                  <input v-model="importStrategy" type="radio" value="merge" class="text-primary-600">
+                  <input
+                    v-model="importStrategy"
+                    type="radio"
+                    value="merge"
+                    class="text-primary-600"
+                  />
                   Merge (update existing)
                 </label>
               </div>
@@ -1302,11 +1430,7 @@ function handleKeydown(e: KeyboardEvent) {
 
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton
-                variant="outline"
-                color="neutral"
-                @click="isImportModalOpen = false"
-              >
+              <UButton variant="outline" color="neutral" @click="isImportModalOpen = false">
                 Cancel
               </UButton>
               <UButton
@@ -1342,9 +1466,17 @@ function handleKeydown(e: KeyboardEvent) {
           </template>
 
           <div class="space-y-3">
-            <div v-for="shortcut in shortcuts" :key="shortcut.key" class="flex items-center justify-between">
-              <span class="text-sm text-gray-600 dark:text-gray-400">{{ shortcut.description }}</span>
-              <kbd class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+            <div
+              v-for="shortcut in shortcuts"
+              :key="shortcut.key"
+              class="flex items-center justify-between"
+            >
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{
+                shortcut.description
+              }}</span>
+              <kbd
+                class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+              >
                 {{ shortcut.key }}
               </kbd>
             </div>

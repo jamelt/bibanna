@@ -1,71 +1,73 @@
 <script setup lang="ts">
-const { user, logout } = useAuth();
+const { user, logout } = useAuth()
 const {
   open: openQuickAdd,
   close: closeQuickAdd,
   isOpen: isQuickAddOpen,
   defaultProjectId: quickAddProjectId,
-} = useQuickAdd();
-const { notifyEntryCreated } = useEntryEvents();
-const { starredProjects, projectRoute } = useStarredProjects();
+} = useQuickAdd()
+const { notifyEntryCreated } = useEntryEvents()
+const { starredProjects, projectRoute } = useStarredProjects()
 
-const colorMode = useColorMode();
+const colorMode = useColorMode()
 const isDark = computed({
-  get: () => colorMode.value === "dark",
+  get: () => colorMode.value === 'dark',
   set: (value) => {
-    colorMode.preference = value ? "dark" : "light";
+    colorMode.preference = value ? 'dark' : 'light'
   },
-});
+})
 
-const isSidebarOpen = ref(true);
-const isMobileMenuOpen = ref(false);
-const isFeedbackOpen = ref(false);
-const isUserMenuOpen = ref(false);
-const userMenuRef = ref(null);
-const isProjectsPopoverOpen = ref(false);
-const projectsPopoverRef = ref(null);
+const isSidebarOpen = ref(true)
+const isMobileMenuOpen = ref(false)
+const isFeedbackOpen = ref(false)
+const isUserMenuOpen = ref(false)
+const userMenuRef = ref(null)
+const isProjectsPopoverOpen = ref(false)
+const projectsPopoverRef = ref(null)
 
 onClickOutside(projectsPopoverRef, () => {
-  isProjectsPopoverOpen.value = false;
-});
+  isProjectsPopoverOpen.value = false
+})
 
 onClickOutside(userMenuRef, () => {
-  isUserMenuOpen.value = false;
-});
+  isUserMenuOpen.value = false
+})
 
 const navigation = [
-  { name: "Dashboard", to: "/app", icon: "i-heroicons-home", exact: true },
-  { name: "Projects", to: "/app/projects", icon: "i-heroicons-folder" },
-  { name: "Library", to: "/app/library", icon: "i-heroicons-book-open" },
-  { name: "Annotations", to: "/app/annotations", icon: "i-heroicons-pencil-square" },
-  { name: "Tags", to: "/app/tags", icon: "i-heroicons-tag" },
-  { name: "Citation Styles", to: "/app/settings/citation-styles", icon: "i-heroicons-document-text" },
-  { name: "Mind Maps", to: "/app/mindmaps", icon: "i-heroicons-share" },
-];
+  { name: 'Dashboard', to: '/app', icon: 'i-heroicons-home', exact: true },
+  { name: 'Projects', to: '/app/projects', icon: 'i-heroicons-folder' },
+  { name: 'Library', to: '/app/library', icon: 'i-heroicons-book-open' },
+  { name: 'Annotations', to: '/app/annotations', icon: 'i-heroicons-pencil-square' },
+  { name: 'Tags', to: '/app/tags', icon: 'i-heroicons-tag' },
+  {
+    name: 'Citation Styles',
+    to: '/app/settings/citation-styles',
+    icon: 'i-heroicons-document-text',
+  },
+  { name: 'Mind Maps', to: '/app/mindmaps', icon: 'i-heroicons-share' },
+]
 
 const adminNavigation = [
-  { name: "Admin Dashboard", to: "/app/admin", icon: "i-heroicons-chart-bar-square", exact: true },
-  { name: "Users", to: "/app/admin/users", icon: "i-heroicons-users" },
-  { name: "Feedback", to: "/app/admin/feedback", icon: "i-heroicons-inbox" },
-  { name: "Announcements", to: "/app/admin/announcements", icon: "i-heroicons-megaphone" },
-  { name: "Feature Flags", to: "/app/admin/feature-flags", icon: "i-heroicons-flag" },
-  { name: "Audit Log", to: "/app/admin/audit-log", icon: "i-heroicons-clipboard-document-list" },
-];
+  { name: 'Admin Dashboard', to: '/app/admin', icon: 'i-heroicons-chart-bar-square', exact: true },
+  { name: 'Users', to: '/app/admin/users', icon: 'i-heroicons-users' },
+  { name: 'Feedback', to: '/app/admin/feedback', icon: 'i-heroicons-inbox' },
+  { name: 'Announcements', to: '/app/admin/announcements', icon: 'i-heroicons-megaphone' },
+  { name: 'Feature Flags', to: '/app/admin/feature-flags', icon: 'i-heroicons-flag' },
+  { name: 'Audit Log', to: '/app/admin/audit-log', icon: 'i-heroicons-clipboard-document-list' },
+]
 
-const { data: activeAnnouncements } = useFetch("/api/announcements/active", {
+const { data: activeAnnouncements } = useFetch('/api/announcements/active', {
   default: () => [],
-});
+})
 
-const dismissedAnnouncements = ref<Set<string>>(new Set());
+const dismissedAnnouncements = ref<Set<string>>(new Set())
 
 const visibleAnnouncements = computed(() =>
-  (activeAnnouncements.value || []).filter(
-    (a: any) => !dismissedAnnouncements.value.has(a.id),
-  ),
-);
+  (activeAnnouncements.value || []).filter((a: any) => !dismissedAnnouncements.value.has(a.id)),
+)
 
 function dismissAnnouncement(id: string) {
-  dismissedAnnouncements.value.add(id);
+  dismissedAnnouncements.value.add(id)
 }
 
 const adminRole = useState<string | null>('admin-role', () => null)
@@ -75,16 +77,13 @@ onMounted(async () => {
     try {
       const profile = await $fetch<{ role: string }>('/api/admin/me')
       adminRole.value = profile.role
-    }
-    catch {
+    } catch {
       adminRole.value = 'user'
     }
   }
 })
 
-const isAdmin = computed(
-  () => adminRole.value === 'admin' || adminRole.value === 'support',
-);
+const isAdmin = computed(() => adminRole.value === 'admin' || adminRole.value === 'support')
 
 const { session } = useUserSession()
 const isImpersonating = computed(() => !!(session.value as any)?.impersonatedBy)
@@ -101,45 +100,48 @@ onMounted(async () => {
   try {
     const sub = await $fetch<any>('/api/subscription')
     subscriptionStatus.value = sub?.subscription
+  } catch {
+    /* ignored */
   }
-  catch {}
 })
 
 const isPaymentPastDue = computed(() => subscriptionStatus.value?.status === 'past_due')
-const graceEndsAt = computed(() => subscriptionStatus.value?.graceEndsAt ? new Date(subscriptionStatus.value.graceEndsAt) : null)
+const graceEndsAt = computed(() =>
+  subscriptionStatus.value?.graceEndsAt ? new Date(subscriptionStatus.value.graceEndsAt) : null,
+)
 const graceDaysLeft = computed(() => {
   if (!graceEndsAt.value) return 0
   return Math.max(0, Math.ceil((graceEndsAt.value.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
 })
 
-const feedbackForm = ref({ type: "general", subject: "", content: "" });
-const feedbackSubmitting = ref(false);
-const feedbackSuccess = ref(false);
+const feedbackForm = ref({ type: 'general', subject: '', content: '' })
+const feedbackSubmitting = ref(false)
+const feedbackSuccess = ref(false)
 
 async function submitFeedback() {
-  feedbackSubmitting.value = true;
+  feedbackSubmitting.value = true
   try {
-    await $fetch("/api/feedback", {
-      method: "POST",
+    await $fetch('/api/feedback', {
+      method: 'POST',
       body: feedbackForm.value,
-    });
-    feedbackSuccess.value = true;
-    feedbackForm.value = { type: "general", subject: "", content: "" };
+    })
+    feedbackSuccess.value = true
+    feedbackForm.value = { type: 'general', subject: '', content: '' }
     setTimeout(() => {
-      isFeedbackOpen.value = false;
-      feedbackSuccess.value = false;
-    }, 2000);
+      isFeedbackOpen.value = false
+      feedbackSuccess.value = false
+    }, 2000)
   } finally {
-    feedbackSubmitting.value = false;
+    feedbackSubmitting.value = false
   }
 }
 
 const announcementBannerColors: Record<string, string> = {
-  info: "bg-blue-600",
-  warning: "bg-amber-600",
-  maintenance: "bg-gray-600",
-  release: "bg-green-600",
-};
+  info: 'bg-blue-600',
+  warning: 'bg-amber-600',
+  maintenance: 'bg-gray-600',
+  release: 'bg-green-600',
+}
 </script>
 
 <template>
@@ -153,9 +155,7 @@ const announcementBannerColors: Record<string, string> = {
         class="px-4 py-2 text-white text-sm flex items-center justify-center gap-3"
       >
         <span class="font-medium">{{ announcement.title }}</span>
-        <span class="hidden sm:inline opacity-90"
-          >&mdash; {{ announcement.content }}</span
-        >
+        <span class="hidden sm:inline opacity-90">&mdash; {{ announcement.content }}</span>
         <button
           class="ml-2 opacity-70 hover:opacity-100"
           @click="dismissAnnouncement(announcement.id)"
@@ -172,8 +172,8 @@ const announcementBannerColors: Record<string, string> = {
     >
       <UIcon name="i-heroicons-eye" class="w-4 h-4" />
       <span>
-        You are impersonating this user.
-        Logged in as <strong>{{ impersonator?.email }}</strong>.
+        You are impersonating this user. Logged in as <strong>{{ impersonator?.email }}</strong
+        >.
       </span>
       <UButton
         label="Stop Impersonating"
@@ -193,7 +193,9 @@ const announcementBannerColors: Record<string, string> = {
       <span>
         Your payment failed.
         <template v-if="graceDaysLeft > 0">
-          Please update your payment method within <strong>{{ graceDaysLeft }} day{{ graceDaysLeft !== 1 ? 's' : '' }}</strong> to avoid losing access to your plan.
+          Please update your payment method within
+          <strong>{{ graceDaysLeft }} day{{ graceDaysLeft !== 1 ? 's' : '' }}</strong> to avoid
+          losing access to your plan.
         </template>
         <template v-else>
           Your grace period has expired. Please update your payment method to restore access.
@@ -214,20 +216,10 @@ const announcementBannerColors: Record<string, string> = {
         <div class="flex h-full flex-col bg-white dark:bg-gray-800 p-4">
           <div class="flex items-center justify-between mb-8">
             <NuxtLink to="/app" class="flex items-center gap-2" @click="close()">
-              <UIcon
-                name="i-heroicons-book-open"
-                class="w-8 h-8 text-primary-500"
-              />
-              <span class="text-xl font-bold text-gray-900 dark:text-white"
-                >AnnoBib</span
-              >
+              <UIcon name="i-heroicons-book-open" class="w-8 h-8 text-primary-500" />
+              <span class="text-xl font-bold text-gray-900 dark:text-white">AnnoBib</span>
             </NuxtLink>
-            <UButton
-              icon="i-heroicons-x-mark"
-              variant="ghost"
-              color="neutral"
-              @click="close()"
-            />
+            <UButton icon="i-heroicons-x-mark" variant="ghost" color="neutral" @click="close()" />
           </div>
 
           <nav class="flex-1 space-y-1">
@@ -266,7 +258,11 @@ const announcementBannerColors: Record<string, string> = {
 
             <template v-if="isAdmin">
               <div class="pt-4 pb-1">
-                <p class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Admin</p>
+                <p
+                  class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                >
+                  Admin
+                </p>
               </div>
               <NuxtLink
                 v-for="item in adminNavigation"
@@ -293,32 +289,16 @@ const announcementBannerColors: Record<string, string> = {
       <div
         class="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700"
       >
-        <NuxtLink
-          v-if="isSidebarOpen"
-          to="/app"
-          class="flex items-center gap-2"
-        >
-          <UIcon
-            name="i-heroicons-book-open"
-            class="w-8 h-8 text-primary-500"
-          />
-          <span class="text-xl font-bold text-gray-900 dark:text-white"
-            >AnnoBib</span
-          >
+        <NuxtLink v-if="isSidebarOpen" to="/app" class="flex items-center gap-2">
+          <UIcon name="i-heroicons-book-open" class="w-8 h-8 text-primary-500" />
+          <span class="text-xl font-bold text-gray-900 dark:text-white">AnnoBib</span>
         </NuxtLink>
-        <UIcon
-          v-else
-          name="i-heroicons-book-open"
-          class="w-8 h-8 text-primary-500 mx-auto"
-        />
+        <UIcon v-else name="i-heroicons-book-open" class="w-8 h-8 text-primary-500 mx-auto" />
       </div>
 
       <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
         <template v-for="item in navigation" :key="item.name">
-          <UTooltip
-            :text="item.name"
-            :content="{ side: 'right' }"
-          >
+          <UTooltip :text="item.name" :content="{ side: 'right' }">
             <NuxtLink
               :to="item.to"
               class="group flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -353,7 +333,10 @@ const announcementBannerColors: Record<string, string> = {
 
       <!-- Admin section -->
       <div v-if="isAdmin" class="px-4 pb-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-        <p v-if="isSidebarOpen" class="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <p
+          v-if="isSidebarOpen"
+          class="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+        >
           Admin
         </p>
         <UTooltip
@@ -377,9 +360,7 @@ const announcementBannerColors: Record<string, string> = {
       <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
         <UButton
           :icon="
-            isSidebarOpen
-              ? 'i-heroicons-chevron-double-left'
-              : 'i-heroicons-chevron-double-right'
+            isSidebarOpen ? 'i-heroicons-chevron-double-left' : 'i-heroicons-chevron-double-right'
           "
           variant="ghost"
           color="neutral"
@@ -391,10 +372,7 @@ const announcementBannerColors: Record<string, string> = {
     </aside>
 
     <!-- Main content -->
-    <div
-      class="transition-all duration-300"
-      :class="isSidebarOpen ? 'lg:pl-64' : 'lg:pl-20'"
-    >
+    <div class="transition-all duration-300" :class="isSidebarOpen ? 'lg:pl-64' : 'lg:pl-20'">
       <!-- Top header -->
       <header
         class="sticky top-0 z-30 h-16 flex items-center gap-4 px-4 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur"
@@ -448,16 +426,22 @@ const announcementBannerColors: Record<string, string> = {
               @click="isUserMenuOpen = !isUserMenuOpen"
             >
               <UAvatar
-                :text="(user as any)?.name ? (user as any).name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : (user as { email?: string })?.email?.slice(0, 2).toUpperCase() || 'U'"
+                :text="
+                  (user as any)?.name
+                    ? (user as any).name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : (user as { email?: string })?.email?.slice(0, 2).toUpperCase() || 'U'
+                "
                 size="md"
                 class="cursor-pointer"
               />
             </UButton>
 
-            <div
-              v-if="isUserMenuOpen"
-              class="absolute right-0 top-full mt-2 w-56 z-50"
-            >
+            <div v-if="isUserMenuOpen" class="absolute right-0 top-full mt-2 w-56 z-50">
               <UCard :ui="{ body: { padding: 'p-1' } }">
                 <div class="space-y-1">
                   <div class="px-2 py-2 mb-1">
@@ -475,7 +459,10 @@ const announcementBannerColors: Record<string, string> = {
                     class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="isUserMenuOpen = false"
                   >
-                    <UIcon name="i-heroicons-user" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-user"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Profile
                   </NuxtLink>
                   <NuxtLink
@@ -483,7 +470,10 @@ const announcementBannerColors: Record<string, string> = {
                     class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="isUserMenuOpen = false"
                   >
-                    <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-cog-6-tooth"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Settings
                   </NuxtLink>
                   <NuxtLink
@@ -491,19 +481,28 @@ const announcementBannerColors: Record<string, string> = {
                     class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="isUserMenuOpen = false"
                   >
-                    <UIcon name="i-heroicons-credit-card" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-credit-card"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Subscription
                   </NuxtLink>
-                  
-                  <div v-if="isAdmin" class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                  
+
+                  <div
+                    v-if="isAdmin"
+                    class="border-t border-gray-200 dark:border-gray-700 my-1"
+                  ></div>
+
                   <NuxtLink
                     v-if="isAdmin"
                     to="/app/admin"
                     class="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="isUserMenuOpen = false"
                   >
-                    <UIcon name="i-heroicons-shield-check" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-shield-check"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Admin Panel
                   </NuxtLink>
 
@@ -512,17 +511,29 @@ const announcementBannerColors: Record<string, string> = {
                   <button
                     type="button"
                     class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
-                    @click="isDark = !isDark; isUserMenuOpen = false"
+                    @click="
+                      isDark = !isDark
+                      isUserMenuOpen = false
+                    "
                   >
-                    <UIcon :name="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      :name="isDark ? 'i-heroicons-sun' : 'i-heroicons-moon'"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     {{ isDark ? 'Light mode' : 'Dark mode' }}
                   </button>
                   <button
                     type="button"
                     class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
-                    @click="isFeedbackOpen = true; isUserMenuOpen = false"
+                    @click="
+                      isFeedbackOpen = true
+                      isUserMenuOpen = false
+                    "
                   >
-                    <UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-chat-bubble-left-ellipsis"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Send Feedback
                   </button>
 
@@ -532,7 +543,10 @@ const announcementBannerColors: Record<string, string> = {
                     class="w-full group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
                     @click="logout"
                   >
-                    <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400" />
+                    <UIcon
+                      name="i-heroicons-arrow-right-on-rectangle"
+                      class="w-4 h-4 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400"
+                    />
                     Sign out
                   </button>
                 </div>
@@ -568,8 +582,14 @@ const announcementBannerColors: Record<string, string> = {
           <button
             type="button"
             class="flex flex-col items-center gap-1 px-3 py-1 text-gray-500 dark:text-gray-400"
-            :class="{ 'text-primary-500 dark:text-primary-400': $route.path.startsWith('/app/projects') }"
-            @click="starredProjects.length > 0 ? isProjectsPopoverOpen = !isProjectsPopoverOpen : navigateTo('/app/projects')"
+            :class="{
+              'text-primary-500 dark:text-primary-400': $route.path.startsWith('/app/projects'),
+            }"
+            @click="
+              starredProjects.length > 0
+                ? (isProjectsPopoverOpen = !isProjectsPopoverOpen)
+                : navigateTo('/app/projects')
+            "
           >
             <UIcon name="i-heroicons-folder" class="w-6 h-6" />
             <span class="text-xs">Projects</span>
@@ -589,7 +609,9 @@ const announcementBannerColors: Record<string, string> = {
               class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden"
             >
               <div class="px-3 pt-3 pb-1.5">
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                <p
+                  class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                >
                   Starred
                 </p>
               </div>
@@ -670,10 +692,7 @@ const announcementBannerColors: Record<string, string> = {
           </p>
 
           <div v-if="feedbackSuccess" class="text-center py-4">
-            <UIcon
-              name="i-heroicons-check-circle"
-              class="w-12 h-12 text-green-500 mx-auto mb-2"
-            />
+            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500 mx-auto mb-2" />
             <p class="text-green-600 dark:text-green-400 font-medium">
               Thank you for your feedback!
             </p>

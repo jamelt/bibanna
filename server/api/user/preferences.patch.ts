@@ -4,12 +4,14 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import type { UserPreferences } from '~/shared/types'
 
-const updateSchema = z.object({
-  defaultCitationStyle: z.string().optional(),
-  defaultExportFormat: z.string().optional(),
-  theme: z.enum(['light', 'dark', 'system']).optional(),
-  emailNotifications: z.boolean().optional(),
-}).strict()
+const updateSchema = z
+  .object({
+    defaultCitationStyle: z.string().optional(),
+    defaultExportFormat: z.string().optional(),
+    theme: z.enum(['light', 'dark', 'system']).optional(),
+    emailNotifications: z.boolean().optional(),
+  })
+  .strict()
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

@@ -1,11 +1,22 @@
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
-import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION, SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from '@opentelemetry/semantic-conventions'
+import {
+  SEMRESATTRS_SERVICE_NAME,
+  SEMRESATTRS_SERVICE_VERSION,
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
+} from '@opentelemetry/semantic-conventions'
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter'
 import { MetricExporter } from '@google-cloud/opentelemetry-cloud-monitoring-exporter'
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { diag, DiagConsoleLogger, DiagLogLevel, trace, metrics, SpanStatusCode } from '@opentelemetry/api'
+import {
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  trace,
+  metrics,
+  SpanStatusCode,
+} from '@opentelemetry/api'
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isGCP = !!process.env.GOOGLE_CLOUD_PROJECT
@@ -58,7 +69,8 @@ export async function initTelemetry() {
   sdk.start()
 
   process.on('SIGTERM', () => {
-    sdk?.shutdown()
+    sdk
+      ?.shutdown()
       .then(() => console.log('Telemetry shut down'))
       .catch((error) => console.error('Error shutting down telemetry', error))
       .finally(() => process.exit(0))
@@ -147,13 +159,25 @@ function getMetrics() {
   return _metrics
 }
 
-export const httpRequestDuration = { record: (...args: any[]) => getMetrics().httpRequestDuration.record(...args) }
-export const httpRequestTotal = { add: (...args: any[]) => getMetrics().httpRequestTotal.add(...args) }
-export const dbQueryDuration = { record: (...args: any[]) => getMetrics().dbQueryDuration.record(...args) }
-export const aiApiDuration = { record: (...args: any[]) => getMetrics().aiApiDuration.record(...args) }
+export const httpRequestDuration = {
+  record: (...args: any[]) => getMetrics().httpRequestDuration.record(...args),
+}
+export const httpRequestTotal = {
+  add: (...args: any[]) => getMetrics().httpRequestTotal.add(...args),
+}
+export const dbQueryDuration = {
+  record: (...args: any[]) => getMetrics().dbQueryDuration.record(...args),
+}
+export const aiApiDuration = {
+  record: (...args: any[]) => getMetrics().aiApiDuration.record(...args),
+}
 export const activeUsers = { add: (...args: any[]) => getMetrics().activeUsers.add(...args) }
-export const entryCount = { addCallback: (...args: any[]) => getMetrics().entryCount.addCallback(...args) }
-export const projectCount = { addCallback: (...args: any[]) => getMetrics().projectCount.addCallback(...args) }
+export const entryCount = {
+  addCallback: (...args: any[]) => getMetrics().entryCount.addCallback(...args),
+}
+export const projectCount = {
+  addCallback: (...args: any[]) => getMetrics().projectCount.addCallback(...args),
+}
 
 export function recordHttpRequest(
   method: string,

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
       .from(entryProjects)
       .where(eq(entryProjects.projectId, projectId))
 
-    const projectEntryIds = projectEntryRows.map(r => r.entryId)
+    const projectEntryIds = projectEntryRows.map((r) => r.entryId)
     if (projectEntryIds.length === 0) {
       userEntries = []
     } else {
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (entryIds && entryIds.length > 0) {
-    userEntries = userEntries.filter(e => entryIds.includes(e.id))
+    userEntries = userEntries.filter((e) => entryIds.includes(e.id))
   }
 
   const bibtex = generateBibtex(userEntries as Entry[])

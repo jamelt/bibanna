@@ -94,7 +94,10 @@ const typeColors: Record<string, string> = {
         icon="i-heroicons-plus"
         label="New Announcement"
         color="primary"
-        @click="resetForm(); isCreateOpen = true"
+        @click="
+          resetForm()
+          isCreateOpen = true
+        "
       />
     </div>
 
@@ -103,18 +106,20 @@ const typeColors: Record<string, string> = {
     </div>
 
     <div v-else class="space-y-3">
-      <UCard
-        v-for="a in announcementsData"
-        :key="a.id"
-      >
+      <UCard v-for="a in announcementsData" :key="a.id">
         <div class="flex items-start gap-4">
           <div class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
-            <UIcon :name="typeIcons[a.type] || 'i-heroicons-information-circle'" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <UIcon
+              :name="typeIcons[a.type] || 'i-heroicons-information-circle'"
+              class="w-5 h-5 text-gray-500 dark:text-gray-400"
+            />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
               <h3 class="font-medium text-gray-900 dark:text-white">{{ a.title }}</h3>
-              <UBadge :color="(typeColors[a.type] as any)" variant="subtle" size="sm">{{ a.type }}</UBadge>
+              <UBadge :color="typeColors[a.type] as any" variant="subtle" size="sm">{{
+                a.type
+              }}</UBadge>
               <UBadge :color="a.isActive ? 'success' : 'neutral'" variant="subtle" size="sm">
                 {{ a.isActive ? 'Active' : 'Inactive' }}
               </UBadge>
@@ -170,7 +175,12 @@ const typeColors: Record<string, string> = {
           </div>
           <div class="flex gap-2 justify-end">
             <UButton label="Cancel" variant="ghost" color="neutral" @click="isCreateOpen = false" />
-            <UButton label="Publish" color="primary" :disabled="!form.title || !form.content" @click="createAnnouncement" />
+            <UButton
+              label="Publish"
+              color="primary"
+              :disabled="!form.title || !form.content"
+              @click="createAnnouncement"
+            />
           </div>
         </div>
       </template>
@@ -197,7 +207,12 @@ const typeColors: Record<string, string> = {
           </div>
           <div class="flex gap-2 justify-end">
             <UButton label="Cancel" variant="ghost" color="neutral" @click="isEditOpen = false" />
-            <UButton label="Save Changes" color="primary" :disabled="!form.title || !form.content" @click="updateAnnouncement" />
+            <UButton
+              label="Save Changes"
+              color="primary"
+              :disabled="!form.title || !form.content"
+              @click="updateAnnouncement"
+            />
           </div>
         </div>
       </template>

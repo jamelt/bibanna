@@ -69,8 +69,7 @@ Return only valid JSON. If you cannot extract any information, return {"confiden
       confidence: Math.min(confidence, 100),
       rawText: transcript,
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Voice command parsing error:', error)
     return { confidence: 0, rawText: transcript }
   }

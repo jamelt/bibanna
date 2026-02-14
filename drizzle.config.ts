@@ -5,6 +5,7 @@ export default defineConfig({
   out: './server/database/migrations',
   driver: 'pg',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib',
+    connectionString:
+      process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib',
   },
 })

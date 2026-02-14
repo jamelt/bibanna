@@ -17,12 +17,12 @@ export function useNativeShare() {
 
   async function share(data: ShareData): Promise<boolean> {
     error.value = null
-    
+
     if (!isSupported.value) {
       error.value = 'Web Share API not supported'
       return false
     }
-    
+
     try {
       if (data.files && canShareFiles.value) {
         const canShare = navigator.canShare({ files: data.files })
@@ -30,14 +30,14 @@ export function useNativeShare() {
           delete data.files
         }
       }
-      
+
       await navigator.share(data)
       return true
     } catch (err: any) {
       if (err.name === 'AbortError') {
         return false
       }
-      
+
       error.value = err.message || 'Share failed'
       return false
     }
@@ -49,16 +49,16 @@ export function useNativeShare() {
     url?: string
     year?: number
   }): Promise<boolean> {
-    const authorText = entry.authors
-      ?.map(a => `${a.firstName} ${a.lastName}`)
-      .join(', ')
-    
+    const authorText = entry.authors?.map((a) => `${a.firstName} ${a.lastName}`).join(', ')
+
     const text = [
       entry.title,
       authorText ? `by ${authorText}` : null,
       entry.year ? `(${entry.year})` : null,
-    ].filter(Boolean).join(' ')
-    
+    ]
+      .filter(Boolean)
+      .join(' ')
+
     return share({
       title: entry.title,
       text,
@@ -72,20 +72,18 @@ export function useNativeShare() {
     format: 'text' | 'file' = 'text',
   ): Promise<boolean> {
     const content = citations.join('\n\n')
-    
+
     if (format === 'file' && canShareFiles.value) {
-      const file = new File(
-        [content],
-        `${title.replace(/[^a-z0-9]/gi, '_')}_bibliography.txt`,
-        { type: 'text/plain' },
-      )
-      
+      const file = new File([content], `${title.replace(/[^a-z0-9]/gi, '_')}_bibliography.txt`, {
+        type: 'text/plain',
+      })
+
       return share({
         title: `${title} - Bibliography`,
         files: [file],
       })
     }
-    
+
     return share({
       title: `${title} - Bibliography`,
       text: content,
@@ -93,7 +91,8 @@ export function useNativeShare() {
   }
 
   function copyToClipboard(text: string): Promise<boolean> {
-    return navigator.clipboard.writeText(text)
+    return navigator.clipboard
+      .writeText(text)
       .then(() => true)
       .catch(() => false)
   }

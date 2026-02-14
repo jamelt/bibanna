@@ -42,12 +42,23 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [updated] = await db.update(feedback).set(updates).where(eq(feedback.id, feedbackId)).returning()
+  const [updated] = await db
+    .update(feedback)
+    .set(updates)
+    .where(eq(feedback.id, feedbackId))
+    .returning()
 
-  await logAdminAction(admin.id, 'feedback.update', 'feedback', feedbackId, {
-    previousStatus: existing.status,
-    newStatus: parsed.status,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'feedback.update',
+    'feedback',
+    feedbackId,
+    {
+      previousStatus: existing.status,
+      newStatus: parsed.status,
+    },
+    ip,
+  )
 
   return updated
 })

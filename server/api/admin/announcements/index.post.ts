@@ -19,19 +19,29 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [created] = await db.insert(announcements).values({
-    createdById: admin.id,
-    title: parsed.title,
-    content: parsed.content,
-    type: parsed.type,
-    startAt: parsed.startAt ? new Date(parsed.startAt) : new Date(),
-    endAt: parsed.endAt ? new Date(parsed.endAt) : undefined,
-  }).returning()
+  const [created] = await db
+    .insert(announcements)
+    .values({
+      createdById: admin.id,
+      title: parsed.title,
+      content: parsed.content,
+      type: parsed.type,
+      startAt: parsed.startAt ? new Date(parsed.startAt) : new Date(),
+      endAt: parsed.endAt ? new Date(parsed.endAt) : undefined,
+    })
+    .returning()
 
-  await logAdminAction(admin.id, 'announcement.create', 'announcement', created?.id, {
-    title: parsed.title,
-    type: parsed.type,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'announcement.create',
+    'announcement',
+    created?.id,
+    {
+      title: parsed.title,
+      type: parsed.type,
+    },
+    ip,
+  )
 
   return created
 })

@@ -20,20 +20,20 @@ const showArchived = ref(false)
 const isDeleting = ref(false)
 const viewMode = useViewPreferences<'grid' | 'table'>('projects', 'grid')
 
-const { data: projects, pending, refresh } = await useFetch<Project[]>('/api/projects', {
+const {
+  data: projects,
+  pending,
+  refresh,
+} = await useFetch<Project[]>('/api/projects', {
   query: computed(() => ({
     includeArchived: showArchived.value ? 'true' : undefined,
   })),
   watch: [showArchived],
 })
 
-const activeProjects = computed(() =>
-  (projects.value || []).filter(p => !p.isArchived),
-)
+const activeProjects = computed(() => (projects.value || []).filter((p) => !p.isArchived))
 
-const archivedProjects = computed(() =>
-  (projects.value || []).filter(p => p.isArchived),
-)
+const archivedProjects = computed(() => (projects.value || []).filter((p) => p.isArchived))
 
 async function handleProjectCreated() {
   await refresh()
@@ -71,8 +71,7 @@ async function toggleArchive(project: Project) {
       color: 'success',
     })
     await refresh()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     toast.add({
       title: 'Failed to update project',
       description: e.data?.message || 'An error occurred',
@@ -96,15 +95,13 @@ async function deleteProject() {
     isDeleteModalOpen.value = false
     selectedProject.value = undefined
     await refresh()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     toast.add({
       title: 'Failed to delete project',
       description: e.data?.message || 'An error occurred',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isDeleting.value = false
   }
 }
@@ -117,8 +114,7 @@ async function handleToggleStar(project: Project) {
       title: result.isStarred ? 'Project starred' : 'Project unstarred',
       color: 'success',
     })
-  }
-  catch {
+  } catch {
     toast.add({
       title: 'Failed to update project',
       color: 'error',
@@ -135,8 +131,16 @@ function getDropdownItems(project: Project) {
         onSelect: () => handleToggleStar(project),
       },
       { label: 'Edit', icon: 'i-heroicons-pencil', onSelect: () => openEditModal(project) },
-      { label: 'Share', icon: 'i-heroicons-share', onSelect: () => router.push(`/app/projects/${projectSlugOrId(project)}?share=true`) },
-      { label: 'Export', icon: 'i-heroicons-arrow-down-tray', onSelect: () => router.push(`/app/projects/${projectSlugOrId(project)}?export=true`) },
+      {
+        label: 'Share',
+        icon: 'i-heroicons-share',
+        onSelect: () => router.push(`/app/projects/${projectSlugOrId(project)}?share=true`),
+      },
+      {
+        label: 'Export',
+        icon: 'i-heroicons-arrow-down-tray',
+        onSelect: () => router.push(`/app/projects/${projectSlugOrId(project)}?export=true`),
+      },
     ],
     [
       {
@@ -144,7 +148,12 @@ function getDropdownItems(project: Project) {
         icon: project.isArchived ? 'i-heroicons-arrow-uturn-up' : 'i-heroicons-archive-box',
         onSelect: () => toggleArchive(project),
       },
-      { label: 'Delete', icon: 'i-heroicons-trash', color: 'error' as const, onSelect: () => openDeleteModal(project) },
+      {
+        label: 'Delete',
+        icon: 'i-heroicons-trash',
+        color: 'error' as const,
+        onSelect: () => openDeleteModal(project),
+      },
     ],
   ]
 }
@@ -167,16 +176,20 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     header: '',
     cell: ({ row }) => {
       const project = row.original
-      return h('div', {
-        class: 'w-8 h-8 rounded-lg flex items-center justify-center',
-        style: { backgroundColor: (project.color || '#4F46E5') + '20' },
-      }, [
-        h(UIcon, {
-          name: project.isArchived ? 'i-heroicons-archive-box' : 'i-heroicons-folder',
-          class: 'w-4 h-4',
-          style: { color: project.isArchived ? '#9ca3af' : (project.color || '#4F46E5') },
-        }),
-      ])
+      return h(
+        'div',
+        {
+          class: 'w-8 h-8 rounded-lg flex items-center justify-center',
+          style: { backgroundColor: (project.color || '#4F46E5') + '20' },
+        },
+        [
+          h(UIcon, {
+            name: project.isArchived ? 'i-heroicons-archive-box' : 'i-heroicons-folder',
+            class: 'w-4 h-4',
+            style: { color: project.isArchived ? '#9ca3af' : project.color || '#4F46E5' },
+          }),
+        ],
+      )
     },
     meta: { class: { th: 'w-12', td: 'w-12' } },
   },
@@ -186,15 +199,24 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     cell: ({ row }) => {
       const project = row.original
       return h('div', { class: 'min-w-0' }, [
-        h('p', {
-          class: 'font-medium text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600 dark:hover:text-primary-400',
-          onClick: (e: Event) => {
-            e.stopPropagation()
-            router.push(`/app/projects/${projectSlugOrId(project)}`)
+        h(
+          'p',
+          {
+            class:
+              'font-medium text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary-600 dark:hover:text-primary-400',
+            onClick: (e: Event) => {
+              e.stopPropagation()
+              router.push(`/app/projects/${projectSlugOrId(project)}`)
+            },
           },
-        }, project.name),
+          project.name,
+        ),
         project.description
-          ? h('p', { class: 'text-xs text-gray-500 dark:text-gray-400 truncate max-w-sm mt-0.5' }, project.description)
+          ? h(
+              'p',
+              { class: 'text-xs text-gray-500 dark:text-gray-400 truncate max-w-sm mt-0.5' },
+              project.description,
+            )
           : null,
       ])
     },
@@ -222,9 +244,13 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     id: 'entryCount',
     header: 'Entries',
     cell: ({ row }) => {
-      return h('span', {
-        class: 'text-sm text-gray-600 dark:text-gray-400 tabular-nums',
-      }, String(row.original.entryCount ?? 0))
+      return h(
+        'span',
+        {
+          class: 'text-sm text-gray-600 dark:text-gray-400 tabular-nums',
+        },
+        String(row.original.entryCount ?? 0),
+      )
     },
     meta: { class: { th: 'w-20', td: 'w-20' } },
   },
@@ -232,27 +258,34 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     id: 'createdAt',
     header: 'Created',
     cell: ({ row }) => {
-      return h('span', {
-        class: 'text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap',
-      }, formatProjectDate(row.original.createdAt))
+      return h(
+        'span',
+        {
+          class: 'text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap',
+        },
+        formatProjectDate(row.original.createdAt),
+      )
     },
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => {
-      return h(UDropdownMenu, {
-        content: { align: 'end' },
-        items: getDropdownItems(row.original),
-        'aria-label': 'Project actions',
-      }, () =>
-        h(UButton, {
-          icon: 'i-heroicons-ellipsis-vertical',
-          color: 'neutral',
-          variant: 'ghost',
-          size: 'xs',
-          onClick: (e: Event) => e.stopPropagation(),
-        }),
+      return h(
+        UDropdownMenu,
+        {
+          content: { align: 'end' },
+          items: getDropdownItems(row.original),
+          'aria-label': 'Project actions',
+        },
+        () =>
+          h(UButton, {
+            icon: 'i-heroicons-ellipsis-vertical',
+            color: 'neutral',
+            variant: 'ghost',
+            size: 'xs',
+            onClick: (e: Event) => e.stopPropagation(),
+          }),
       )
     },
     meta: { class: { th: 'w-10', td: 'w-10 text-right' } },
@@ -265,9 +298,7 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Projects
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
         <p class="text-gray-500 dark:text-gray-400">
           Organize your research into focused collections
         </p>
@@ -309,9 +340,7 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     <!-- Empty state -->
     <UCard v-else-if="!projects?.length" class="text-center py-12">
       <UIcon name="i-heroicons-folder" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        No projects yet
-      </h3>
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No projects yet</h3>
       <p class="mt-2 text-gray-500 dark:text-gray-400">
         Create your first project to start organizing your research
       </p>
@@ -340,9 +369,7 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
         }"
       >
         <template #empty>
-          <div class="text-center py-6 text-sm text-gray-500">
-            No active projects
-          </div>
+          <div class="text-center py-6 text-sm text-gray-500">No active projects</div>
         </template>
       </UTable>
 
@@ -386,11 +413,7 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
               class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               :style="{ backgroundColor: project.color + '20' }"
             >
-              <UIcon
-                name="i-heroicons-folder"
-                class="w-5 h-5"
-                :style="{ color: project.color }"
-              />
+              <UIcon name="i-heroicons-folder" class="w-5 h-5" :style="{ color: project.color }" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
@@ -403,7 +426,10 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
                   class="w-4 h-4 text-amber-400 shrink-0"
                 />
               </div>
-              <p v-if="project.description" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+              <p
+                v-if="project.description"
+                class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1"
+              >
                 {{ project.description }}
               </p>
               <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">
@@ -447,16 +473,16 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
             @click="router.push(`/app/projects/${projectSlugOrId(project)}`)"
           >
             <div class="flex items-start gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+              <div
+                class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0"
+              >
                 <UIcon name="i-heroicons-archive-box" class="w-5 h-5 text-gray-400" />
               </div>
               <div class="flex-1 min-w-0">
                 <h3 class="font-medium text-gray-900 dark:text-white truncate">
                   {{ project.name }}
                 </h3>
-                <p class="text-sm text-gray-400 mt-1">
-                  {{ project.entryCount }} entries
-                </p>
+                <p class="text-sm text-gray-400 mt-1">{{ project.entryCount }} entries</p>
               </div>
               <UDropdownMenu
                 :items="getDropdownItems(project)"
@@ -478,10 +504,7 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
     </template>
 
     <!-- Create Project Modal -->
-    <LazyAppProjectFormModal
-      v-model:open="isCreateModalOpen"
-      @created="handleProjectCreated"
-    />
+    <LazyAppProjectFormModal v-model:open="isCreateModalOpen" @created="handleProjectCreated" />
 
     <!-- Edit Project Modal -->
     <LazyAppProjectFormModal
@@ -496,34 +519,31 @@ const projectColumns = computed<TableColumn<Project>[]>(() => [
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div
+                class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
+              >
+                <UIcon
+                  name="i-heroicons-exclamation-triangle"
+                  class="w-5 h-5 text-red-600 dark:text-red-400"
+                />
               </div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Delete Project
-              </h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Project</h2>
             </div>
           </template>
 
           <p class="text-gray-600 dark:text-gray-400">
-            Are you sure you want to delete <strong class="text-gray-900 dark:text-white">{{ selectedProject?.name }}</strong>?
-            This action cannot be undone. All entries will remain in your library but will be removed from this project.
+            Are you sure you want to delete
+            <strong class="text-gray-900 dark:text-white">{{ selectedProject?.name }}</strong
+            >? This action cannot be undone. All entries will remain in your library but will be
+            removed from this project.
           </p>
 
           <template #footer>
             <div class="flex justify-end gap-3">
-              <UButton
-                variant="outline"
-                color="neutral"
-                @click="isDeleteModalOpen = false"
-              >
+              <UButton variant="outline" color="neutral" @click="isDeleteModalOpen = false">
                 Cancel
               </UButton>
-              <UButton
-                color="error"
-                :loading="isDeleting"
-                @click="deleteProject"
-              >
+              <UButton color="error" :loading="isDeleting" @click="deleteProject">
                 Delete Project
               </UButton>
             </div>

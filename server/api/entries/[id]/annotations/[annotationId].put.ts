@@ -26,10 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {
@@ -40,10 +37,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existing = await db.query.annotations.findFirst({
-    where: and(
-      eq(annotations.id, annotationId),
-      eq(annotations.entryId, entryId),
-    ),
+    where: and(eq(annotations.id, annotationId), eq(annotations.entryId, entryId)),
   })
 
   if (!existing) {

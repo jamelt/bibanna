@@ -15,7 +15,7 @@ export interface AICredibilityAssessment {
 
 export async function assessCredibilityWithAI(entry: Entry): Promise<AICredibilityAssessment> {
   const entryContext = buildEntryContext(entry)
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -68,14 +68,14 @@ Be conservative - if you can't determine something, score it at 50 with low weig
 
   try {
     const parsed = JSON.parse(content) as AICredibilityAssessment
-    
-    parsed.factors = parsed.factors.map(f => ({
+
+    parsed.factors = parsed.factors.map((f) => ({
       ...f,
       source: 'AI Assessment',
     }))
-    
+
     parsed.confidence = Math.min(parsed.confidence, 0.7)
-    
+
     return parsed
   } catch {
     return getDefaultAssessment()
@@ -88,7 +88,7 @@ export async function assessWebsiteCredibility(
   content?: string,
 ): Promise<AICredibilityAssessment> {
   const domain = new URL(url).hostname
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -110,7 +110,7 @@ ${content ? `Content preview: ${content.substring(0, 500)}...` : ''}`,
   })
 
   const parsed = JSON.parse(completion.choices[0]?.message?.content || '{}')
-  
+
   return {
     overallScore: parsed.overallScore || 50,
     confidence: Math.min(parsed.confidence || 0.5, 0.6),
@@ -129,7 +129,7 @@ export async function detectMisinformationRisk(entry: Entry): Promise<{
   recommendation: string
 }> {
   const entryContext = buildEntryContext(entry)
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -176,8 +176,8 @@ function buildEntryContext(entry: Entry): string {
   const parts = [
     `Title: ${entry.title}`,
     `Type: ${entry.entryType}`,
-    entry.authors?.length 
-      ? `Authors: ${entry.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ')}`
+    entry.authors?.length
+      ? `Authors: ${entry.authors.map((a) => `${a.firstName} ${a.lastName}`).join(', ')}`
       : 'Authors: Not specified',
     entry.year ? `Year: ${entry.year}` : 'Year: Not specified',
     entry.metadata?.abstract ? `Abstract: ${entry.metadata.abstract}` : null,

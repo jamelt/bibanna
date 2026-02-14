@@ -18,7 +18,7 @@ export interface AutoContext {
 
 export async function generateAutoContext(entry: Entry): Promise<AutoContext> {
   const entryContext = buildEntryContext(entry)
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -91,8 +91,8 @@ export async function suggestRelatedSources(
   entry: Entry,
   existingEntries: Entry[],
 ): Promise<string[]> {
-  const entryTitles = existingEntries.map(e => e.title).join('\n- ')
-  
+  const entryTitles = existingEntries.map((e) => e.title).join('\n- ')
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -102,7 +102,7 @@ export async function suggestRelatedSources(
       },
       {
         role: 'user',
-        content: `Current source: "${entry.title}" by ${entry.authors?.map(a => `${a.firstName} ${a.lastName}`).join(', ') || 'Unknown'}
+        content: `Current source: "${entry.title}" by ${entry.authors?.map((a) => `${a.firstName} ${a.lastName}`).join(', ') || 'Unknown'}
 
 Existing sources in library:
 - ${entryTitles || 'None'}
@@ -128,8 +128,8 @@ function buildEntryContext(entry: Entry): string {
   const parts = [
     `Title: ${entry.title}`,
     `Type: ${entry.entryType}`,
-    entry.authors?.length 
-      ? `Authors: ${entry.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ')}`
+    entry.authors?.length
+      ? `Authors: ${entry.authors.map((a) => `${a.firstName} ${a.lastName}`).join(', ')}`
       : null,
     entry.year ? `Year: ${entry.year}` : null,
     entry.metadata?.abstract ? `Abstract: ${entry.metadata.abstract}` : null,

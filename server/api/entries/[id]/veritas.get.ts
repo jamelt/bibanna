@@ -19,10 +19,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {
@@ -36,10 +33,7 @@ export default defineEventHandler(async (event) => {
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
 
   const cachedScore = await db.query.veritasScores.findFirst({
-    where: and(
-      eq(veritasScores.entryId, entryId),
-      gt(veritasScores.expiresAt, new Date()),
-    ),
+    where: and(eq(veritasScores.entryId, entryId), gt(veritasScores.expiresAt, new Date())),
   })
 
   if (cachedScore) {

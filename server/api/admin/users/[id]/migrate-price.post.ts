@@ -62,19 +62,29 @@ export default defineEventHandler(async (event) => {
     proration_behavior: 'create_prorations',
   })
 
-  await db.update(subscriptions).set({
-    stripePriceId: newPriceId,
-    billingInterval: parsed.interval,
-    updatedAt: new Date(),
-  }).where(eq(subscriptions.id, subscription.id))
+  await db
+    .update(subscriptions)
+    .set({
+      stripePriceId: newPriceId,
+      billingInterval: parsed.interval,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.id, subscription.id))
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
-  await logAdminAction(admin.id, 'user.migrate_price', 'user', userId, {
-    oldPriceId,
-    newPriceId,
-    oldAmount,
-    interval: parsed.interval,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.migrate_price',
+    'user',
+    userId,
+    {
+      oldPriceId,
+      newPriceId,
+      oldAmount,
+      interval: parsed.interval,
+    },
+    ip,
+  )
 
   return { success: true, newPriceId, interval: parsed.interval }
 })

@@ -42,11 +42,22 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [updated] = await db.update(announcements).set(updates).where(eq(announcements.id, announcementId)).returning()
+  const [updated] = await db
+    .update(announcements)
+    .set(updates)
+    .where(eq(announcements.id, announcementId))
+    .returning()
 
-  await logAdminAction(admin.id, 'announcement.update', 'announcement', announcementId, {
-    changes: parsed,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'announcement.update',
+    'announcement',
+    announcementId,
+    {
+      changes: parsed,
+    },
+    ip,
+  )
 
   return updated
 })

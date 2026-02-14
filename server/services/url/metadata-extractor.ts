@@ -27,7 +27,7 @@ export async function extractMetadataFromUrl(url: string): Promise<ExtractedMeta
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'AnnoBib/1.0 (Academic Bibliography Tool)',
-        'Accept': 'text/html,application/xhtml+xml',
+        Accept: 'text/html,application/xhtml+xml',
       },
       signal: AbortSignal.timeout(10000),
     })
@@ -64,8 +64,7 @@ export async function extractMetadataFromUrl(url: string): Promise<ExtractedMeta
     metadata.confidence = calculateConfidence(metadata)
 
     return metadata
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('URL extraction failed:', error.message)
     return {
       url,
@@ -124,8 +123,8 @@ function extractSchemaOrg(root: any, html: string): Partial<ExtractedMetadata> |
           metadata.siteName = metadata.siteName || item.name
         }
       }
-    }
-    catch (e) {
+    } catch {
+      /* ignored */
     }
   }
 
@@ -139,8 +138,7 @@ function parseSchemaAuthors(author: any): Author[] {
   for (const a of authorList) {
     if (typeof a === 'string') {
       authors.push(parseAuthorName(a))
-    }
-    else if (a.name) {
+    } else if (a.name) {
       authors.push(parseAuthorName(a.name))
     }
   }
@@ -165,8 +163,9 @@ function extractOpenGraph(root: any): Partial<ExtractedMetadata> {
   const metadata: Partial<ExtractedMetadata> = {}
 
   const getMeta = (property: string): string | undefined => {
-    const el = root.querySelector(`meta[property="${property}"]`)
-      || root.querySelector(`meta[name="${property}"]`)
+    const el =
+      root.querySelector(`meta[property="${property}"]`) ||
+      root.querySelector(`meta[name="${property}"]`)
     return el?.getAttribute('content')
   }
 
@@ -193,8 +192,8 @@ function extractTwitterCards(root: any): Partial<ExtractedMetadata> {
   const metadata: Partial<ExtractedMetadata> = {}
 
   const getMeta = (name: string): string | undefined => {
-    const el = root.querySelector(`meta[name="${name}"]`)
-      || root.querySelector(`meta[property="${name}"]`)
+    const el =
+      root.querySelector(`meta[name="${name}"]`) || root.querySelector(`meta[property="${name}"]`)
     return el?.getAttribute('content')
   }
 
@@ -215,7 +214,8 @@ function extractHtmlMeta(root: any): Partial<ExtractedMetadata> {
 
   metadata.title = metadata.title || root.querySelector('title')?.textContent?.trim()
   metadata.description = metadata.description || getMeta('description')
-  metadata.authors = metadata.authors || (getMeta('author') ? [parseAuthorName(getMeta('author')!)] : undefined)
+  metadata.authors =
+    metadata.authors || (getMeta('author') ? [parseAuthorName(getMeta('author')!)] : undefined)
   metadata.publishedDate = metadata.publishedDate || getMeta('date')
   metadata.doi = getMeta('citation_doi') || getMeta('dc.identifier')
 
@@ -247,7 +247,11 @@ function extractHtmlMeta(root: any): Partial<ExtractedMetadata> {
   return metadata
 }
 
-function extractSiteSpecific(url: string, root: any, html: string): Partial<ExtractedMetadata> | null {
+function extractSiteSpecific(
+  url: string,
+  root: any,
+  html: string,
+): Partial<ExtractedMetadata> | null {
   const hostname = new URL(url).hostname.toLowerCase()
 
   if (hostname.includes('arxiv.org')) {
@@ -262,8 +266,12 @@ function extractSiteSpecific(url: string, root: any, html: string): Partial<Extr
     return extractYouTube(root)
   }
 
-  if (hostname.includes('nytimes.com') || hostname.includes('washingtonpost.com')
-    || hostname.includes('theguardian.com') || hostname.includes('bbc.')) {
+  if (
+    hostname.includes('nytimes.com') ||
+    hostname.includes('washingtonpost.com') ||
+    hostname.includes('theguardian.com') ||
+    hostname.includes('bbc.')
+  ) {
     return { entryType: 'newspaper_article' }
   }
 
@@ -304,27 +312,39 @@ function inferEntryType(url: string, metadata: Partial<ExtractedMetadata>): Entr
   if (hostname.includes('podcast') || hostname.includes('spotify.com/episode')) return 'podcast'
   if (hostname.includes('arxiv.org') || hostname.includes('ssrn.com')) return 'report'
 
-  if (hostname.includes('nytimes.com') || hostname.includes('washingtonpost.com')
-    || hostname.includes('bbc.') || hostname.includes('cnn.com')
-    || hostname.includes('reuters.com') || hostname.includes('apnews.com')) {
+  if (
+    hostname.includes('nytimes.com') ||
+    hostname.includes('washingtonpost.com') ||
+    hostname.includes('bbc.') ||
+    hostname.includes('cnn.com') ||
+    hostname.includes('reuters.com') ||
+    hostname.includes('apnews.com')
+  ) {
     return 'newspaper_article'
   }
 
-  if (hostname.includes('medium.com') || hostname.includes('forbes.com')
-    || hostname.includes('wired.com') || hostname.includes('techcrunch.com')) {
+  if (
+    hostname.includes('medium.com') ||
+    hostname.includes('forbes.com') ||
+    hostname.includes('wired.com') ||
+    hostname.includes('techcrunch.com')
+  ) {
     return 'magazine_article'
   }
 
   return 'website'
 }
 
-function mergeMetadata(base: ExtractedMetadata, additional: Partial<ExtractedMetadata>): ExtractedMetadata {
+function mergeMetadata(
+  base: ExtractedMetadata,
+  additional: Partial<ExtractedMetadata>,
+): ExtractedMetadata {
   const result = { ...base }
 
   for (const [key, value] of Object.entries(additional)) {
     if (value !== undefined && value !== null && value !== '') {
       if (!(result as any)[key]) {
-        (result as any)[key] = value
+        ;(result as any)[key] = value
       }
     }
   }

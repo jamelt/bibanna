@@ -12,11 +12,15 @@ const confirmPassword = ref('')
 const isLoading = ref(false)
 const error = ref('')
 
-watch(loggedIn, async (value) => {
-  if (value) {
-    await navigateTo('/app', { external: true })
-  }
-}, { immediate: true })
+watch(
+  loggedIn,
+  async (value) => {
+    if (value) {
+      await navigateTo('/app', { external: true })
+    }
+  },
+  { immediate: true },
+)
 
 async function handleSignup() {
   error.value = ''
@@ -44,11 +48,9 @@ async function handleSignup() {
     })
     await fetchSession()
     await navigateTo('/app', { external: true })
-  }
-  catch (e: any) {
+  } catch (e: any) {
     error.value = e.data?.message || 'Failed to create account'
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }
@@ -66,14 +68,10 @@ async function handleOAuthLogin(provider: string) {
           <UIcon name="i-heroicons-book-open" class="w-10 h-10 text-primary-500" />
           <span class="text-2xl font-bold text-gray-900 dark:text-white">AnnoBib</span>
         </NuxtLink>
-        <h1 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
-          Create your account
-        </h1>
+        <h1 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">Create your account</h1>
         <p class="mt-2 text-gray-600 dark:text-gray-400">
           Already have an account?
-          <NuxtLink to="/login" class="text-primary-500 hover:text-primary-600">
-            Sign in
-          </NuxtLink>
+          <NuxtLink to="/login" class="text-primary-500 hover:text-primary-600"> Sign in </NuxtLink>
         </p>
       </div>
 
@@ -87,13 +85,7 @@ async function handleOAuthLogin(provider: string) {
           />
 
           <UFormField label="Name">
-            <UInput
-              v-model="name"
-              placeholder="Your name"
-              required
-              autofocus
-              class="w-full"
-            />
+            <UInput v-model="name" placeholder="Your name" required autofocus class="w-full" />
           </UFormField>
 
           <UFormField label="Email">
@@ -126,12 +118,7 @@ async function handleOAuthLogin(provider: string) {
             />
           </UFormField>
 
-          <UButton
-            type="submit"
-            color="primary"
-            block
-            :loading="isLoading"
-          >
+          <UButton type="submit" color="primary" block :loading="isLoading">
             Create Account
           </UButton>
         </form>
@@ -181,7 +168,8 @@ async function handleOAuthLogin(provider: string) {
           By creating an account, you agree to our
           <NuxtLink to="/terms" class="text-primary-500 hover:underline">Terms of Service</NuxtLink>
           and
-          <NuxtLink to="/privacy" class="text-primary-500 hover:underline">Privacy Policy</NuxtLink>.
+          <NuxtLink to="/privacy" class="text-primary-500 hover:underline">Privacy Policy</NuxtLink
+          >.
         </p>
       </UCard>
     </div>

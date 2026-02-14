@@ -1,119 +1,106 @@
 <script setup lang="ts">
-import { useMediaQuery } from "@vueuse/core";
-import type { ExcelColumnConfig, ExcelExportOptions } from "~/shared/types";
-import type { SubscriptionTier } from "~/shared/subscriptions";
+import { useMediaQuery } from '@vueuse/core'
+import type { ExcelColumnConfig, ExcelExportOptions } from '~/shared/types'
+import type { SubscriptionTier } from '~/shared/subscriptions'
 
-const isMobile = useMediaQuery("(max-width: 640px)");
+const isMobile = useMediaQuery('(max-width: 640px)')
 
 const props = defineProps<{
-  open: boolean;
-  entryIds?: string[];
-  projectId?: string;
-}>();
+  open: boolean
+  entryIds?: string[]
+  projectId?: string
+}>()
 
 const emit = defineEmits<{
-  "update:open": [value: boolean];
-}>();
+  'update:open': [value: boolean]
+}>()
 
 const isOpen = computed({
   get: () => props.open,
-  set: (value) => emit("update:open", value),
-});
+  set: (value) => emit('update:open', value),
+})
 
-const exportFormat = ref<"excel" | "pdf" | "docx" | "bibtex">("excel");
-const isExporting = ref(false);
-const error = ref("");
+const exportFormat = ref<'excel' | 'pdf' | 'docx' | 'bibtex'>('excel')
+const isExporting = ref(false)
+const error = ref('')
 
-const { data: presetsData, status: presetsStatus } = useFetch(
-  "/api/export/presets",
-);
-const { data: subscriptionData } = useFetch("/api/subscription");
-const { data: citationStylesData } = useFetch("/api/citation/styles", {
+const { data: presetsData, status: presetsStatus } = useFetch('/api/export/presets')
+const { data: subscriptionData } = useFetch('/api/subscription')
+const { data: citationStylesData } = useFetch('/api/citation/styles', {
   lazy: true,
-});
-const { defaultCitationStyle } = useUserPreferences();
+})
+const { defaultCitationStyle } = useUserPreferences()
 
-const selectedCitationStyleId = ref(defaultCitationStyle.value);
+const selectedCitationStyleId = ref(defaultCitationStyle.value)
 
 watch(defaultCitationStyle, (val) => {
-  if (
-    !selectedCitationStyleId.value ||
-    selectedCitationStyleId.value === "apa-7th"
-  ) {
-    selectedCitationStyleId.value = val;
+  if (!selectedCitationStyleId.value || selectedCitationStyleId.value === 'apa-7th') {
+    selectedCitationStyleId.value = val
   }
-});
+})
 
 const citationStyleOptions = computed(() => {
-  if (!citationStylesData.value) return [];
+  if (!citationStylesData.value) return []
   return citationStylesData.value.defaultStyles.map((s: any) => ({
     value: s.id,
     label: s.shortName || s.name,
-  }));
-});
+  }))
+})
 
-const userTier = computed<SubscriptionTier>(
-  () => subscriptionData.value?.tier ?? "free",
-);
-const isPaidUser = computed(() => userTier.value !== "free");
+const userTier = computed<SubscriptionTier>(() => subscriptionData.value?.tier ?? 'free')
+const isPaidUser = computed(() => userTier.value !== 'free')
 const requiresPaidTier = computed(
-  () => exportFormat.value === "pdf" || exportFormat.value === "docx",
-);
-const canExport = computed(() => !requiresPaidTier.value || isPaidUser.value);
-const showPreview = computed(
-  () => exportFormat.value === "pdf" || exportFormat.value === "docx",
-);
+  () => exportFormat.value === 'pdf' || exportFormat.value === 'docx',
+)
+const canExport = computed(() => !requiresPaidTier.value || isPaidUser.value)
+const showPreview = computed(() => exportFormat.value === 'pdf' || exportFormat.value === 'docx')
 
-const showScrollHint = ref(false);
-let scrollHintTimer: ReturnType<typeof setTimeout> | null = null;
+const showScrollHint = ref(false)
+let scrollHintTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(
   () => showPreview.value && isMobile.value,
   (shouldShow) => {
-    if (scrollHintTimer) clearTimeout(scrollHintTimer);
+    if (scrollHintTimer) clearTimeout(scrollHintTimer)
     if (shouldShow) {
-      showScrollHint.value = true;
+      showScrollHint.value = true
       scrollHintTimer = setTimeout(() => {
-        showScrollHint.value = false;
-      }, 1500);
+        showScrollHint.value = false
+      }, 1500)
     } else {
-      showScrollHint.value = false;
+      showScrollHint.value = false
     }
   },
-);
-const modalMaxWidth = computed(() =>
-  showPreview.value ? "sm:max-w-6xl" : "sm:max-w-2xl",
-);
+)
+const modalMaxWidth = computed(() => (showPreview.value ? 'sm:max-w-6xl' : 'sm:max-w-2xl'))
 
-const systemPresets = computed(() => presetsData.value?.systemPresets || []);
-const userPresets = computed(() => presetsData.value?.userPresets || []);
-const availableColumns = computed(
-  () => presetsData.value?.availableColumns || [],
-);
+const systemPresets = computed(() => presetsData.value?.systemPresets || [])
+const userPresets = computed(() => presetsData.value?.userPresets || [])
+const availableColumns = computed(() => presetsData.value?.availableColumns || [])
 
-const selectedPresetId = ref("standard");
-const customColumns = ref<ExcelColumnConfig[]>([]);
-const showColumnCustomizer = ref(false);
+const selectedPresetId = ref('standard')
+const customColumns = ref<ExcelColumnConfig[]>([])
+const showColumnCustomizer = ref(false)
 
 const pdfOptions = reactive({
-  paperSize: "letter" as const,
+  paperSize: 'letter' as const,
   margins: { top: 1, right: 1, bottom: 1, left: 1 },
-  font: "Times New Roman",
+  font: 'Times New Roman',
   fontSize: 12,
-  lineSpacing: "double" as const,
+  lineSpacing: 'double' as const,
   includeAnnotations: false,
-  annotationStyle: "paragraph" as const,
+  annotationStyle: 'paragraph' as const,
   includeTitlePage: false,
-  title: "Bibliography",
+  title: 'Bibliography',
   pageNumbers: true,
-  sortBy: "author" as const,
-});
+  sortBy: 'author' as const,
+})
 
-const previewHtml = ref("");
-const previewLoading = ref(false);
-const previewTotalEntries = ref(0);
-const previewShownEntries = ref(0);
-let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const previewHtml = ref('')
+const previewLoading = ref(false)
+const previewTotalEntries = ref(0)
+const previewShownEntries = ref(0)
+let previewDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const previewRequestBody = computed(() => ({
   entryIds: props.entryIds,
@@ -121,182 +108,176 @@ const previewRequestBody = computed(() => ({
   ...pdfOptions,
   citationStyleId: selectedCitationStyleId.value,
   maxEntries: 5,
-}));
+}))
 
 async function fetchPreview() {
-  previewLoading.value = true;
+  previewLoading.value = true
   try {
-    const result = await $fetch("/api/export/preview", {
-      method: "POST",
+    const result = await $fetch('/api/export/preview', {
+      method: 'POST',
       body: previewRequestBody.value,
-    });
-    previewHtml.value = (result as any).html;
-    previewTotalEntries.value = (result as any).totalEntries;
-    previewShownEntries.value = (result as any).previewedEntries;
+    })
+    previewHtml.value = (result as any).html
+    previewTotalEntries.value = (result as any).totalEntries
+    previewShownEntries.value = (result as any).previewedEntries
   } catch {
-    previewHtml.value =
-      '<p style="padding:1em;color:#666;">Preview unavailable</p>';
+    previewHtml.value = '<p style="padding:1em;color:#666;">Preview unavailable</p>'
   } finally {
-    previewLoading.value = false;
+    previewLoading.value = false
   }
 }
 
 function debouncedFetchPreview() {
-  if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
-  previewDebounceTimer = setTimeout(fetchPreview, 400);
+  if (previewDebounceTimer) clearTimeout(previewDebounceTimer)
+  previewDebounceTimer = setTimeout(fetchPreview, 400)
 }
 
 watch(showPreview, (val) => {
-  if (val) fetchPreview();
-});
+  if (val) fetchPreview()
+})
 
 watch(
   previewRequestBody,
   () => {
-    if (showPreview.value) debouncedFetchPreview();
+    if (showPreview.value) debouncedFetchPreview()
   },
   { deep: true },
-);
+)
 
 watch(isOpen, (val) => {
-  if (val && showPreview.value) fetchPreview();
-});
+  if (val && showPreview.value) fetchPreview()
+})
 
-const allPresets = computed(() => [
-  ...systemPresets.value,
-  ...userPresets.value,
-]);
+const allPresets = computed(() => [...systemPresets.value, ...userPresets.value])
 
-const selectedPreset = computed(() =>
-  allPresets.value.find((p) => p.id === selectedPresetId.value),
-);
+const selectedPreset = computed(() => allPresets.value.find((p) => p.id === selectedPresetId.value))
 
 watch(
   selectedPreset,
   (preset) => {
     if (preset) {
-      customColumns.value = [...preset.columns];
+      customColumns.value = [...preset.columns]
     }
   },
   { immediate: true },
-);
+)
 
 function toggleColumn(columnId: string) {
-  const column = customColumns.value.find((c) => c.id === columnId);
+  const column = customColumns.value.find((c) => c.id === columnId)
   if (column) {
-    column.enabled = !column.enabled;
+    column.enabled = !column.enabled
   }
 }
 
-function moveColumn(index: number, direction: "up" | "down") {
-  const newIndex = direction === "up" ? index - 1 : index + 1;
-  if (newIndex < 0 || newIndex >= customColumns.value.length) return;
+function moveColumn(index: number, direction: 'up' | 'down') {
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+  if (newIndex < 0 || newIndex >= customColumns.value.length) return
 
-  const temp = customColumns.value[index];
-  const newVal = customColumns.value[newIndex];
-  if (temp === undefined || newVal === undefined) return;
+  const temp = customColumns.value[index]
+  const newVal = customColumns.value[newIndex]
+  if (temp === undefined || newVal === undefined) return
 
-  customColumns.value[index] = newVal;
-  customColumns.value[newIndex] = temp;
+  customColumns.value[index] = newVal
+  customColumns.value[newIndex] = temp
 
   customColumns.value.forEach((col, i) => {
-    col.order = i;
-  });
+    col.order = i
+  })
 }
 
 async function extractErrorMessage(e: any): Promise<string> {
-  if (e.data?.message) return e.data.message;
+  if (e.data?.message) return e.data.message
 
   if (e.response?._data instanceof Blob) {
     try {
-      const text = await e.response._data.text();
-      const parsed = JSON.parse(text);
-      if (parsed.message) return parsed.message;
-    } catch {}
+      const text = await e.response._data.text()
+      const parsed = JSON.parse(text)
+      if (parsed.message) return parsed.message
+    } catch {
+      /* ignored */
+    }
   }
 
-  if (typeof e.statusMessage === "string" && e.statusMessage) {
-    return e.statusMessage;
+  if (typeof e.statusMessage === 'string' && e.statusMessage) {
+    return e.statusMessage
   }
 
-  return "Export failed. Please try again.";
+  return 'Export failed. Please try again.'
 }
 
 async function handleExport() {
-  error.value = "";
-  isExporting.value = true;
+  error.value = ''
+  isExporting.value = true
 
   try {
-    let endpoint = "";
+    let endpoint = ''
     let body: Record<string, unknown> = {
       entryIds: props.entryIds,
       projectId: props.projectId,
-    };
+    }
 
     switch (exportFormat.value) {
-      case "excel":
-        endpoint = "/api/export/excel";
+      case 'excel':
+        endpoint = '/api/export/excel'
         body = {
           ...body,
           presetId: selectedPresetId.value,
-          customColumns: showColumnCustomizer.value
-            ? customColumns.value
-            : undefined,
-        };
-        break;
+          customColumns: showColumnCustomizer.value ? customColumns.value : undefined,
+        }
+        break
 
-      case "pdf":
-        endpoint = "/api/export/pdf";
+      case 'pdf':
+        endpoint = '/api/export/pdf'
         body = {
           ...body,
           ...pdfOptions,
           citationStyleId: selectedCitationStyleId.value,
-        };
-        break;
+        }
+        break
 
-      case "docx":
-        endpoint = "/api/export/docx";
+      case 'docx':
+        endpoint = '/api/export/docx'
         body = {
           ...body,
           ...pdfOptions,
           citationStyleId: selectedCitationStyleId.value,
-        };
-        break;
+        }
+        break
 
-      case "bibtex":
-        endpoint = "/api/export/bibtex";
-        break;
+      case 'bibtex':
+        endpoint = '/api/export/bibtex'
+        break
     }
 
     const response = await $fetch(endpoint, {
-      method: "POST",
+      method: 'POST',
       body,
-      responseType: "blob",
-    });
+      responseType: 'blob',
+    })
 
-    const blob = new Blob([response as BlobPart]);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
+    const blob = new Blob([response as BlobPart])
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
 
     const extensions = {
-      excel: "xlsx",
-      pdf: "pdf",
-      docx: "docx",
-      bibtex: "bib",
-    };
-    link.download = `bibliography-${Date.now()}.${extensions[exportFormat.value]}`;
+      excel: 'xlsx',
+      pdf: 'pdf',
+      docx: 'docx',
+      bibtex: 'bib',
+    }
+    link.download = `bibliography-${Date.now()}.${extensions[exportFormat.value]}`
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
 
-    isOpen.value = false;
+    isOpen.value = false
   } catch (e: any) {
-    error.value = await extractErrorMessage(e);
+    error.value = await extractErrorMessage(e)
   } finally {
-    isExporting.value = false;
+    isExporting.value = false
   }
 }
 </script>
@@ -306,9 +287,7 @@ async function handleExport() {
     v-model:open="isOpen"
     :fullscreen="isMobile"
     :ui="{
-      content: isMobile
-        ? 'w-full h-full max-w-full max-h-full rounded-none'
-        : modalMaxWidth,
+      content: isMobile ? 'w-full h-full max-w-full max-h-full rounded-none' : modalMaxWidth,
     }"
   >
     <template #content>
@@ -388,11 +367,7 @@ async function handleExport() {
                   >
                     <span class="flex items-center gap-1">
                       PDF
-                      <UBadge
-                        v-if="!isPaidUser"
-                        variant="subtle"
-                        color="warning"
-                        size="xs"
+                      <UBadge v-if="!isPaidUser" variant="subtle" color="warning" size="xs"
                         >Pro</UBadge
                       >
                     </span>
@@ -408,11 +383,7 @@ async function handleExport() {
                   >
                     <span class="flex items-center gap-1">
                       DOCX
-                      <UBadge
-                        v-if="!isPaidUser"
-                        variant="subtle"
-                        color="warning"
-                        size="xs"
+                      <UBadge v-if="!isPaidUser" variant="subtle" color="warning" size="xs"
                         >Pro</UBadge
                       >
                     </span>
@@ -447,10 +418,7 @@ async function handleExport() {
                   v-if="presetsStatus === 'pending'"
                   class="flex items-center gap-2 text-sm text-gray-500"
                 >
-                  <UIcon
-                    name="i-heroicons-arrow-path"
-                    class="w-4 h-4 animate-spin"
-                  />
+                  <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
                   Loading presets...
                 </div>
                 <template v-else>
@@ -469,15 +437,11 @@ async function handleExport() {
                     >
                       <template #item-label="{ item }">
                         <span class="font-medium">{{ item.name }}</span>
-                        <span
-                          v-if="item.isSystem"
-                          class="ml-2 text-xs text-muted"
-                          >(System)</span
-                        >
+                        <span v-if="item.isSystem" class="ml-2 text-xs text-muted">(System)</span>
                       </template>
                       <template #item-description="{ item }">
                         <p class="text-xs text-muted">
-                          {{ item.description ?? "" }}
+                          {{ item.description ?? '' }}
                         </p>
                       </template>
                     </USelectMenu>
@@ -491,7 +455,7 @@ async function handleExport() {
                     data-testid="export-excel-customize-columns"
                     @click="showColumnCustomizer = !showColumnCustomizer"
                   >
-                    {{ showColumnCustomizer ? "Hide" : "Customize" }} Columns
+                    {{ showColumnCustomizer ? 'Hide' : 'Customize' }} Columns
                   </UButton>
 
                   <div
@@ -514,10 +478,7 @@ async function handleExport() {
                           :model-value="column.enabled"
                           @update:model-value="toggleColumn(column.id)"
                         />
-                        <span
-                          class="flex-1"
-                          :class="column.enabled ? '' : 'text-gray-400'"
-                        >
+                        <span class="flex-1" :class="column.enabled ? '' : 'text-gray-400'">
                           {{ column.header }}
                         </span>
                         <div class="flex gap-1">
@@ -545,13 +506,8 @@ async function handleExport() {
               </template>
 
               <!-- PDF / DOCX Options -->
-              <template
-                v-if="exportFormat === 'pdf' || exportFormat === 'docx'"
-              >
-                <UFormField
-                  label="Citation Style"
-                  data-testid="export-citation-style"
-                >
+              <template v-if="exportFormat === 'pdf' || exportFormat === 'docx'">
+                <UFormField label="Citation Style" data-testid="export-citation-style">
                   <USelectMenu
                     v-model="selectedCitationStyleId"
                     :items="citationStyleOptions"
@@ -562,10 +518,7 @@ async function handleExport() {
                   />
                 </UFormField>
 
-                <div
-                  class="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                  data-testid="export-pdf-options"
-                >
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="export-pdf-options">
                   <UFormField label="Paper Size">
                     <USelectMenu
                       v-model="pdfOptions.paperSize"
@@ -672,7 +625,9 @@ async function handleExport() {
                 v-if="showScrollHint"
                 class="sm:hidden flex items-center justify-center py-1.5 pointer-events-none border-t-0! bg-transparent"
               >
-                <div class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 animate-bounce bg-transparent">
+                <div
+                  class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 animate-bounce bg-transparent"
+                >
                   <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5" />
                   <span>Scroll for more options</span>
                 </div>
@@ -690,17 +645,13 @@ async function handleExport() {
               >
                 <div class="flex items-center gap-2">
                   <UIcon name="i-heroicons-eye" class="w-4 h-4 text-gray-500" />
-                  <span
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >Preview</span
-                  >
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</span>
                 </div>
                 <span
                   v-if="previewTotalEntries > previewShownEntries"
                   class="text-xs text-gray-500"
                 >
-                  Showing {{ previewShownEntries }} of
-                  {{ previewTotalEntries }} entries
+                  Showing {{ previewShownEntries }} of {{ previewTotalEntries }} entries
                 </span>
               </div>
 
@@ -710,10 +661,7 @@ async function handleExport() {
                   class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10"
                 >
                   <div class="flex items-center gap-2 text-sm text-gray-500">
-                    <UIcon
-                      name="i-heroicons-arrow-path"
-                      class="w-4 h-4 animate-spin"
-                    />
+                    <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
                     Generating preview...
                   </div>
                 </div>
@@ -725,10 +673,7 @@ async function handleExport() {
                   sandbox="allow-same-origin"
                   data-testid="export-preview-iframe"
                 />
-                <div
-                  v-else
-                  class="flex items-center justify-center h-full text-sm text-gray-400"
-                >
+                <div v-else class="flex items-center justify-center h-full text-sm text-gray-400">
                   No preview available
                 </div>
               </div>
@@ -745,8 +690,8 @@ async function handleExport() {
               props.entryIds?.length
                 ? `${props.entryIds.length} entries`
                 : props.projectId
-                  ? "All project entries"
-                  : "All library entries"
+                  ? 'All project entries'
+                  : 'All library entries'
             }}
             will be exported
           </span>

@@ -30,24 +30,20 @@ const queryParams = computed(() => ({
   showSimilarEdges: showSimilarEdges.value,
 }))
 
-const { data: graphData, pending, refresh } = await useFetch(
-  graphEndpoint,
-  {
-    query: queryParams,
-    watch: [queryParams, graphEndpoint],
-    lazy: true,
-  },
-)
+const {
+  data: graphData,
+  pending,
+  refresh,
+} = await useFetch(graphEndpoint, {
+  query: queryParams,
+  watch: [queryParams, graphEndpoint],
+  lazy: true,
+})
 
 const selectedNode = ref<any>(null)
 const showNodeDetails = ref(false)
 
-const {
-  update,
-  zoomToFit,
-  exportSVG,
-  hoveredNode,
-} = useMindMap(containerRef, {
+const { update, zoomToFit, exportSVG, hoveredNode } = useMindMap(containerRef, {
   width: 1200,
   height: 800,
   nodeRadius: 10,
@@ -57,18 +53,21 @@ const {
     selectedNode.value = node
     showNodeDetails.value = true
   },
-  onNodeHover: (node) => {
-  },
+  onNodeHover: (node) => {},
 })
 
-watch(graphData, (data) => {
-  if (data) {
-    update(data.nodes || [], data.edges || [])
-    nextTick(() => {
-      setTimeout(zoomToFit, 500)
-    })
-  }
-}, { immediate: true })
+watch(
+  graphData,
+  (data) => {
+    if (data) {
+      update(data.nodes || [], data.edges || [])
+      nextTick(() => {
+        setTimeout(zoomToFit, 500)
+      })
+    }
+  },
+  { immediate: true },
+)
 
 function handleExportSVG() {
   const svgString = exportSVG()
@@ -113,9 +112,9 @@ const stats = computed(() => {
   return {
     nodes: graphData.value.nodes?.length || 0,
     edges: graphData.value.edges?.length || 0,
-    entries: graphData.value.nodes?.filter(n => n.type === 'entry').length || 0,
-    authors: graphData.value.nodes?.filter(n => n.type === 'author').length || 0,
-    tags: graphData.value.nodes?.filter(n => n.type === 'tag').length || 0,
+    entries: graphData.value.nodes?.filter((n) => n.type === 'entry').length || 0,
+    authors: graphData.value.nodes?.filter((n) => n.type === 'author').length || 0,
+    tags: graphData.value.nodes?.filter((n) => n.type === 'tag').length || 0,
   }
 })
 </script>
@@ -123,7 +122,9 @@ const stats = computed(() => {
 <template>
   <div class="flex flex-col h-full">
     <!-- Toolbar -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 gap-2">
+    <div
+      class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 gap-2"
+    >
       <div class="flex items-center gap-2 min-w-0">
         <UButton
           variant="ghost"
@@ -138,18 +139,46 @@ const stats = computed(() => {
       </div>
 
       <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-        <UButton variant="ghost" size="sm" icon="i-heroicons-arrow-path" class="hidden sm:flex" @click="refresh">
+        <UButton
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-arrow-path"
+          class="hidden sm:flex"
+          @click="refresh"
+        >
           Refresh
         </UButton>
-        <UButton variant="ghost" size="sm" icon="i-heroicons-arrow-path" class="sm:hidden" @click="refresh" />
-        <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" class="hidden sm:flex" @click="zoomToFit">
+        <UButton
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-arrow-path"
+          class="sm:hidden"
+          @click="refresh"
+        />
+        <UButton
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-viewfinder-circle"
+          class="hidden sm:flex"
+          @click="zoomToFit"
+        >
           Fit
         </UButton>
-        <UButton variant="ghost" size="sm" icon="i-heroicons-viewfinder-circle" class="sm:hidden" @click="zoomToFit" />
+        <UButton
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-viewfinder-circle"
+          class="sm:hidden"
+          @click="zoomToFit"
+        />
         <UDropdownMenu
           :items="[
             [
-              { label: 'Export SVG', icon: 'i-heroicons-arrow-down-tray', onSelect: handleExportSVG },
+              {
+                label: 'Export SVG',
+                icon: 'i-heroicons-arrow-down-tray',
+                onSelect: handleExportSVG,
+              },
               { label: 'Copy SVG', icon: 'i-heroicons-clipboard', onSelect: copyToClipboard },
             ],
           ]"
@@ -163,9 +192,7 @@ const stats = computed(() => {
       <!-- Filters sidebar - Desktop -->
       <div class="hidden lg:block w-56 border-r border-gray-200 dark:border-gray-700 p-4 space-y-6">
         <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Show Nodes
-          </h3>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Show Nodes</h3>
           <div class="space-y-2">
             <UCheckbox v-model="showAuthors" label="Authors" />
             <UCheckbox v-model="showTags" label="Tags" />
@@ -183,30 +210,20 @@ const stats = computed(() => {
         </div>
 
         <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Node Legend
-          </h3>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Node Legend</h3>
           <div class="space-y-2">
             <div v-for="item in legend" :key="item.type" class="flex items-center gap-2">
-              <div
-                class="w-3 h-3 rounded-full"
-                :style="{ backgroundColor: item.color }"
-              />
+              <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: item.color }" />
               <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Edge Legend
-          </h3>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Edge Legend</h3>
           <div class="space-y-2">
             <div v-for="item in edgeLegend" :key="item.type" class="flex items-center gap-2">
-              <div
-                class="w-4 h-0.5"
-                :style="{ backgroundColor: item.color }"
-              />
+              <div class="w-4 h-0.5" :style="{ backgroundColor: item.color }" />
               <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
             </div>
           </div>
@@ -219,18 +236,22 @@ const stats = computed(() => {
           <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
         </div>
 
-        <div v-else-if="!graphData?.nodes?.length" class="absolute inset-0 flex flex-col items-center justify-center">
+        <div
+          v-else-if="!graphData?.nodes?.length"
+          class="absolute inset-0 flex flex-col items-center justify-center"
+        >
           <UIcon name="i-heroicons-share" class="w-16 h-16 text-gray-300" />
           <p class="mt-4 text-gray-500">
-            {{ scope === 'library' ? 'No entries in your library yet' : 'No entries in this project yet' }}
+            {{
+              scope === 'library'
+                ? 'No entries in your library yet'
+                : 'No entries in this project yet'
+            }}
           </p>
           <p class="text-sm text-gray-400">Add entries to visualize their relationships</p>
         </div>
 
-        <div
-          ref="containerRef"
-          class="w-full h-full"
-        />
+        <div ref="containerRef" class="w-full h-full" />
 
         <!-- Hover tooltip -->
         <div
@@ -240,7 +261,7 @@ const stats = computed(() => {
           <div class="flex items-start gap-2">
             <div
               class="w-3 h-3 rounded-full shrink-0 mt-1"
-              :style="{ backgroundColor: legend.find(l => l.type === hoveredNode.type)?.color }"
+              :style="{ backgroundColor: legend.find((l) => l.type === hoveredNode.type)?.color }"
             />
             <div>
               <p class="font-medium text-gray-900 dark:text-white text-sm">
@@ -265,23 +286,23 @@ const stats = computed(() => {
     <!-- Node details slideover -->
     <USlideover v-model:open="showNodeDetails">
       <template #content="{ close }">
-        <div v-if="selectedNode" class="p-6 space-y-4 h-full overflow-y-auto bg-white dark:bg-gray-900">
+        <div
+          v-if="selectedNode"
+          class="p-6 space-y-4 h-full overflow-y-auto bg-white dark:bg-gray-900"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <div
                 class="w-4 h-4 rounded-full"
-                :style="{ backgroundColor: legend.find(l => l.type === selectedNode.type)?.color }"
+                :style="{
+                  backgroundColor: legend.find((l) => l.type === selectedNode.type)?.color,
+                }"
               />
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ selectedNode.label }}
               </h3>
             </div>
-            <UButton
-              icon="i-heroicons-x-mark"
-              variant="ghost"
-              size="sm"
-              @click="close"
-            />
+            <UButton icon="i-heroicons-x-mark" variant="ghost" size="sm" @click="close" />
           </div>
 
           <div>
@@ -332,21 +353,12 @@ const stats = computed(() => {
       <template #content="{ close }">
         <div class="p-6 space-y-6 h-full overflow-y-auto bg-white dark:bg-gray-900">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Filters & Legend
-            </h3>
-            <UButton
-              icon="i-heroicons-x-mark"
-              variant="ghost"
-              size="sm"
-              @click="close"
-            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filters & Legend</h3>
+            <UButton icon="i-heroicons-x-mark" variant="ghost" size="sm" @click="close" />
           </div>
 
           <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Show Nodes
-            </h3>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Show Nodes</h3>
             <div class="space-y-2">
               <UCheckbox v-model="showAuthors" label="Authors" />
               <UCheckbox v-model="showTags" label="Tags" />
@@ -364,30 +376,20 @@ const stats = computed(() => {
           </div>
 
           <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Node Legend
-            </h3>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Node Legend</h3>
             <div class="space-y-2">
               <div v-for="item in legend" :key="item.type" class="flex items-center gap-2">
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :style="{ backgroundColor: item.color }"
-                />
+                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: item.color }" />
                 <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Edge Legend
-            </h3>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Edge Legend</h3>
             <div class="space-y-2">
               <div v-for="item in edgeLegend" :key="item.type" class="flex items-center gap-2">
-                <div
-                  class="w-4 h-0.5"
-                  :style="{ backgroundColor: item.color }"
-                />
+                <div class="w-4 h-0.5" :style="{ backgroundColor: item.color }" />
                 <span class="text-xs text-gray-600 dark:text-gray-400">{{ item.label }}</span>
               </div>
             </div>

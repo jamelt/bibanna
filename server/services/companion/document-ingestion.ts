@@ -51,12 +51,16 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return response.data[0].embedding
 }
 
-export async function ingestEntry(entry: Entry, projectId: string, userId: string): Promise<number> {
+export async function ingestEntry(
+  entry: Entry,
+  projectId: string,
+  userId: string,
+): Promise<number> {
   const splitter = await getTextSplitter()
   let textContent = `Title: ${entry.title}\n`
 
   if (entry.authors?.length) {
-    textContent += `Authors: ${entry.authors.map(a => `${a.firstName || ''} ${a.lastName}`.trim()).join(', ')}\n`
+    textContent += `Authors: ${entry.authors.map((a) => `${a.firstName || ''} ${a.lastName}`.trim()).join(', ')}\n`
   }
 
   if (entry.year) {
@@ -86,20 +90,25 @@ export async function ingestEntry(entry: Entry, projectId: string, userId: strin
     const chunk = chunks[i]
     const embedding = await generateEmbedding(chunk)
 
-    await db.insert(documentChunks).values({
-      projectId,
-      userId,
-      entryId: entry.id,
-      content: chunk,
-      embedding,
-      chunkIndex: i,
-      tokenCount: Math.ceil(chunk.length / 4),
-      metadata: {
-        sourceType: 'entry',
-        title: entry.title,
-        authors: entry.authors?.map(a => `${a.firstName || ''} ${a.lastName}`.trim()).join(', '),
-      },
-    }).onConflictDoNothing()
+    await db
+      .insert(documentChunks)
+      .values({
+        projectId,
+        userId,
+        entryId: entry.id,
+        content: chunk,
+        embedding,
+        chunkIndex: i,
+        tokenCount: Math.ceil(chunk.length / 4),
+        metadata: {
+          sourceType: 'entry',
+          title: entry.title,
+          authors: entry.authors
+            ?.map((a) => `${a.firstName || ''} ${a.lastName}`.trim())
+            .join(', '),
+        },
+      })
+      .onConflictDoNothing()
 
     insertedCount++
   }
@@ -107,27 +116,34 @@ export async function ingestEntry(entry: Entry, projectId: string, userId: strin
   return insertedCount
 }
 
-export async function ingestAnnotation(annotation: Annotation, projectId: string, userId: string): Promise<number> {
+export async function ingestAnnotation(
+  annotation: Annotation,
+  projectId: string,
+  userId: string,
+): Promise<number> {
   const embedding = await generateEmbedding(annotation.content)
 
   const entry = await db.query.entries.findFirst({
     where: eq(entries.id, annotation.entryId),
   })
 
-  await db.insert(documentChunks).values({
-    projectId,
-    userId,
-    entryId: annotation.entryId,
-    annotationId: annotation.id,
-    content: annotation.content,
-    embedding,
-    chunkIndex: 0,
-    tokenCount: Math.ceil(annotation.content.length / 4),
-    metadata: {
-      sourceType: 'annotation',
-      title: entry?.title,
-    },
-  }).onConflictDoNothing()
+  await db
+    .insert(documentChunks)
+    .values({
+      projectId,
+      userId,
+      entryId: annotation.entryId,
+      annotationId: annotation.id,
+      content: annotation.content,
+      embedding,
+      chunkIndex: 0,
+      tokenCount: Math.ceil(annotation.content.length / 4),
+      metadata: {
+        sourceType: 'annotation',
+        title: entry?.title,
+      },
+    })
+    .onConflictDoNothing()
 
   return 1
 }

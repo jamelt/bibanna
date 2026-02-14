@@ -11,7 +11,8 @@ const features = [
   {
     icon: 'i-heroicons-book-open',
     title: 'Comprehensive Library',
-    description: 'Track books, journals, articles, media, and any source type with flexible metadata.',
+    description:
+      'Track books, journals, articles, media, and any source type with flexible metadata.',
   },
   {
     icon: 'i-heroicons-pencil-square',
@@ -40,7 +41,7 @@ const features = [
   },
 ]
 
-const tiers = getAllPlansForDisplay().map(plan => ({
+const tiers = getAllPlansForDisplay().map((plan) => ({
   name: plan.name,
   price: plan.pricing ? getDisplayPrice(plan.id as any, 'monthly') : '$0',
   period: plan.pricing ? '/month' : undefined,
@@ -54,7 +55,9 @@ const tiers = getAllPlansForDisplay().map(plan => ({
 <template>
   <div>
     <!-- Navigation -->
-    <header class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800">
+    <header
+      class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800"
+    >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <NuxtLink to="/" class="flex items-center gap-2">
@@ -63,18 +66,25 @@ const tiers = getAllPlansForDisplay().map(plan => ({
           </NuxtLink>
 
           <nav class="hidden md:flex items-center gap-6">
-            <NuxtLink to="#features" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            <NuxtLink
+              to="#features"
+              class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
               Features
             </NuxtLink>
-            <NuxtLink to="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            <NuxtLink
+              to="#pricing"
+              class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
               Pricing
             </NuxtLink>
-            <NuxtLink to="/login" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            <NuxtLink
+              to="/login"
+              class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
               Sign In
             </NuxtLink>
-            <UButton to="/signup" color="primary">
-              Get Started
-            </UButton>
+            <UButton to="/signup" color="primary"> Get Started </UButton>
           </nav>
 
           <UButton
@@ -139,9 +149,7 @@ const tiers = getAllPlansForDisplay().map(plan => ({
             </nav>
 
             <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
-              <UButton to="/signup" color="primary" block @click="close()">
-                Get Started
-              </UButton>
+              <UButton to="/signup" color="primary" block @click="close()"> Get Started </UButton>
             </div>
           </div>
         </template>
@@ -151,21 +159,19 @@ const tiers = getAllPlansForDisplay().map(plan => ({
     <!-- Hero section -->
     <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto text-center">
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight">
+        <h1
+          class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white tracking-tight"
+        >
           Your Research,
           <span class="text-primary-500">Brilliantly Organized</span>
         </h1>
         <p class="mt-6 text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          The modern bibliography manager for researchers, students, and professors.
-          Track sources, annotate, cite, and discover connections in your research.
+          The modern bibliography manager for researchers, students, and professors. Track sources,
+          annotate, cite, and discover connections in your research.
         </p>
         <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <UButton to="/signup" size="xl" color="primary">
-            Start Free
-          </UButton>
-          <UButton to="#features" size="xl" variant="outline" color="neutral">
-            Learn More
-          </UButton>
+          <UButton to="/signup" size="xl" color="primary"> Start Free </UButton>
+          <UButton to="#features" size="xl" variant="outline" color="neutral"> Learn More </UButton>
         </div>
       </div>
     </section>
@@ -183,13 +189,11 @@ const tiers = getAllPlansForDisplay().map(plan => ({
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <UCard
-            v-for="feature in features"
-            :key="feature.title"
-            class="p-6"
-          >
-              <div class="flex items-start gap-4">
-              <div class="shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+          <UCard v-for="feature in features" :key="feature.title" class="p-6">
+            <div class="flex items-start gap-4">
+              <div
+                class="shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center"
+              >
                 <UIcon :name="feature.icon" class="w-6 h-6 text-primary-500" />
               </div>
               <div>
@@ -225,9 +229,7 @@ const tiers = getAllPlansForDisplay().map(plan => ({
             :class="[tier.highlighted ? 'ring-2 ring-primary-500' : '', 'p-6']"
           >
             <div v-if="tier.highlighted" class="absolute -top-3 left-1/2 -translate-x-1/2">
-              <UBadge color="primary" variant="solid">
-                Most Popular
-              </UBadge>
+              <UBadge color="primary" variant="solid"> Most Popular </UBadge>
             </div>
 
             <div class="text-center">
@@ -235,8 +237,12 @@ const tiers = getAllPlansForDisplay().map(plan => ({
                 {{ tier.name }}
               </h3>
               <div class="mt-4">
-                <span class="text-4xl font-bold text-gray-900 dark:text-white">{{ tier.price }}</span>
-                <span v-if="tier.period" class="text-gray-500 dark:text-gray-400">{{ tier.period }}</span>
+                <span class="text-4xl font-bold text-gray-900 dark:text-white">{{
+                  tier.price
+                }}</span>
+                <span v-if="tier.period" class="text-gray-500 dark:text-gray-400">{{
+                  tier.period
+                }}</span>
               </div>
               <p class="mt-2 text-gray-600 dark:text-gray-300">
                 {{ tier.description }}

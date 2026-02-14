@@ -1,18 +1,30 @@
 import type { Tag } from '~/shared/types'
 
 const TAG_COLORS = [
-  '#3B82F6', '#2563EB',
-  '#4F46E5', '#6366F1',
-  '#7C3AED', '#8B5CF6',
-  '#EC4899', '#DB2777',
-  '#EF4444', '#DC2626',
-  '#F97316', '#EA580C',
-  '#EAB308', '#CA8A04',
-  '#22C55E', '#16A34A',
-  '#14B8A6', '#0D9488',
-  '#06B6D4', '#0891B2',
-  '#F43F5E', '#84CC16',
-  '#6B7280', '#4B5563',
+  '#3B82F6',
+  '#2563EB',
+  '#4F46E5',
+  '#6366F1',
+  '#7C3AED',
+  '#8B5CF6',
+  '#EC4899',
+  '#DB2777',
+  '#EF4444',
+  '#DC2626',
+  '#F97316',
+  '#EA580C',
+  '#EAB308',
+  '#CA8A04',
+  '#22C55E',
+  '#16A34A',
+  '#14B8A6',
+  '#0D9488',
+  '#06B6D4',
+  '#0891B2',
+  '#F43F5E',
+  '#84CC16',
+  '#6B7280',
+  '#4B5563',
 ]
 
 function pickRandomColor(): string {
@@ -37,13 +49,15 @@ export function useTags() {
     }
   }
 
-  async function createTag(name: string, color?: string, extra?: { description?: string; groupName?: string }): Promise<Tag> {
+  async function createTag(
+    name: string,
+    color?: string,
+    extra?: { description?: string; groupName?: string },
+  ): Promise<Tag> {
     const trimmed = name.trim()
     if (!trimmed) throw new Error('Tag name is required')
 
-    const existing = tags.value.find(
-      t => t.name.toLowerCase() === trimmed.toLowerCase(),
-    )
+    const existing = tags.value.find((t) => t.name.toLowerCase() === trimmed.toLowerCase())
     if (existing) return existing
 
     const newTag = await $fetch<Tag>('/api/tags', {
@@ -74,18 +88,21 @@ export function useTags() {
     return results
   }
 
-  async function updateTag(tagId: string, data: Partial<{ name: string; color: string; description: string; groupName: string }>): Promise<Tag> {
+  async function updateTag(
+    tagId: string,
+    data: Partial<{ name: string; color: string; description: string; groupName: string }>,
+  ): Promise<Tag> {
     const updated = await $fetch<Tag>(`/api/tags/${tagId}`, {
       method: 'PUT',
       body: data,
     })
-    tags.value = tags.value.map(t => t.id === tagId ? { ...t, ...updated } : t)
+    tags.value = tags.value.map((t) => (t.id === tagId ? { ...t, ...updated } : t))
     return updated
   }
 
   async function deleteTag(tagId: string): Promise<void> {
     await $fetch(`/api/tags/${tagId}`, { method: 'DELETE' })
-    tags.value = tags.value.filter(t => t.id !== tagId)
+    tags.value = tags.value.filter((t) => t.id !== tagId)
   }
 
   async function mergeTags(sourceTagIds: string[], targetTagId: string): Promise<Tag> {
@@ -94,19 +111,19 @@ export function useTags() {
       body: { sourceTagIds, targetTagId },
     })
     tags.value = tags.value
-      .filter(t => !sourceTagIds.includes(t.id))
-      .map(t => t.id === targetTagId ? result : t)
+      .filter((t) => !sourceTagIds.includes(t.id))
+      .map((t) => (t.id === targetTagId ? result : t))
     return result
   }
 
   function optimisticRemove(tagId: string): Tag | undefined {
-    const tag = tags.value.find(t => t.id === tagId)
-    if (tag) tags.value = tags.value.filter(t => t.id !== tagId)
+    const tag = tags.value.find((t) => t.id === tagId)
+    if (tag) tags.value = tags.value.filter((t) => t.id !== tagId)
     return tag
   }
 
   function optimisticRestore(tag: Tag) {
-    if (!tags.value.find(t => t.id === tag.id)) {
+    if (!tags.value.find((t) => t.id === tag.id)) {
       tags.value = [...tags.value, tag]
     }
   }
@@ -116,15 +133,13 @@ export function useTags() {
   }
 
   function findByName(name: string): Tag | undefined {
-    return tags.value.find(
-      t => t.name.toLowerCase() === name.trim().toLowerCase(),
-    )
+    return tags.value.find((t) => t.name.toLowerCase() === name.trim().toLowerCase())
   }
 
   function searchTags(query: string): Tag[] {
     if (!query.trim()) return tags.value
     const lower = query.trim().toLowerCase()
-    return tags.value.filter(t => t.name.toLowerCase().includes(lower))
+    return tags.value.filter((t) => t.name.toLowerCase().includes(lower))
   }
 
   return {

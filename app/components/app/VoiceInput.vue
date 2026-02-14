@@ -22,27 +22,19 @@ const emit = defineEmits<{
 const { hasFeature } = useSubscription()
 const canUseWhisper = computed(() => props.useWhisper && hasFeature('whisperVoice'))
 
-const {
-  isListening,
-  isSupported,
-  transcript,
-  interimTranscript,
-  error,
-  start,
-  stop,
-  clear,
-} = useVoiceInput({
-  continuous: true,
-  interimResults: true,
-  onResult: (text, isFinal) => {
-    if (isFinal && props.autoSubmit) {
-      handleSubmit()
-    }
-  },
-  onError: (err) => {
-    emit('error', err)
-  },
-})
+const { isListening, isSupported, transcript, interimTranscript, error, start, stop, clear } =
+  useVoiceInput({
+    continuous: true,
+    interimResults: true,
+    onResult: (text, isFinal) => {
+      if (isFinal && props.autoSubmit) {
+        handleSubmit()
+      }
+    },
+    onError: (err) => {
+      emit('error', err)
+    },
+  })
 
 const isRecording = ref(false)
 const mediaRecorder = ref<MediaRecorder | null>(null)
@@ -73,14 +65,13 @@ async function startWhisperRecording() {
     }
 
     mediaRecorder.value.onstop = async () => {
-      stream.getTracks().forEach(track => track.stop())
+      stream.getTracks().forEach((track) => track.stop())
       await processWhisperAudio()
     }
 
     mediaRecorder.value.start(1000)
     isRecording.value = true
-  }
-  catch (err: any) {
+  } catch (err: any) {
     emit('error', err.message || 'Failed to start recording')
   }
 }
@@ -113,11 +104,9 @@ async function processWhisperAudio() {
     if (props.autoSubmit) {
       await handleParse(response.text)
     }
-  }
-  catch (err: any) {
+  } catch (err: any) {
     emit('error', err.message || 'Failed to transcribe audio')
-  }
-  finally {
+  } finally {
     isProcessing.value = false
     audioChunks.value = []
   }
@@ -127,16 +116,13 @@ function handleToggle() {
   if (canUseWhisper.value) {
     if (isRecording.value) {
       stopWhisperRecording()
-    }
-    else {
+    } else {
       startWhisperRecording()
     }
-  }
-  else {
+  } else {
     if (isListening.value) {
       stop()
-    }
-    else {
+    } else {
       start()
     }
   }
@@ -158,8 +144,7 @@ async function handleParse(text: string) {
     })
 
     emit('parsed', response)
-  }
-  catch (err: any) {
+  } catch (err: any) {
     console.error('Parse error:', err)
   }
 }
@@ -186,7 +171,7 @@ const activeListening = computed(() => {
           activeListening
             ? 'bg-red-500 text-white animate-pulse'
             : 'bg-primary-500 text-white hover:bg-primary-600',
-          (!isSupported && !canUseWhisper) && 'opacity-50 cursor-not-allowed',
+          !isSupported && !canUseWhisper && 'opacity-50 cursor-not-allowed',
         ]"
         @click="handleToggle"
       >
@@ -203,41 +188,20 @@ const activeListening = computed(() => {
       </button>
 
       <div class="flex-1">
-        <p
-          v-if="!isSupported && !canUseWhisper"
-          class="text-sm text-gray-500"
-        >
+        <p v-if="!isSupported && !canUseWhisper" class="text-sm text-gray-500">
           Voice input is not supported in this browser
         </p>
-        <p
-          v-else-if="activeListening"
-          class="text-sm text-red-500 font-medium"
-        >
+        <p v-else-if="activeListening" class="text-sm text-red-500 font-medium">
           Listening... Click to stop
         </p>
-        <p
-          v-else-if="isProcessing"
-          class="text-sm text-primary-500"
-        >
-          Processing audio...
-        </p>
-        <p
-          v-else
-          class="text-sm text-gray-500"
-        >
+        <p v-else-if="isProcessing" class="text-sm text-primary-500">Processing audio...</p>
+        <p v-else class="text-sm text-gray-500">
           {{ placeholder }}
         </p>
       </div>
 
       <!-- Whisper badge -->
-      <UBadge
-        v-if="canUseWhisper"
-        color="purple"
-        variant="subtle"
-        size="xs"
-      >
-        Whisper AI
-      </UBadge>
+      <UBadge v-if="canUseWhisper" color="purple" variant="subtle" size="xs"> Whisper AI </UBadge>
     </div>
 
     <!-- Transcript display -->
@@ -248,19 +212,11 @@ const activeListening = computed(() => {
       <div class="flex items-start justify-between gap-2">
         <p class="text-sm text-gray-700 dark:text-gray-300 flex-1">
           {{ displayTranscript }}
-          <span
-            v-if="interimTranscript && !canUseWhisper"
-            class="text-gray-400 italic"
-          >
+          <span v-if="interimTranscript && !canUseWhisper" class="text-gray-400 italic">
             {{ interimTranscript }}
           </span>
         </p>
-        <UButton
-          variant="ghost"
-          size="xs"
-          icon="i-heroicons-x-mark"
-          @click="handleClear"
-        />
+        <UButton variant="ghost" size="xs" icon="i-heroicons-x-mark" @click="handleClear" />
       </div>
     </div>
 
@@ -275,25 +231,9 @@ const activeListening = computed(() => {
     />
 
     <!-- Action buttons -->
-    <div
-      v-if="displayTranscript && !activeListening"
-      class="flex gap-2"
-    >
-      <UButton
-        size="sm"
-        :loading="isProcessing"
-        @click="handleSubmit"
-      >
-        Use Transcript
-      </UButton>
-      <UButton
-        variant="outline"
-        color="gray"
-        size="sm"
-        @click="handleClear"
-      >
-        Clear
-      </UButton>
+    <div v-if="displayTranscript && !activeListening" class="flex gap-2">
+      <UButton size="sm" :loading="isProcessing" @click="handleSubmit"> Use Transcript </UButton>
+      <UButton variant="outline" color="gray" size="sm" @click="handleClear"> Clear </UButton>
     </div>
   </div>
 </template>

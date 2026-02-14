@@ -28,7 +28,9 @@ test.describe('Projects Flow', () => {
     await expect(page).toHaveURL(/\/app\/projects/)
     await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible()
 
-    const openModalButton = page.getByRole('button', { name: /New Project|Create Project/i }).first()
+    const openModalButton = page
+      .getByRole('button', { name: /New Project|Create Project/i })
+      .first()
     await openModalButton.click()
 
     const nameField = page.getByTestId('project-modal-name')
@@ -50,12 +52,12 @@ test.describe('Projects Flow', () => {
     await projectCard.click()
 
     await page.waitForURL(/\/app\/projects\/.+/, { timeout: 10000 })
-    
+
     const currentUrl = page.url()
     console.log('Navigated to project URL:', currentUrl)
 
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible({ timeout: 15000 })
-    
+
     await expect(page.locator('text=Project not found')).not.toBeVisible()
     await expect(page.locator('text=0 entries')).toBeVisible()
   })
@@ -74,7 +76,10 @@ test.describe('Projects Flow', () => {
     await expect(page).toHaveURL('/app', { timeout: 10000 })
 
     await page.goto('/app/projects')
-    await page.getByRole('button', { name: /New Project|Create Project/i }).first().click()
+    await page
+      .getByRole('button', { name: /New Project|Create Project/i })
+      .first()
+      .click()
 
     const projectName = `Slug Test ${Date.now()}`
     await page.getByTestId('project-modal-name').fill(projectName)
@@ -95,7 +100,7 @@ test.describe('Projects Flow', () => {
 
     await page.reload()
     await page.waitForLoadState('networkidle')
-    
+
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible({ timeout: 15000 })
     await expect(page.locator('text=Project not found')).not.toBeVisible()
   })
@@ -116,7 +121,10 @@ test.describe('Projects Flow', () => {
     const cookies = await page.context().cookies()
 
     await page.goto('/app/projects')
-    await page.getByRole('button', { name: /New Project|Create Project/i }).first().click()
+    await page
+      .getByRole('button', { name: /New Project|Create Project/i })
+      .first()
+      .click()
 
     const projectName = `API Operations ${Date.now()}`
     await page.getByTestId('project-modal-name').fill(projectName)
@@ -137,7 +145,7 @@ test.describe('Projects Flow', () => {
 
     const getResponse = await request.get(`${baseURL}/api/projects/${projectSlugOrId}`, {
       headers: {
-        cookie: cookies.map(c => `${c.name}=${c.value}`).join('; '),
+        cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '),
       },
     })
     expect(getResponse.ok()).toBeTruthy()
@@ -146,7 +154,7 @@ test.describe('Projects Flow', () => {
 
     const updateResponse = await request.put(`${baseURL}/api/projects/${projectSlugOrId}`, {
       headers: {
-        cookie: cookies.map(c => `${c.name}=${c.value}`).join('; '),
+        cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '),
         'content-type': 'application/json',
       },
       data: {
@@ -189,4 +197,3 @@ test.describe('Projects Flow', () => {
     await expect(page.locator('text=Project not found')).not.toBeVisible()
   })
 })
-

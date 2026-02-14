@@ -50,12 +50,7 @@ export default defineEventHandler(async (event) => {
     const [existingCount] = await db
       .select({ count: count() })
       .from(projectShares)
-      .where(
-        and(
-          eq(projectShares.projectId, projectId),
-          eq(projectShares.isPublicLink, false),
-        ),
-      )
+      .where(and(eq(projectShares.projectId, projectId), eq(projectShares.isPublicLink, false)))
 
     if (existingCount && existingCount.count >= limits.collaboratorsPerProject) {
       throw createError({
@@ -67,8 +62,7 @@ export default defineEventHandler(async (event) => {
     try {
       const share = await shareProjectWithUser(projectId, user.id, email, permission)
       return share
-    }
-    catch (error: any) {
+    } catch (error: any) {
       throw createError({
         statusCode: 403,
         message: error.message,
@@ -87,8 +81,7 @@ export default defineEventHandler(async (event) => {
     try {
       const result = await createPublicLink(projectId, user.id, permission)
       return result
-    }
-    catch (error: any) {
+    } catch (error: any) {
       throw createError({
         statusCode: 403,
         message: error.message,

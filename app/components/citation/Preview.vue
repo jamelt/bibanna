@@ -6,7 +6,12 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { data: preview, pending, error, refresh } = await useFetch('/api/citation/preview', {
+const {
+  data: preview,
+  pending,
+  error,
+  refresh,
+} = await useFetch('/api/citation/preview', {
   method: 'POST',
   body: computed(() => ({
     styleId: props.styleId,
@@ -18,7 +23,7 @@ const { data: preview, pending, error, refresh } = await useFetch('/api/citation
 const copiedIndex = ref<number | null>(null)
 
 const isNoteStyle = computed(() => preview.value?.category === 'note')
-const citationLabel = computed(() => isNoteStyle.value ? 'Footnote' : 'In-text')
+const citationLabel = computed(() => (isNoteStyle.value ? 'Footnote' : 'In-text'))
 
 const hasBibliography = computed(() =>
   preview.value?.samples?.some((s: any) => s.bibliography && stripHtml(s.bibliography).trim()),
@@ -41,7 +46,9 @@ function stripHtml(html: string): string {
 <template>
   <div class="flex flex-col h-full">
     <!-- Header bar -->
-    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 shrink-0">
+    <div
+      class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 shrink-0"
+    >
       <div class="min-w-0">
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate">
           {{ preview?.styleName || 'Citation Preview' }}
@@ -93,7 +100,9 @@ function stripHtml(html: string): string {
       <!-- Document-style preview -->
       <div v-else-if="preview?.samples" class="p-5 lg:p-8">
         <!-- Paper surface -->
-        <div class="citation-paper bg-white dark:bg-gray-900 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mx-auto max-w-2xl">
+        <div
+          class="citation-paper bg-white dark:bg-gray-900 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mx-auto max-w-2xl"
+        >
           <!-- Page header -->
           <div class="px-8 pt-8 pb-4 border-b border-gray-100 dark:border-gray-800">
             <p class="text-xs font-medium tracking-widest uppercase text-gray-400">
@@ -103,13 +112,12 @@ function stripHtml(html: string): string {
 
           <!-- Entries -->
           <div class="px-8 py-6 space-y-5">
-            <div
-              v-for="(sample, index) in preview.samples"
-              :key="sample.type"
-              class="group"
-            >
+            <div v-for="(sample, index) in preview.samples" :key="sample.type" class="group">
               <!-- Bibliography entry (when available) -->
-              <div v-if="sample.bibliography && stripHtml(sample.bibliography).trim()" class="relative">
+              <div
+                v-if="sample.bibliography && stripHtml(sample.bibliography).trim()"
+                class="relative"
+              >
                 <div
                   class="bib-entry text-sm leading-relaxed text-gray-800 dark:text-gray-200 max-w-none"
                   v-html="sample.bibliography"
@@ -119,7 +127,9 @@ function stripHtml(html: string): string {
                   @click="copyToClipboard(sample.bibliography, index)"
                 >
                   <UIcon
-                    :name="copiedIndex === index ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+                    :name="
+                      copiedIndex === index ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'
+                    "
                     class="w-3.5 h-3.5"
                     :class="copiedIndex === index ? 'text-green-500' : 'text-gray-400'"
                   />
@@ -137,7 +147,9 @@ function stripHtml(html: string): string {
                   @click="copyToClipboard(sample.inText, index)"
                 >
                   <UIcon
-                    :name="copiedIndex === index ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+                    :name="
+                      copiedIndex === index ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'
+                    "
                     class="w-3.5 h-3.5"
                     :class="copiedIndex === index ? 'text-green-500' : 'text-gray-400'"
                   />
@@ -147,7 +159,10 @@ function stripHtml(html: string): string {
               <!-- Citation annotations -->
               <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <!-- Only show in-text label when we have a bibliography (otherwise in-text is the main display) -->
-                <span v-if="hasBibliography && sample.inText" class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <span
+                  v-if="hasBibliography && sample.inText"
+                  class="inline-flex items-center gap-1.5 text-xs text-gray-500"
+                >
                   <span class="font-medium text-gray-400">{{ citationLabel }}:</span>
                   <code
                     class="inline-cite px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"
@@ -155,7 +170,10 @@ function stripHtml(html: string): string {
                   />
                 </span>
 
-                <span v-if="sample.subsequentNote" class="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <span
+                  v-if="sample.subsequentNote"
+                  class="inline-flex items-center gap-1.5 text-xs text-gray-500"
+                >
                   <span class="font-medium text-gray-400">Subsequent:</span>
                   <code
                     class="inline-cite px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"
@@ -242,7 +260,7 @@ function stripHtml(html: string): string {
   font-style: italic;
 }
 
-.bib-entry :deep(span[style*="small-caps"]) {
+.bib-entry :deep(span[style*='small-caps']) {
   font-variant: small-caps;
 }
 </style>

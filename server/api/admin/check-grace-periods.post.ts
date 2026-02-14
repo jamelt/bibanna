@@ -31,11 +31,13 @@ export async function processExpiredGracePeriods() {
       tier: subscriptions.tier,
     })
     .from(subscriptions)
-    .where(and(
-      eq(subscriptions.status, 'past_due'),
-      isNotNull(subscriptions.graceEndsAt),
-      lte(subscriptions.graceEndsAt, now),
-    ))
+    .where(
+      and(
+        eq(subscriptions.status, 'past_due'),
+        isNotNull(subscriptions.graceEndsAt),
+        lte(subscriptions.graceEndsAt, now),
+      ),
+    )
 
   if (expiredSubscriptions.length === 0) {
     return { processed: 0, downgraded: 0 }
@@ -45,15 +47,21 @@ export async function processExpiredGracePeriods() {
   let downgraded = 0
 
   for (const sub of expiredSubscriptions) {
-    await db.update(users).set({
-      subscriptionTier: DEFAULT_TIER,
-      updatedAt: now,
-    }).where(eq(users.id, sub.userId))
+    await db
+      .update(users)
+      .set({
+        subscriptionTier: DEFAULT_TIER,
+        updatedAt: now,
+      })
+      .where(eq(users.id, sub.userId))
 
-    await db.update(subscriptions).set({
-      graceEndsAt: null,
-      updatedAt: now,
-    }).where(eq(subscriptions.id, sub.subscriptionId))
+    await db
+      .update(subscriptions)
+      .set({
+        graceEndsAt: null,
+        updatedAt: now,
+      })
+      .where(eq(subscriptions.id, sub.subscriptionId))
 
     await db.insert(adminAuditLogs).values({
       adminId: systemAdminId,

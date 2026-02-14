@@ -106,10 +106,7 @@ export async function createPublicLink(
   }
 
   const existingPublicShare = await db.query.projectShares.findFirst({
-    where: and(
-      eq(projectShares.projectId, project.id),
-      eq(projectShares.isPublicLink, true),
-    ),
+    where: and(eq(projectShares.projectId, project.id), eq(projectShares.isPublicLink, true)),
   })
 
   const token = nanoid(24)
@@ -161,12 +158,7 @@ export async function revokePublicLink(projectId: string, ownerUserId: string): 
 
   await db
     .delete(projectShares)
-    .where(
-      and(
-        eq(projectShares.projectId, project.id),
-        eq(projectShares.isPublicLink, true),
-      ),
-    )
+    .where(and(eq(projectShares.projectId, project.id), eq(projectShares.isPublicLink, true)))
 }
 
 export async function removeShare(shareId: string, ownerUserId: string): Promise<void> {
@@ -179,10 +171,7 @@ export async function removeShare(shareId: string, ownerUserId: string): Promise
   }
 
   const project = await db.query.projects.findFirst({
-    where: and(
-      eq(projects.id, share.projectId),
-      eq(projects.userId, ownerUserId),
-    ),
+    where: and(eq(projects.id, share.projectId), eq(projects.userId, ownerUserId)),
   })
 
   if (!project) {
@@ -192,7 +181,10 @@ export async function removeShare(shareId: string, ownerUserId: string): Promise
   await db.delete(projectShares).where(eq(projectShares.id, shareId))
 }
 
-export async function getProjectShares(projectId: string, ownerUserId: string): Promise<ShareInfo[]> {
+export async function getProjectShares(
+  projectId: string,
+  ownerUserId: string,
+): Promise<ShareInfo[]> {
   const project = await db.query.projects.findFirst({
     where: buildProjectWhere(projectId, ownerUserId),
   })
@@ -205,14 +197,15 @@ export async function getProjectShares(projectId: string, ownerUserId: string): 
     where: eq(projectShares.projectId, project.id),
   })
 
-  const userIds = shares.filter(s => s.sharedWithUserId).map(s => s.sharedWithUserId!)
-  const sharedUsers = userIds.length > 0
-    ? await db.query.users.findMany({
-        where: or(...userIds.map(id => eq(users.id, id))),
-      })
-    : []
+  const userIds = shares.filter((s) => s.sharedWithUserId).map((s) => s.sharedWithUserId!)
+  const sharedUsers =
+    userIds.length > 0
+      ? await db.query.users.findMany({
+          where: or(...userIds.map((id) => eq(users.id, id))),
+        })
+      : []
 
-  const userMap = new Map(sharedUsers.map(u => [u.id, u]))
+  const userMap = new Map(sharedUsers.map((u) => [u.id, u]))
 
   return shares.map((share) => {
     const user = share.sharedWithUserId ? userMap.get(share.sharedWithUserId) : undefined
@@ -236,10 +229,7 @@ export async function getSharedProjectByToken(token: string): Promise<{
   permission: SharePermission
 } | null> {
   const share = await db.query.projectShares.findFirst({
-    where: and(
-      eq(projectShares.publicLinkToken, token),
-      eq(projectShares.isPublicLink, true),
-    ),
+    where: and(eq(projectShares.publicLinkToken, token), eq(projectShares.isPublicLink, true)),
   })
 
   if (!share) return null
@@ -256,11 +246,13 @@ export async function getSharedProjectByToken(token: string): Promise<{
   }
 }
 
-export async function getUserSharedProjects(userId: string): Promise<Array<{
-  project: typeof projects.$inferSelect
-  permission: SharePermission
-  sharedBy: string
-}>> {
+export async function getUserSharedProjects(userId: string): Promise<
+  Array<{
+    project: typeof projects.$inferSelect
+    permission: SharePermission
+    sharedBy: string
+  }>
+> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
   })

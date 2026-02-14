@@ -72,10 +72,7 @@ async function generateUniqueProjectSlug(userId: string, baseSlug: string): Prom
 
   for (;;) {
     const existing = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.userId, userId),
-        eq(projects.slug, candidate),
-      ),
+      where: and(eq(projects.userId, userId), eq(projects.slug, candidate)),
     })
 
     if (!existing) {

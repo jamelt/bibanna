@@ -2,7 +2,12 @@ import { db } from '~/server/database/client'
 import { users, subscriptions } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
 import { requireAdmin, logAdminAction } from '~/server/utils/auth'
-import { stripe, getOrCreateStripeProducts, getTierFromPriceId, mapStripeStatus } from '~/server/services/stripe'
+import {
+  stripe,
+  getOrCreateStripeProducts,
+  getTierFromPriceId,
+  mapStripeStatus,
+} from '~/server/services/stripe'
 import { DEFAULT_TIER } from '~/shared/subscriptions'
 
 export default defineEventHandler(async (event) => {
@@ -41,18 +46,28 @@ export default defineEventHandler(async (event) => {
 
   if (!activeSub) {
     if (targetUser.subscriptionTier !== DEFAULT_TIER) {
-      await db.update(users).set({
-        subscriptionTier: DEFAULT_TIER,
-        updatedAt: new Date(),
-      }).where(eq(users.id, userId))
+      await db
+        .update(users)
+        .set({
+          subscriptionTier: DEFAULT_TIER,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
     }
 
     const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
-    await logAdminAction(admin.id, 'user.sync_stripe', 'user', userId, {
-      result: 'no_subscription',
-      previousTier: targetUser.subscriptionTier,
-      newTier: DEFAULT_TIER,
-    }, ip)
+    await logAdminAction(
+      admin.id,
+      'user.sync_stripe',
+      'user',
+      userId,
+      {
+        result: 'no_subscription',
+        previousTier: targetUser.subscriptionTier,
+        newTier: DEFAULT_TIER,
+      },
+      ip,
+    )
 
     return {
       synced: true,
@@ -67,22 +82,14 @@ export default defineEventHandler(async (event) => {
   const priceId = priceItem?.id
   const tier = priceId ? getTierFromPriceId(priceId, products) : DEFAULT_TIER
   const status = mapStripeStatus(activeSub.status)
-  const effectiveTier = (status === 'active' || status === 'trialing' || status === 'past_due') ? tier : DEFAULT_TIER
+  const effectiveTier =
+    status === 'active' || status === 'trialing' || status === 'past_due' ? tier : DEFAULT_TIER
 
-  await db.insert(subscriptions).values({
-    userId,
-    stripeSubscriptionId: activeSub.id,
-    tier,
-    status: status as any,
-    currentPeriodStart: new Date(activeSub.current_period_start * 1000),
-    currentPeriodEnd: new Date(activeSub.current_period_end * 1000),
-    cancelAtPeriodEnd: activeSub.cancel_at_period_end,
-    stripePriceId: priceId || null,
-    unitAmount: priceItem?.unit_amount ?? null,
-    billingInterval: priceItem?.recurring?.interval || null,
-  }).onConflictDoUpdate({
-    target: subscriptions.stripeSubscriptionId,
-    set: {
+  await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      stripeSubscriptionId: activeSub.id,
       tier,
       status: status as any,
       currentPeriodStart: new Date(activeSub.current_period_start * 1000),
@@ -91,22 +98,44 @@ export default defineEventHandler(async (event) => {
       stripePriceId: priceId || null,
       unitAmount: priceItem?.unit_amount ?? null,
       billingInterval: priceItem?.recurring?.interval || null,
-      updatedAt: new Date(),
-    },
-  })
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.stripeSubscriptionId,
+      set: {
+        tier,
+        status: status as any,
+        currentPeriodStart: new Date(activeSub.current_period_start * 1000),
+        currentPeriodEnd: new Date(activeSub.current_period_end * 1000),
+        cancelAtPeriodEnd: activeSub.cancel_at_period_end,
+        stripePriceId: priceId || null,
+        unitAmount: priceItem?.unit_amount ?? null,
+        billingInterval: priceItem?.recurring?.interval || null,
+        updatedAt: new Date(),
+      },
+    })
 
-  await db.update(users).set({
-    subscriptionTier: effectiveTier,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId))
+  await db
+    .update(users)
+    .set({
+      subscriptionTier: effectiveTier,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
-  await logAdminAction(admin.id, 'user.sync_stripe', 'user', userId, {
-    previousTier: targetUser.subscriptionTier,
-    newTier: effectiveTier,
-    stripeStatus: activeSub.status,
-    stripeSubscriptionId: activeSub.id,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.sync_stripe',
+    'user',
+    userId,
+    {
+      previousTier: targetUser.subscriptionTier,
+      newTier: effectiveTier,
+      stripeStatus: activeSub.status,
+      stripeSubscriptionId: activeSub.id,
+    },
+    ip,
+  )
 
   return {
     synced: true,

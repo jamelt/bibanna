@@ -5,7 +5,10 @@ import { eq } from 'drizzle-orm'
 import * as schema from '~/server/database/schema'
 import { buildProjectWhere } from '~/server/utils/project-query'
 
-const testDbUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/annobib'
+const testDbUrl =
+  process.env.TEST_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  'postgres://postgres:postgres@localhost:5432/annobib'
 
 let db: ReturnType<typeof drizzle>
 let client: postgres.Sql
@@ -14,24 +17,31 @@ let testUserId: string
 beforeAll(async () => {
   client = postgres(testDbUrl, { max: 1, connect_timeout: 2 })
   db = drizzle(client, { schema })
-  
-  const [user] = await db.insert(schema.users).values({
-    email: `slug-test-${Date.now()}@example.com`,
-    name: 'Slug Test User',
-    auth0Id: `slug-test-${Date.now()}`,
-  }).returning()
+
+  const [user] = await db
+    .insert(schema.users)
+    .values({
+      email: `slug-test-${Date.now()}@example.com`,
+      name: 'Slug Test User',
+      auth0Id: `slug-test-${Date.now()}`,
+    })
+    .returning()
   testUserId = user.id
 })
 
 afterAll(async () => {
   if (testUserId) {
-    await db.delete(schema.entryProjects).where(
-      eq(schema.entryProjects.projectId,
-        db.select({ id: schema.projects.id })
-          .from(schema.projects)
-          .where(eq(schema.projects.userId, testUserId))
+    await db
+      .delete(schema.entryProjects)
+      .where(
+        eq(
+          schema.entryProjects.projectId,
+          db
+            .select({ id: schema.projects.id })
+            .from(schema.projects)
+            .where(eq(schema.projects.userId, testUserId)),
+        ),
       )
-    )
     await db.delete(schema.entries).where(eq(schema.entries.userId, testUserId))
     await db.delete(schema.projects).where(eq(schema.projects.userId, testUserId))
     await db.delete(schema.users).where(eq(schema.users.id, testUserId))
@@ -47,11 +57,14 @@ beforeEach(async () => {
 
 describe('Project Slug and ID Query Helper', () => {
   it('fetches project by UUID using helper', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'UUID Test Project',
-      slug: 'uuid-test-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'UUID Test Project',
+        slug: 'uuid-test-project',
+      })
+      .returning()
 
     const found = await db.query.projects.findFirst({
       where: buildProjectWhere(project.id, testUserId),
@@ -63,11 +76,14 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('fetches project by slug using helper', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Slug Test Project',
-      slug: 'slug-test-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Slug Test Project',
+        slug: 'slug-test-project',
+      })
+      .returning()
 
     const found = await db.query.projects.findFirst({
       where: buildProjectWhere('slug-test-project', testUserId),
@@ -79,11 +95,14 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('handles invalid UUID format as slug-only query', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Invalid UUID Format',
-      slug: 'not-a-valid-uuid',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Invalid UUID Format',
+        slug: 'not-a-valid-uuid',
+      })
+      .returning()
 
     const found = await db.query.projects.findFirst({
       where: buildProjectWhere('not-a-valid-uuid', testUserId),
@@ -94,17 +113,23 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('respects user ownership in queries', async () => {
-    const [otherUser] = await db.insert(schema.users).values({
-      email: `other-${Date.now()}@example.com`,
-      name: 'Other User',
-      auth0Id: `other-${Date.now()}`,
-    }).returning()
+    const [otherUser] = await db
+      .insert(schema.users)
+      .values({
+        email: `other-${Date.now()}@example.com`,
+        name: 'Other User',
+        auth0Id: `other-${Date.now()}`,
+      })
+      .returning()
 
-    const [project] = await db.insert(schema.projects).values({
-      userId: otherUser.id,
-      name: 'Other User Project',
-      slug: 'other-user-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: otherUser.id,
+        name: 'Other User Project',
+        slug: 'other-user-project',
+      })
+      .returning()
 
     const notFound = await db.query.projects.findFirst({
       where: buildProjectWhere(project.id, testUserId),
@@ -117,19 +142,25 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('works with project entry associations', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Project with Entries',
-      slug: 'project-with-entries',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Project with Entries',
+        slug: 'project-with-entries',
+      })
+      .returning()
 
-    const [entry] = await db.insert(schema.entries).values({
-      userId: testUserId,
-      entryType: 'book',
-      title: 'Test Entry',
-      authors: [],
-      year: 2024,
-    }).returning()
+    const [entry] = await db
+      .insert(schema.entries)
+      .values({
+        userId: testUserId,
+        entryType: 'book',
+        title: 'Test Entry',
+        authors: [],
+        year: 2024,
+      })
+      .returning()
 
     await db.insert(schema.entryProjects).values({
       entryId: entry.id,
@@ -151,11 +182,14 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('handles hyphenated slugs correctly', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'My Research Project',
-      slug: 'my-research-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'My Research Project',
+        slug: 'my-research-project',
+      })
+      .returning()
 
     const found = await db.query.projects.findFirst({
       where: buildProjectWhere('my-research-project', testUserId),
@@ -166,11 +200,14 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('handles numeric slugs correctly', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: '2024 Research',
-      slug: '2024-research',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: '2024 Research',
+        slug: '2024-research',
+      })
+      .returning()
 
     const found = await db.query.projects.findFirst({
       where: buildProjectWhere('2024-research', testUserId),
@@ -181,17 +218,23 @@ describe('Project Slug and ID Query Helper', () => {
   })
 
   it('ensures unique slugs for same user', async () => {
-    const [project1] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Duplicate Name',
-      slug: 'duplicate-name',
-    }).returning()
+    const [project1] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Duplicate Name',
+        slug: 'duplicate-name',
+      })
+      .returning()
 
-    const [project2] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Duplicate Name',
-      slug: 'duplicate-name-2',
-    }).returning()
+    const [project2] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Duplicate Name',
+        slug: 'duplicate-name-2',
+      })
+      .returning()
 
     expect(project1.slug).toBe('duplicate-name')
     expect(project2.slug).toBe('duplicate-name-2')

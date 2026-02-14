@@ -22,7 +22,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (userId === admin.id) {
-    throw createError({ statusCode: 400, message: 'You cannot modify your own account through admin tools' })
+    throw createError({
+      statusCode: 400,
+      message: 'You cannot modify your own account through admin tools',
+    })
   }
 
   const body = await readBody(event)
@@ -44,7 +47,10 @@ export default defineEventHandler(async (event) => {
     updates.role = parsed.role
   }
 
-  if (parsed.subscriptionTier !== undefined && parsed.subscriptionTier !== existingUser.subscriptionTier) {
+  if (
+    parsed.subscriptionTier !== undefined &&
+    parsed.subscriptionTier !== existingUser.subscriptionTier
+  ) {
     changes.subscriptionTier = { from: existingUser.subscriptionTier, to: parsed.subscriptionTier }
     updates.subscriptionTier = parsed.subscriptionTier
   }
@@ -53,7 +59,7 @@ export default defineEventHandler(async (event) => {
     changes.isBanned = { from: existingUser.isBanned, to: parsed.isBanned }
     updates.isBanned = parsed.isBanned
     updates.bannedAt = parsed.isBanned ? new Date() : null
-    updates.bannedReason = parsed.isBanned ? (parsed.bannedReason || null) : null
+    updates.bannedReason = parsed.isBanned ? parsed.bannedReason || null : null
   }
 
   if (parsed.name !== undefined && parsed.name !== existingUser.name) {

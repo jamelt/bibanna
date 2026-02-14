@@ -13,13 +13,16 @@ export default defineEventHandler(async (event) => {
       description: tags.description,
       groupName: tags.groupName,
       createdAt: tags.createdAt,
-      entryCount: sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as('entry_count'),
+      entryCount:
+        sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as(
+          'entry_count',
+        ),
     })
     .from(tags)
     .where(eq(tags.userId, user.id))
     .orderBy(asc(tags.name))
 
-  return userTags.map(t => ({
+  return userTags.map((t) => ({
     ...t,
     entryCount: Number(t.entryCount),
   }))

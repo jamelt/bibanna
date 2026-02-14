@@ -14,9 +14,7 @@ const page = ref(1)
 const pageSize = ref(20)
 const searchQuery = ref('')
 const typeFilter = ref('')
-const projectFilter = ref<string | null>(
-  (route.query.projectId as string) || null,
-)
+const projectFilter = ref<string | null>((route.query.projectId as string) || null)
 const sortBy = ref('updatedAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const viewMode = useViewPreferences<'list' | 'table'>('annotations', 'list')
@@ -33,7 +31,11 @@ const queryParams = computed(() => ({
   sortOrder: sortOrder.value,
 }))
 
-const { data: annotationsData, pending, refresh } = await useFetch('/api/annotations', {
+const {
+  data: annotationsData,
+  pending,
+  refresh,
+} = await useFetch('/api/annotations', {
   query: queryParams,
   watch: [queryParams],
 })
@@ -73,13 +75,13 @@ const typeColorMap: Record<string, string> = {
   custom: 'neutral',
 }
 
-const hasActiveFilters = computed(() =>
-  !!(searchQuery.value || typeFilter.value || projectFilter.value),
+const hasActiveFilters = computed(
+  () => !!(searchQuery.value || typeFilter.value || projectFilter.value),
 )
 
 const selectedProjectName = computed(() => {
   if (!projectFilter.value || !projectsData.value) return null
-  const p = projectsData.value.find(p => p.id === projectFilter.value)
+  const p = projectsData.value.find((p) => p.id === projectFilter.value)
   return p?.name || null
 })
 
@@ -92,7 +94,10 @@ function formatAuthors(authors: any[]) {
 }
 
 function truncateContent(content: string, maxLength = 200) {
-  const stripped = content.replace(/[#*_~`>\-\[\]()]/g, '').replace(/\n+/g, ' ').trim()
+  const stripped = content
+    .replace(/[#*_~`>\-[\]()]/g, '')
+    .replace(/\n+/g, ' ')
+    .trim()
   if (stripped.length <= maxLength) return stripped
   return stripped.slice(0, maxLength).trim() + '...'
 }
@@ -147,7 +152,8 @@ function handleKeydown(e: KeyboardEvent) {
   if (viewMode.value === 'table') return
 
   const target = e.target as HTMLElement
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+    return
 
   const list = annotations.value
   if (list.length === 0) return
@@ -215,7 +221,8 @@ onUnmounted(() => {
           </span>
         </h1>
         <p class="text-gray-500 dark:text-gray-400">
-          {{ total }} {{ total === 1 ? 'annotation' : 'annotations' }}{{ selectedProjectName ? '' : ' across your library' }}
+          {{ total }} {{ total === 1 ? 'annotation' : 'annotations'
+          }}{{ selectedProjectName ? '' : ' across your library' }}
         </p>
       </div>
 
@@ -270,7 +277,10 @@ onUnmounted(() => {
 
       <USelectMenu
         v-model="projectFilter"
-        :items="[{ id: null, name: 'All projects' }, ...(projectsData || []).map(p => ({ id: p.id, name: p.name }))]"
+        :items="[
+          { id: null, name: 'All projects' },
+          ...(projectsData || []).map((p) => ({ id: p.id, name: p.name })),
+        ]"
         placeholder="All projects"
         value-key="id"
         label-key="name"
@@ -311,7 +321,10 @@ onUnmounted(() => {
 
     <!-- Empty state: filters active but no results -->
     <UCard v-else-if="annotations.length === 0 && hasActiveFilters" class="text-center py-12">
-      <UIcon name="i-heroicons-magnifying-glass" class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600" />
+      <UIcon
+        name="i-heroicons-magnifying-glass"
+        class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600"
+      />
       <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
         No matching annotations
       </h3>
@@ -331,14 +344,15 @@ onUnmounted(() => {
     <!-- Empty state: no annotations at all -->
     <UCard v-else-if="annotations.length === 0" class="py-12">
       <div class="text-center max-w-md mx-auto space-y-5">
-        <UIcon name="i-heroicons-pencil-square" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+        <UIcon
+          name="i-heroicons-pencil-square"
+          class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600"
+        />
         <div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            No annotations yet
-          </h3>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">No annotations yet</h3>
           <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-            Annotations let you record your thoughts, summaries, and critiques on sources.
-            Open any entry in your library to add your first annotation.
+            Annotations let you record your thoughts, summaries, and critiques on sources. Open any
+            entry in your library to add your first annotation.
           </p>
         </div>
         <UButton
@@ -357,8 +371,13 @@ onUnmounted(() => {
       :loading="pending"
       :sort-by="sortBy"
       :sort-order="sortOrder"
-      @update:sort-by="(v) => { sortBy = v; page = 1 }"
-      @update:sort-order="(v) => sortOrder = v"
+      @update:sort-by="
+        (v) => {
+          sortBy = v
+          page = 1
+        }
+      "
+      @update:sort-order="(v) => (sortOrder = v)"
       @edit="openEditModal"
     />
 
@@ -368,18 +387,15 @@ onUnmounted(() => {
         v-for="(annotation, index) in annotations"
         :key="annotation.id"
         :data-annotation-index="index"
-        
       >
         <UCard
           class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
           :class="{
-            'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10': focusedIndex === index,
+            'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10':
+              focusedIndex === index,
           }"
         >
-          <NuxtLink
-            :to="`/app/library/${annotation.entryId}`"
-            class="block space-y-2"
-          >
+          <NuxtLink :to="`/app/library/${annotation.entryId}`" class="block space-y-2">
             <!-- Entry context + type badge -->
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-2 min-w-0">
@@ -405,9 +421,12 @@ onUnmounted(() => {
           </NuxtLink>
 
           <!-- Footer with edit button -->
-          <div class="flex items-center justify-between mt-2 text-xs text-gray-400 dark:text-gray-500">
+          <div
+            class="flex items-center justify-between mt-2 text-xs text-gray-400 dark:text-gray-500"
+          >
             <span>
-              {{ formatAuthors(annotation.entryAuthors) }}{{ annotation.entryYear ? ` · ${annotation.entryYear}` : '' }}
+              {{ formatAuthors(annotation.entryAuthors)
+              }}{{ annotation.entryYear ? ` · ${annotation.entryYear}` : '' }}
             </span>
             <div class="flex items-center gap-2">
               <UButton
@@ -428,11 +447,7 @@ onUnmounted(() => {
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center">
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="total"
-      />
+      <UPagination v-model:page="page" :items-per-page="pageSize" :total="total" />
     </div>
 
     <!-- Edit Annotation Modal -->

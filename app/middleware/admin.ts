@@ -23,8 +23,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     try {
       const profile = await $fetch<{ role: string }>('/api/admin/me')
       adminRole.value = profile.role
-    }
-    catch {
+    } catch {
       return navigateTo('/app')
     }
   }

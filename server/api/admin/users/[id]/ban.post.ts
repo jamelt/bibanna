@@ -37,12 +37,16 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  const [updated] = await db.update(users).set({
-    isBanned: true,
-    bannedAt: new Date(),
-    bannedReason: parsed.reason,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId)).returning()
+  const [updated] = await db
+    .update(users)
+    .set({
+      isBanned: true,
+      bannedAt: new Date(),
+      bannedReason: parsed.reason,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning()
 
   await logAdminAction(admin.id, 'user.ban', 'user', userId, { reason: parsed.reason }, ip)
 

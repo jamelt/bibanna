@@ -89,9 +89,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (untagged) {
-    conditions.push(
-      sql`NOT EXISTS (SELECT 1 FROM entry_tags et WHERE et.entry_id = ${entries.id})`,
-    )
+    conditions.push(sql`NOT EXISTS (SELECT 1 FROM entry_tags et WHERE et.entry_id = ${entries.id})`)
   }
 
   let baseQuery = db
@@ -112,20 +110,14 @@ export default defineEventHandler(async (event) => {
   if (projectId) {
     baseQuery = baseQuery.innerJoin(
       entryProjects,
-      and(
-        eq(entries.id, entryProjects.entryId),
-        eq(entryProjects.projectId, projectId),
-      ),
+      and(eq(entries.id, entryProjects.entryId), eq(entryProjects.projectId, projectId)),
     )
   }
 
   if (tagIds && tagIds.length > 0) {
     baseQuery = baseQuery.innerJoin(
       entryTags,
-      and(
-        eq(entries.id, entryTags.entryId),
-        inArray(entryTags.tagId, tagIds),
-      ),
+      and(eq(entries.id, entryTags.entryId), inArray(entryTags.tagId, tagIds)),
     )
   }
 
@@ -171,7 +163,7 @@ export default defineEventHandler(async (event) => {
     updatedAt: entries.updatedAt,
   }[effectiveSortBy]
 
-  const orderFn = useRelevanceSort ? desc : (sortOrder === 'asc' ? asc : desc)
+  const orderFn = useRelevanceSort ? desc : sortOrder === 'asc' ? asc : desc
 
   const offset = (page - 1) * pageSize
 
@@ -183,34 +175,25 @@ export default defineEventHandler(async (event) => {
   if (projectId) {
     countQuery = countQuery.innerJoin(
       entryProjects,
-      and(
-        eq(entries.id, entryProjects.entryId),
-        eq(entryProjects.projectId, projectId),
-      ),
+      and(eq(entries.id, entryProjects.entryId), eq(entryProjects.projectId, projectId)),
     )
   }
 
   if (tagIds && tagIds.length > 0) {
     countQuery = countQuery.innerJoin(
       entryTags,
-      and(
-        eq(entries.id, entryTags.entryId),
-        inArray(entryTags.tagId, tagIds),
-      ),
+      and(eq(entries.id, entryTags.entryId), inArray(entryTags.tagId, tagIds)),
     )
   }
 
   const [results, countResult] = await Promise.all([
-    baseQuery
-      .orderBy(orderFn(orderColumn))
-      .limit(pageSize)
-      .offset(offset),
+    baseQuery.orderBy(orderFn(orderColumn)).limit(pageSize).offset(offset),
     countQuery,
   ])
 
   const total = Number(countResult[0]?.count ?? 0)
 
-  const entryIds = results.map(r => r.id)
+  const entryIds = results.map((r) => r.id)
   const [entryTagsData, entryAnnotationsData] = await Promise.all([
     entryIds.length > 0
       ? db
@@ -236,26 +219,32 @@ export default defineEventHandler(async (event) => {
       : [],
   ])
 
-  const tagsByEntry = entryTagsData.reduce((acc, tag) => {
-    if (tag.entryId === undefined) return acc
-    const arr = acc[tag.entryId] ?? []
-    arr.push({
-      id: tag.tagId,
-      name: tag.tagName,
-      color: tag.tagColor,
-    })
-    acc[tag.entryId] = arr
-    return acc
-  }, {} as Record<string, Array<{ id: string; name: string; color: string | null }>>)
+  const tagsByEntry = entryTagsData.reduce(
+    (acc, tag) => {
+      if (tag.entryId === undefined) return acc
+      const arr = acc[tag.entryId] ?? []
+      arr.push({
+        id: tag.tagId,
+        name: tag.tagName,
+        color: tag.tagColor,
+      })
+      acc[tag.entryId] = arr
+      return acc
+    },
+    {} as Record<string, Array<{ id: string; name: string; color: string | null }>>,
+  )
 
-  const annotationCountByEntry = entryAnnotationsData.reduce((acc, a) => {
-    if (a.entryId !== undefined) {
-      acc[a.entryId] = Number(a.count ?? 0)
-    }
-    return acc
-  }, {} as Record<string, number>)
+  const annotationCountByEntry = entryAnnotationsData.reduce(
+    (acc, a) => {
+      if (a.entryId !== undefined) {
+        acc[a.entryId] = Number(a.count ?? 0)
+      }
+      return acc
+    },
+    {} as Record<string, number>,
+  )
 
-  const data = results.map(entry => ({
+  const data = results.map((entry) => ({
     ...entry,
     tags: tagsByEntry[entry.id] ?? [],
     annotationCount: annotationCountByEntry[entry.id] ?? 0,

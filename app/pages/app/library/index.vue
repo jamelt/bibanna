@@ -11,7 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
-const searchQuery = ref(route.query.q as string || '')
+const searchQuery = ref((route.query.q as string) || '')
 const selectedTypes = ref<string[]>([])
 const showUntagged = ref(route.query.untagged === 'true')
 const selectedTags = ref<string[]>(
@@ -22,9 +22,7 @@ const selectedTags = ref<string[]>(
     return Array.isArray(tagIds) ? tagIds : [tagIds]
   })(),
 )
-const selectedProject = ref<string | null>(
-  (route.query.projectId as string) || null,
-)
+const selectedProject = ref<string | null>((route.query.projectId as string) || null)
 const sortBy = ref('createdAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const page = ref(1)
@@ -63,13 +61,15 @@ const q = computed(() => searchQuery.value || undefined)
 const entryTypesQuery = computed(() =>
   selectedTypes.value.length > 0 ? selectedTypes.value : undefined,
 )
-const tagIdsQuery = computed(() =>
-  selectedTags.value.length > 0 ? selectedTags.value : undefined,
-)
+const tagIdsQuery = computed(() => (selectedTags.value.length > 0 ? selectedTags.value : undefined))
 const projectIdQuery = computed(() => selectedProject.value || undefined)
 const untaggedQuery = computed(() => showUntagged.value || undefined)
 
-const { data: entriesData, pending, refresh } = await useFetch('/api/entries', {
+const {
+  data: entriesData,
+  pending,
+  refresh,
+} = await useFetch('/api/entries', {
   query: {
     q,
     entryTypes: entryTypesQuery,
@@ -95,8 +95,9 @@ const entries = computed(() => entriesData.value?.data || [])
 const totalEntries = computed(() => entriesData.value?.total || 0)
 const totalPages = computed(() => entriesData.value?.totalPages || 1)
 
-const allSelected = computed(() =>
-  entries.value.length > 0 && entries.value.every(e => selectedEntryIds.value.includes(e.id)),
+const allSelected = computed(
+  () =>
+    entries.value.length > 0 && entries.value.every((e) => selectedEntryIds.value.includes(e.id)),
 )
 
 const entryTypeOptions = Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => ({
@@ -159,8 +160,7 @@ function toggleEntrySelection(entryId: string) {
   const idx = selectedEntryIds.value.indexOf(entryId)
   if (idx >= 0) {
     selectedEntryIds.value.splice(idx, 1)
-  }
-  else {
+  } else {
     selectedEntryIds.value.push(entryId)
   }
 }
@@ -168,9 +168,8 @@ function toggleEntrySelection(entryId: string) {
 function toggleSelectAll() {
   if (allSelected.value) {
     selectedEntryIds.value = []
-  }
-  else {
-    selectedEntryIds.value = entries.value.map(e => e.id)
+  } else {
+    selectedEntryIds.value = entries.value.map((e) => e.id)
   }
 }
 
@@ -182,8 +181,7 @@ function exitSelectionMode() {
 function handleEntryClick(entryId: string) {
   if (isSelectionMode.value) {
     toggleEntrySelection(entryId)
-  }
-  else {
+  } else {
     router.push(`/app/library/${entryId}`)
   }
 }
@@ -211,15 +209,13 @@ async function bulkAction(action: string, extra: Record<string, unknown> = {}) {
     selectedEntryIds.value = []
     isSelectionMode.value = false
     await refresh()
-  }
-  catch (err: any) {
+  } catch (err: any) {
     toast.add({
       title: 'Bulk action failed',
       description: err.data?.message || 'Please try again.',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isBulkProcessing.value = false
   }
 }
@@ -269,7 +265,9 @@ const mobileOverflowItems = computed(() => {
     items.push({
       label: 'Select',
       icon: 'i-heroicons-check-circle',
-      onSelect: () => { isSelectionMode.value = true },
+      onSelect: () => {
+        isSelectionMode.value = true
+      },
     })
   }
 
@@ -277,17 +275,23 @@ const mobileOverflowItems = computed(() => {
     {
       label: 'Import',
       icon: 'i-heroicons-arrow-up-tray',
-      onSelect: () => { isImportModalOpen.value = true },
+      onSelect: () => {
+        isImportModalOpen.value = true
+      },
     },
     {
       label: 'Export',
       icon: 'i-heroicons-arrow-down-tray',
-      onSelect: () => { isExportModalOpen.value = true },
+      onSelect: () => {
+        isExportModalOpen.value = true
+      },
     },
     {
       label: 'Mind Map',
       icon: 'i-heroicons-share',
-      onSelect: () => { navigateTo('/app/library/mindmap') },
+      onSelect: () => {
+        navigateTo('/app/library/mindmap')
+      },
     },
   )
 
@@ -304,7 +308,8 @@ function handleLibraryKeydown(e: KeyboardEvent) {
   if (isAnyModalOpen()) return
 
   const target = e.target as HTMLElement
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+    return
 
   const list = entries.value
   if (list.length === 0) return
@@ -328,8 +333,7 @@ function handleLibraryKeydown(e: KeyboardEvent) {
       if (entry) {
         if (isSelectionMode.value) {
           toggleEntrySelection(entry.id)
-        }
-        else {
+        } else {
           router.push(`/app/library/${entry.id}`)
         }
       }
@@ -370,9 +374,7 @@ onUnmounted(() => {
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          Library
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Library</h1>
         <p class="text-gray-500 dark:text-gray-400">
           {{ totalEntries }} {{ totalEntries === 1 ? 'entry' : 'entries' }}
         </p>
@@ -458,11 +460,7 @@ onUnmounted(() => {
         />
 
         <!-- Mobile overflow menu -->
-        <UDropdownMenu
-          :items="mobileOverflowItems"
-          :content="{ align: 'end' }"
-          class="sm:hidden"
-        >
+        <UDropdownMenu :items="mobileOverflowItems" :content="{ align: 'end' }" class="sm:hidden">
           <UButton
             icon="i-heroicons-ellipsis-vertical"
             variant="outline"
@@ -497,7 +495,7 @@ onUnmounted(() => {
 
       <USelectMenu
         v-model="selectedTags"
-        :items="(tags || []).map(t => ({ ...t, description: t.description ?? undefined }))"
+        :items="(tags || []).map((t) => ({ ...t, description: t.description ?? undefined }))"
         multiple
         placeholder="All tags"
         value-key="id"
@@ -526,7 +524,10 @@ onUnmounted(() => {
 
       <USelectMenu
         v-model="selectedProject"
-        :items="[{ id: null, name: 'All projects' }, ...(projects || []).map(p => ({ id: p.id, name: p.name }))]"
+        :items="[
+          { id: null, name: 'All projects' },
+          ...(projects || []).map((p) => ({ id: p.id, name: p.name })),
+        ]"
         placeholder="All projects"
         value-key="id"
         label-key="name"
@@ -551,7 +552,13 @@ onUnmounted(() => {
       />
 
       <UButton
-        v-if="searchQuery || selectedTypes.length > 0 || selectedTags.length > 0 || selectedProject || showUntagged"
+        v-if="
+          searchQuery ||
+          selectedTypes.length > 0 ||
+          selectedTags.length > 0 ||
+          selectedProject ||
+          showUntagged
+        "
         icon="i-heroicons-x-mark"
         variant="ghost"
         color="neutral"
@@ -595,7 +602,7 @@ onUnmounted(() => {
           </UButton>
           <UDropdownMenu
             :items="[
-              (projects || []).map(p => ({
+              (projects || []).map((p) => ({
                 label: p.name,
                 onSelect: () => bulkAction('addToProject', { projectId: p.id }),
               })),
@@ -645,7 +652,10 @@ onUnmounted(() => {
       </div>
 
       <!-- Bulk tag picker (multi-select) -->
-      <div v-if="isBulkTagPickerOpen" class="flex items-center gap-2 pt-1 border-t border-primary-200 dark:border-primary-700">
+      <div
+        v-if="isBulkTagPickerOpen"
+        class="flex items-center gap-2 pt-1 border-t border-primary-200 dark:border-primary-700"
+      >
         <span class="text-xs font-medium text-primary-600 dark:text-primary-400 shrink-0">
           {{ bulkTagMode === 'add' ? 'Add' : 'Remove' }} tags:
         </span>
@@ -653,7 +663,9 @@ onUnmounted(() => {
           <AppInlineTagInput
             v-model="bulkTagIds"
             size="xs"
-            :placeholder="bulkTagMode === 'add' ? 'Select or create tags...' : 'Select tags to remove...'"
+            :placeholder="
+              bulkTagMode === 'add' ? 'Select or create tags...' : 'Select tags to remove...'
+            "
           />
         </div>
         <UButton
@@ -665,12 +677,7 @@ onUnmounted(() => {
         >
           Apply ({{ bulkTagIds.length }})
         </UButton>
-        <UButton
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          @click="isBulkTagPickerOpen = false"
-        >
+        <UButton size="xs" variant="ghost" color="neutral" @click="isBulkTagPickerOpen = false">
           Cancel
         </UButton>
       </div>
@@ -682,11 +689,18 @@ onUnmounted(() => {
     </div>
 
     <!-- Empty state: search has results but filters excluded all -->
-    <UCard v-else-if="entries.length === 0 && (searchQuery || selectedTypes.length || selectedTags.length || selectedProject)" class="text-center py-12">
-      <UIcon name="i-heroicons-magnifying-glass" class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        No matching entries
-      </h3>
+    <UCard
+      v-else-if="
+        entries.length === 0 &&
+        (searchQuery || selectedTypes.length || selectedTags.length || selectedProject)
+      "
+      class="text-center py-12"
+    >
+      <UIcon
+        name="i-heroicons-magnifying-glass"
+        class="w-14 h-14 mx-auto text-gray-300 dark:text-gray-600"
+      />
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No matching entries</h3>
       <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
         Try broadening your search, or remove some filters to see more results.
       </p>
@@ -703,11 +717,12 @@ onUnmounted(() => {
     <!-- Empty state: library is genuinely empty -->
     <UCard v-else-if="entries.length === 0" class="py-12">
       <div class="text-center max-w-md mx-auto space-y-5">
-        <UIcon name="i-heroicons-book-open" class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+        <UIcon
+          name="i-heroicons-book-open"
+          class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600"
+        />
         <div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            Your library is empty
-          </h3>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Your library is empty</h3>
           <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
             Add your first source to start building your bibliography.
           </p>
@@ -735,19 +750,36 @@ onUnmounted(() => {
           </p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1.5 text-left inline-block">
             <li class="flex items-start gap-2">
-              <kbd class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">{{ navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl' }}+K</kbd>
+              <kbd
+                class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded"
+                >{{ navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl' }}+K</kbd
+              >
               <span>Open Quick Add from anywhere</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">DOI</span>
-              <span>Paste a DOI like <code class="text-xs">10.1234/example</code> for instant metadata</span>
+              <span
+                class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded"
+                >DOI</span
+              >
+              <span
+                >Paste a DOI like <code class="text-xs">10.1234/example</code> for instant
+                metadata</span
+              >
             </li>
             <li class="flex items-start gap-2">
-              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">ISBN</span>
-              <span>Paste an ISBN like <code class="text-xs">978-0-13-468599-1</code> for books</span>
+              <span
+                class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded"
+                >ISBN</span
+              >
+              <span
+                >Paste an ISBN like <code class="text-xs">978-0-13-468599-1</code> for books</span
+              >
             </li>
             <li class="flex items-start gap-2">
-              <span class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded">j/k</span>
+              <span
+                class="shrink-0 px-1.5 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-800 rounded"
+                >j/k</span
+              >
               <span>Navigate entries with your keyboard</span>
             </li>
           </ul>
@@ -764,7 +796,8 @@ onUnmounted(() => {
         class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
         :class="{
           'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id),
-          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10': focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
+          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10':
+            focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
         }"
         @click="handleEntryClick(entry.id)"
       >
@@ -824,14 +857,22 @@ onUnmounted(() => {
       :sort-by="sortBy"
       :sort-order="sortOrder"
       @update:selected-ids="handleTableSelectionChange"
-      @update:sort-by="(v) => { sortBy = v; page = 1 }"
-      @update:sort-order="(v) => sortOrder = v"
+      @update:sort-by="
+        (v) => {
+          sortBy = v
+          page = 1
+        }
+      "
+      @update:sort-order="(v) => (sortOrder = v)"
       @tag-click="handleTagFilterFromTable"
       @refresh="refresh"
     />
 
     <!-- Grid view -->
-    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div
+      v-else-if="viewMode === 'grid'"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+    >
       <UCard
         v-for="(entry, index) in entries"
         :key="entry.id"
@@ -839,7 +880,8 @@ onUnmounted(() => {
         class="p-4 hover:ring-2 hover:ring-primary-500/50 transition-all cursor-pointer"
         :class="{
           'ring-2 ring-primary-500': selectedEntryIds.includes(entry.id),
-          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10': focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
+          'ring-2 ring-primary-300 dark:ring-primary-700 bg-primary-50/50 dark:bg-primary-900/10':
+            focusedEntryIndex === index && !selectedEntryIds.includes(entry.id),
         }"
         @click="handleEntryClick(entry.id)"
       >
@@ -877,18 +919,11 @@ onUnmounted(() => {
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex justify-center">
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="totalEntries"
-      />
+      <UPagination v-model:page="page" :items-per-page="pageSize" :total="totalEntries" />
     </div>
 
     <!-- Add Entry Modal -->
-    <LazyAppEntryFormModal
-      v-model:open="isAddModalOpen"
-      @created="handleEntryCreated"
-    />
+    <LazyAppEntryFormModal v-model:open="isAddModalOpen" @created="handleEntryCreated" />
 
     <!-- Export Modal -->
     <LazyAppExportModal
@@ -897,9 +932,6 @@ onUnmounted(() => {
     />
 
     <!-- Import Modal -->
-    <LazyAppImportModal
-      v-model:open="isImportModalOpen"
-      @imported="handleImported"
-    />
+    <LazyAppImportModal v-model:open="isImportModalOpen" @imported="handleImported" />
   </div>
 </template>

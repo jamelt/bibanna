@@ -1,4 +1,12 @@
-export { SUBSCRIPTION_PLANS, type SubscriptionTier, type SubscriptionPlan, type PlanLimits, type PlanPricing, type PlanUI, type PlanStripeConfig } from './plans'
+export {
+  SUBSCRIPTION_PLANS,
+  type SubscriptionTier,
+  type SubscriptionPlan,
+  type PlanLimits,
+  type PlanPricing,
+  type PlanUI,
+  type PlanStripeConfig,
+} from './plans'
 export {
   TIER_IDS,
   PAID_TIER_IDS,

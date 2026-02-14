@@ -22,9 +22,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const audioFile = formData.find(f => f.name === 'audio')
-  const languageField = formData.find(f => f.name === 'language')
-  const promptField = formData.find(f => f.name === 'prompt')
+  const audioFile = formData.find((f) => f.name === 'audio')
+  const languageField = formData.find((f) => f.name === 'language')
+  const promptField = formData.find((f) => f.name === 'prompt')
 
   if (!audioFile || !audioFile.data) {
     throw createError({
@@ -48,7 +48,10 @@ export default defineEventHandler(async (event) => {
   const currentMonth = new Date().toISOString().slice(0, 7)
 
   const monthlyUsage = (dbUser.preferences as any)?.voiceMinutesUsed?.[currentMonth] || 0
-  const audioDurationSeconds = estimateAudioDuration(audioFile.data.length, audioFile.type || 'audio/webm')
+  const audioDurationSeconds = estimateAudioDuration(
+    audioFile.data.length,
+    audioFile.type || 'audio/webm',
+  )
   const audioDurationMinutes = audioDurationSeconds / 60
 
   if (monthlyUsage + audioDurationMinutes > limits.voiceMinutesPerMonth) {
@@ -60,7 +63,9 @@ export default defineEventHandler(async (event) => {
 
   try {
     const language = languageField?.data?.toString() || 'en'
-    const prompt = promptField?.data?.toString() || 'Academic bibliography, citation, research paper, journal article, book reference'
+    const prompt =
+      promptField?.data?.toString() ||
+      'Academic bibliography, citation, research paper, journal article, book reference'
 
     const file = new File([audioFile.data], 'audio.webm', {
       type: audioFile.type || 'audio/webm',
@@ -75,25 +80,21 @@ export default defineEventHandler(async (event) => {
     })
 
     const updatedPreferences = {
-      ...(dbUser.preferences as object || {}),
+      ...((dbUser.preferences as object) || {}),
       voiceMinutesUsed: {
         ...((dbUser.preferences as any)?.voiceMinutesUsed || {}),
         [currentMonth]: monthlyUsage + audioDurationMinutes,
       },
     }
 
-    await db
-      .update(users)
-      .set({ preferences: updatedPreferences })
-      .where(eq(users.id, user.id))
+    await db.update(users).set({ preferences: updatedPreferences }).where(eq(users.id, user.id))
 
     return {
       text: transcription.text,
       duration: audioDurationMinutes,
       remainingMinutes: limits.voiceMinutesPerMonth - monthlyUsage - audioDurationMinutes,
     }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('Whisper API error:', error)
     throw createError({
       statusCode: 500,

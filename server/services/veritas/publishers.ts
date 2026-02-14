@@ -108,12 +108,7 @@ export const publisherTiers: Record<string, PublisherTier> = {
 
   tier5_independent: {
     score: 45,
-    keywords: [
-      'small press',
-      'independent',
-      'regional',
-      'local publisher',
-    ],
+    keywords: ['small press', 'independent', 'regional', 'local publisher'],
     characteristics: ['Variable quality', 'Limited peer review'],
   },
 
@@ -152,23 +147,25 @@ export const publisherTiers: Record<string, PublisherTier> = {
 }
 
 export const knownJournalRankings: Record<string, number> = {
-  'nature': 95,
-  'science': 95,
-  'cell': 95,
+  nature: 95,
+  science: 95,
+  cell: 95,
   'the lancet': 95,
   'new england journal of medicine': 95,
-  'nejm': 95,
-  'jama': 92,
-  'bmj': 90,
-  'pnas': 90,
+  nejm: 95,
+  jama: 92,
+  bmj: 90,
+  pnas: 90,
   'nature communications': 88,
   'science advances': 88,
-  'elife': 85,
+  elife: 85,
   'plos one': 70,
   'scientific reports': 70,
 }
 
-export function getPublisherScore(publisher: string | undefined): { score: number; tier: string; evidence: string } | null {
+export function getPublisherScore(
+  publisher: string | undefined,
+): { score: number; tier: string; evidence: string } | null {
   if (!publisher) return null
 
   const normalizedPublisher = publisher.toLowerCase().trim()
@@ -188,7 +185,9 @@ export function getPublisherScore(publisher: string | undefined): { score: numbe
   return null
 }
 
-export function getJournalScore(journal: string | undefined): { score: number; evidence: string } | null {
+export function getJournalScore(
+  journal: string | undefined,
+): { score: number; evidence: string } | null {
   if (!journal) return null
 
   const normalizedJournal = journal.toLowerCase().trim()

@@ -102,15 +102,13 @@ async function handleImport() {
 
     emit('imported')
     resetAndClose()
-  }
-  catch (err: any) {
+  } catch (err: any) {
     toast.add({
       title: 'Import failed',
       description: err.data?.message || 'Please check the BibTeX format and try again.',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isImporting.value = false
   }
 }
@@ -141,12 +139,14 @@ watch(isOpen, (open) => {
     }"
   >
     <template #content>
-      <div class="flex flex-col max-h-[min(90vh,44rem)] bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+      <div
+        class="flex flex-col max-h-[min(90vh,44rem)] bg-white dark:bg-gray-900 rounded-lg overflow-hidden"
+      >
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Import BibTeX
-          </h2>
+        <div
+          class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700"
+        >
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Import BibTeX</h2>
           <UButton
             variant="ghost"
             icon="i-heroicons-x-mark"
@@ -171,8 +171,11 @@ watch(isOpen, (open) => {
               accept=".bib,.bibtex,.txt"
               class="hidden"
               @change="handleFileSelect"
-            >
-            <UIcon name="i-heroicons-arrow-up-tray" class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500" />
+            />
+            <UIcon
+              name="i-heroicons-arrow-up-tray"
+              class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500"
+            />
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Drop a .bib file here, or click to browse
             </p>
@@ -215,7 +218,9 @@ watch(isOpen, (open) => {
             <UFormField label="Add to project">
               <USelectMenu
                 v-model="selectedProjectId"
-                :items="(projects || []).map(p => ({ ...p, description: p.description ?? undefined }))"
+                :items="
+                  (projects || []).map((p) => ({ ...p, description: p.description ?? undefined }))
+                "
                 placeholder="None (library only)"
                 value-key="id"
                 label-key="name"
@@ -224,27 +229,20 @@ watch(isOpen, (open) => {
             </UFormField>
 
             <UFormField label="Apply tags" help="Type to create new tags on the fly">
-              <AppInlineTagInput
-                v-model="selectedTagIds"
-                placeholder="Add or create tags..."
-              />
+              <AppInlineTagInput v-model="selectedTagIds" placeholder="Add or create tags..." />
             </UFormField>
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+        <div
+          class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3"
+        >
           <p class="text-xs text-gray-400 dark:text-gray-500">
             BibTeX entries will be parsed and added to your library.
           </p>
           <div class="flex gap-2">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="resetAndClose"
-            >
-              Cancel
-            </UButton>
+            <UButton variant="outline" color="neutral" @click="resetAndClose"> Cancel </UButton>
             <UButton
               color="primary"
               :loading="isImporting"

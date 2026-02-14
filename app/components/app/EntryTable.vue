@@ -8,22 +8,25 @@ type EntryRow = Entry & {
   annotationCount?: number
 }
 
-const props = withDefaults(defineProps<{
-  data: EntryRow[]
-  loading?: boolean
-  selectable?: boolean
-  showProjectColumn?: boolean
-  projectId?: string
-  tags?: Tag[]
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
-}>(), {
-  loading: false,
-  selectable: true,
-  showProjectColumn: false,
-  sortBy: 'createdAt',
-  sortOrder: 'desc',
-})
+const props = withDefaults(
+  defineProps<{
+    data: EntryRow[]
+    loading?: boolean
+    selectable?: boolean
+    showProjectColumn?: boolean
+    projectId?: string
+    tags?: Tag[]
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  }>(),
+  {
+    loading: false,
+    selectable: true,
+    showProjectColumn: false,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  },
+)
 
 const emit = defineEmits<{
   'update:selectedIds': [ids: string[]]
@@ -31,7 +34,7 @@ const emit = defineEmits<{
   'update:sortOrder': [order: 'asc' | 'desc']
   'remove-from-project': [entryId: string]
   'tag-click': [tagId: string]
-  'refresh': []
+  refresh: []
 }>()
 
 const router = useRouter()
@@ -47,9 +50,7 @@ const AppEntryTagCell = resolveComponent('AppEntryTagCell')
 const rowSelection = ref<Record<string, boolean>>({})
 
 const selectedIds = computed(() => {
-  return props.data
-    .filter((_, index) => rowSelection.value[index])
-    .map(entry => entry.id)
+  return props.data.filter((_, index) => rowSelection.value[index]).map((entry) => entry.id)
 })
 
 watch(selectedIds, (ids) => {
@@ -88,19 +89,26 @@ function handleSort(field: string) {
 function sortHeader(label: string, field: string) {
   const isActive = props.sortBy === field
   const icon = isActive
-    ? (props.sortOrder === 'asc' ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')
+    ? props.sortOrder === 'asc'
+      ? 'i-heroicons-chevron-up'
+      : 'i-heroicons-chevron-down'
     : 'i-heroicons-chevron-up-down'
 
-  return h('button', {
-    class: 'flex items-center gap-1 text-left font-medium hover:text-gray-900 dark:hover:text-white transition-colors',
-    onClick: () => handleSort(field),
-  }, [
-    label,
-    h(UIcon, {
-      name: icon,
-      class: `w-3.5 h-3.5 ${isActive ? 'text-primary-500' : 'text-gray-400'}`,
-    }),
-  ])
+  return h(
+    'button',
+    {
+      class:
+        'flex items-center gap-1 text-left font-medium hover:text-gray-900 dark:hover:text-white transition-colors',
+      onClick: () => handleSort(field),
+    },
+    [
+      label,
+      h(UIcon, {
+        name: icon,
+        class: `w-3.5 h-3.5 ${isActive ? 'text-primary-500' : 'text-gray-400'}`,
+      }),
+    ],
+  )
 }
 
 async function toggleFavorite(entry: EntryRow) {
@@ -181,8 +189,7 @@ const columns = computed(() => {
       cell: ({ row }) =>
         h(UCheckbox, {
           modelValue: row.getIsSelected(),
-          'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-            row.toggleSelected(!!value),
+          'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
           'aria-label': 'Select row',
           onClick: (e: Event) => e.stopPropagation(),
         }),
@@ -227,14 +234,19 @@ const columns = computed(() => {
     cell: ({ row }) => {
       const entry = row.original
       return h('div', { class: 'min-w-0' }, [
-        h('p', {
-          class: 'font-medium text-gray-900 dark:text-white truncate max-w-xs cursor-pointer hover:text-primary-600 dark:hover:text-primary-400',
-          title: entry.title,
-          onClick: (e: Event) => {
-            e.stopPropagation()
-            navigateToEntry(entry.id)
+        h(
+          'p',
+          {
+            class:
+              'font-medium text-gray-900 dark:text-white truncate max-w-xs cursor-pointer hover:text-primary-600 dark:hover:text-primary-400',
+            title: entry.title,
+            onClick: (e: Event) => {
+              e.stopPropagation()
+              navigateToEntry(entry.id)
+            },
           },
-        }, entry.title),
+          entry.title,
+        ),
       ])
     },
     meta: {
@@ -248,10 +260,14 @@ const columns = computed(() => {
     id: 'authors',
     header: () => sortHeader('Authors', 'author'),
     cell: ({ row }) => {
-      return h('span', {
-        class: 'text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[200px]',
-        title: formatAuthors(row.original.authors ?? []),
-      }, formatAuthors(row.original.authors ?? []))
+      return h(
+        'span',
+        {
+          class: 'text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[200px]',
+          title: formatAuthors(row.original.authors ?? []),
+        },
+        formatAuthors(row.original.authors ?? []),
+      )
     },
   })
 
@@ -260,9 +276,13 @@ const columns = computed(() => {
     header: () => sortHeader('Year', 'year'),
     cell: ({ row }) => {
       const year = row.original.year
-      return h('span', {
-        class: 'text-sm text-gray-600 dark:text-gray-400 tabular-nums',
-      }, year ? String(year) : 'n.d.')
+      return h(
+        'span',
+        {
+          class: 'text-sm text-gray-600 dark:text-gray-400 tabular-nums',
+        },
+        year ? String(year) : 'n.d.',
+      )
     },
     meta: {
       class: {
@@ -277,11 +297,15 @@ const columns = computed(() => {
     header: 'Type',
     cell: ({ row }) => {
       const label = ENTRY_TYPE_LABELS[row.original.entryType as keyof typeof ENTRY_TYPE_LABELS]
-      return h(UBadge, {
-        variant: 'subtle',
-        size: 'xs',
-        class: 'whitespace-nowrap',
-      }, () => label || row.original.entryType)
+      return h(
+        UBadge,
+        {
+          variant: 'subtle',
+          size: 'xs',
+          class: 'whitespace-nowrap',
+        },
+        () => label || row.original.entryType,
+      )
     },
   })
 
@@ -310,17 +334,20 @@ const columns = computed(() => {
         const visible = entryProjects.slice(0, 2)
         const overflow = entryProjects.length - 2
 
-        const children = visible.map(project =>
-          h('span', {
-            key: project.id,
-            class: 'inline-flex items-center text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
-          }, project.name),
+        const children = visible.map((project) =>
+          h(
+            'span',
+            {
+              key: project.id,
+              class:
+                'inline-flex items-center text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+            },
+            project.name,
+          ),
         )
 
         if (overflow > 0) {
-          children.push(
-            h('span', { class: 'text-xs text-gray-400' }, `+${overflow}`),
-          )
+          children.push(h('span', { class: 'text-xs text-gray-400' }, `+${overflow}`))
         }
 
         return h('div', { class: 'flex items-center gap-1 flex-wrap' }, children)
@@ -351,9 +378,13 @@ const columns = computed(() => {
     id: 'createdAt',
     header: () => sortHeader('Added', 'createdAt'),
     cell: ({ row }) => {
-      return h('span', {
-        class: 'text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap',
-      }, formatDate(row.original.createdAt))
+      return h(
+        'span',
+        {
+          class: 'text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap',
+        },
+        formatDate(row.original.createdAt),
+      )
     },
   })
 
@@ -361,19 +392,22 @@ const columns = computed(() => {
     id: 'actions',
     header: '',
     cell: ({ row }) => {
-      return h(UDropdownMenu, {
-        content: { align: 'end' },
-        items: getRowActions(row.original),
-        'aria-label': 'Row actions',
-      }, () =>
-        h(UButton, {
-          icon: 'i-heroicons-ellipsis-vertical',
-          color: 'neutral',
-          variant: 'ghost',
-          size: 'xs',
-          'aria-label': 'Actions',
-          onClick: (e: Event) => e.stopPropagation(),
-        }),
+      return h(
+        UDropdownMenu,
+        {
+          content: { align: 'end' },
+          items: getRowActions(row.original),
+          'aria-label': 'Row actions',
+        },
+        () =>
+          h(UButton, {
+            icon: 'i-heroicons-ellipsis-vertical',
+            color: 'neutral',
+            variant: 'ghost',
+            size: 'xs',
+            'aria-label': 'Actions',
+            onClick: (e: Event) => e.stopPropagation(),
+          }),
       )
     },
     meta: {
@@ -413,10 +447,11 @@ function handleRowSelect(row: any) {
   >
     <template #empty>
       <div class="text-center py-8">
-        <UIcon name="i-heroicons-book-open" class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600" />
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          No entries found
-        </p>
+        <UIcon
+          name="i-heroicons-book-open"
+          class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600"
+        />
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No entries found</p>
       </div>
     </template>
   </UTable>

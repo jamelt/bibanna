@@ -28,11 +28,18 @@ export default defineEventHandler(async (event) => {
   ])
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
-  await logAdminAction(admin.id, 'user.export_data', 'user', userId, {
-    targetEmail: targetUser.email,
-    entriesCount: userEntries.length,
-    projectsCount: userProjects.length,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.export_data',
+    'user',
+    userId,
+    {
+      targetEmail: targetUser.email,
+      entriesCount: userEntries.length,
+      projectsCount: userProjects.length,
+    },
+    ip,
+  )
 
   return {
     exportedAt: new Date().toISOString(),
@@ -47,7 +54,7 @@ export default defineEventHandler(async (event) => {
       createdAt: targetUser.createdAt,
       updatedAt: targetUser.updatedAt,
     },
-    entries: userEntries.map(e => ({
+    entries: userEntries.map((e) => ({
       id: e.id,
       entryType: e.entryType,
       title: e.title,
@@ -60,7 +67,7 @@ export default defineEventHandler(async (event) => {
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
     })),
-    projects: userProjects.map(p => ({
+    projects: userProjects.map((p) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -70,14 +77,14 @@ export default defineEventHandler(async (event) => {
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     })),
-    tags: userTags.map(t => ({
+    tags: userTags.map((t) => ({
       id: t.id,
       name: t.name,
       color: t.color,
       description: t.description,
       createdAt: t.createdAt,
     })),
-    annotations: userAnnotations.map(a => ({
+    annotations: userAnnotations.map((a) => ({
       id: a.id,
       entryId: a.entryId,
       content: a.content,
@@ -86,7 +93,7 @@ export default defineEventHandler(async (event) => {
       createdAt: a.createdAt,
       updatedAt: a.updatedAt,
     })),
-    feedback: userFeedback.map(f => ({
+    feedback: userFeedback.map((f) => ({
       id: f.id,
       type: f.type,
       subject: f.subject,

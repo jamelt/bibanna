@@ -112,11 +112,10 @@ function parseQualifiers(raw: string): { freeText: string; qualifiers: SearchQua
 
   const parts: string[] = []
 
-  // eslint-disable-next-line no-cond-assign
   while ((match = qualifierRegex.exec(raw)) !== null) {
     const rawKey = match[1].toLowerCase()
     const key = QUALIFIER_ALIASES[rawKey] || rawKey
-    let value = match[2].replace(/^"|"$/g, '')
+    const value = match[2].replace(/^"|"$/g, '')
 
     if (!QUALIFIER_KEYS.includes(key) && !Object.keys(QUALIFIER_ALIASES).includes(rawKey)) {
       continue
@@ -218,7 +217,7 @@ export function useGlobalSearch() {
     if (!isSlashCommand.value) return []
     const cmd = query.value.slice(1).toLowerCase()
     if (!cmd) return navigationCommands
-    return navigationCommands.filter(c => c.label.toLowerCase().includes(cmd))
+    return navigationCommands.filter((c) => c.label.toLowerCase().includes(cmd))
   })
 
   const flatResults = computed<Array<{ type: string; id: string; data: any }>>(() => {
@@ -262,7 +261,7 @@ export function useGlobalSearch() {
   const qualifierSuggestions = computed(() => {
     const q = query.value
     if (!q.endsWith(':') && !q.match(/\w+:$/)) return []
-    return QUALIFIER_KEYS.map(k => ({
+    return QUALIFIER_KEYS.map((k) => ({
       key: k,
       label: `${k}:`,
       description: qualifierDescriptions[k] || '',
@@ -362,7 +361,7 @@ export function useGlobalSearch() {
 
   function addToRecentSearches(q: string) {
     if (!q.trim() || q.startsWith('/')) return
-    const existing = recentSearches.value.findIndex(s => s.query === q && s.scope === scope.value)
+    const existing = recentSearches.value.findIndex((s) => s.query === q && s.scope === scope.value)
     if (existing >= 0) {
       recentSearches.value[existing].timestamp = Date.now()
       recentSearches.value[existing].count++
@@ -382,17 +381,17 @@ export function useGlobalSearch() {
   }
 
   function pinSearch(search: RecentSearchItem) {
-    if (pinnedSearches.value.some(s => s.query === search.query)) return
+    if (pinnedSearches.value.some((s) => s.query === search.query)) return
     pinnedSearches.value.unshift(search)
     pinnedSearches.value = pinnedSearches.value.slice(0, 5)
   }
 
   function unpinSearch(query: string) {
-    pinnedSearches.value = pinnedSearches.value.filter(s => s.query !== query)
+    pinnedSearches.value = pinnedSearches.value.filter((s) => s.query !== query)
   }
 
   function trackVisited(item: Omit<RecentlyVisitedItem, 'timestamp'>) {
-    recentlyVisited.value = recentlyVisited.value.filter(v => v.id !== item.id)
+    recentlyVisited.value = recentlyVisited.value.filter((v) => v.id !== item.id)
     recentlyVisited.value.unshift({ ...item, timestamp: Date.now() })
     recentlyVisited.value = recentlyVisited.value.slice(0, 8)
   }

@@ -4,7 +4,10 @@ import postgres from 'postgres'
 import { eq, desc, sql } from 'drizzle-orm'
 import * as schema from '~/server/database/schema'
 
-const testDbUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/annobib'
+const testDbUrl =
+  process.env.TEST_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  'postgres://postgres:postgres@localhost:5432/annobib'
 
 let db: ReturnType<typeof drizzle>
 let client: postgres.Sql
@@ -13,31 +16,42 @@ let testUserId: string
 beforeAll(async () => {
   client = postgres(testDbUrl, { max: 1, connect_timeout: 2 })
   db = drizzle(client, { schema })
-  
-  const [user] = await db.insert(schema.users).values({
-    email: `immediate-test-${Date.now()}@example.com`,
-    name: 'Immediate Update Test User',
-    auth0Id: `immediate-test-${Date.now()}`,
-  }).returning()
+
+  const [user] = await db
+    .insert(schema.users)
+    .values({
+      email: `immediate-test-${Date.now()}@example.com`,
+      name: 'Immediate Update Test User',
+      auth0Id: `immediate-test-${Date.now()}`,
+    })
+    .returning()
   testUserId = user.id
 })
 
 afterAll(async () => {
   if (testUserId) {
-    await db.delete(schema.entryTags).where(
-      eq(schema.entryTags.entryId,
-        db.select({ id: schema.entries.id })
-          .from(schema.entries)
-          .where(eq(schema.entries.userId, testUserId))
+    await db
+      .delete(schema.entryTags)
+      .where(
+        eq(
+          schema.entryTags.entryId,
+          db
+            .select({ id: schema.entries.id })
+            .from(schema.entries)
+            .where(eq(schema.entries.userId, testUserId)),
+        ),
       )
-    )
-    await db.delete(schema.entryProjects).where(
-      eq(schema.entryProjects.projectId,
-        db.select({ id: schema.projects.id })
-          .from(schema.projects)
-          .where(eq(schema.projects.userId, testUserId))
+    await db
+      .delete(schema.entryProjects)
+      .where(
+        eq(
+          schema.entryProjects.projectId,
+          db
+            .select({ id: schema.projects.id })
+            .from(schema.projects)
+            .where(eq(schema.projects.userId, testUserId)),
+        ),
       )
-    )
     await db.delete(schema.entries).where(eq(schema.entries.userId, testUserId))
     await db.delete(schema.projects).where(eq(schema.projects.userId, testUserId))
     await db.delete(schema.tags).where(eq(schema.tags.userId, testUserId))
@@ -61,11 +75,14 @@ describe('Projects List Updates', () => {
     })
     expect(initialProjects).toHaveLength(0)
 
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'New Project',
-      slug: 'new-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'New Project',
+        slug: 'new-project',
+      })
+      .returning()
 
     const updatedProjects = await db.query.projects.findMany({
       where: eq(schema.projects.userId, testUserId),
@@ -95,16 +112,22 @@ describe('Projects List Updates', () => {
   })
 
   it('project with entries shows correct count', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Project with Entries',
-      slug: 'project-with-entries',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Project with Entries',
+        slug: 'project-with-entries',
+      })
+      .returning()
 
-    const [entry1, entry2] = await db.insert(schema.entries).values([
-      { userId: testUserId, entryType: 'book', title: 'Entry 1', authors: [], year: 2024 },
-      { userId: testUserId, entryType: 'book', title: 'Entry 2', authors: [], year: 2024 },
-    ]).returning()
+    const [entry1, entry2] = await db
+      .insert(schema.entries)
+      .values([
+        { userId: testUserId, entryType: 'book', title: 'Entry 1', authors: [], year: 2024 },
+        { userId: testUserId, entryType: 'book', title: 'Entry 2', authors: [], year: 2024 },
+      ])
+      .returning()
 
     await db.insert(schema.entryProjects).values([
       { entryId: entry1.id, projectId: project.id },
@@ -135,8 +158,8 @@ describe('Projects List Updates', () => {
       where: eq(schema.projects.userId, testUserId),
     })
 
-    const archivedCount = activeProjects.filter(p => p.isArchived).length
-    const activeCount = activeProjects.filter(p => !p.isArchived).length
+    const archivedCount = activeProjects.filter((p) => p.isArchived).length
+    const activeCount = activeProjects.filter((p) => !p.isArchived).length
 
     expect(archivedCount).toBe(1)
     expect(activeCount).toBe(1)
@@ -150,13 +173,16 @@ describe('Entries List Updates', () => {
     })
     expect(initialEntries).toHaveLength(0)
 
-    const [entry] = await db.insert(schema.entries).values({
-      userId: testUserId,
-      entryType: 'book',
-      title: 'Test Entry',
-      authors: [{ firstName: 'John', lastName: 'Doe' }],
-      year: 2024,
-    }).returning()
+    const [entry] = await db
+      .insert(schema.entries)
+      .values({
+        userId: testUserId,
+        entryType: 'book',
+        title: 'Test Entry',
+        authors: [{ firstName: 'John', lastName: 'Doe' }],
+        year: 2024,
+      })
+      .returning()
 
     const updatedEntries = await db.query.entries.findMany({
       where: eq(schema.entries.userId, testUserId),
@@ -186,19 +212,25 @@ describe('Entries List Updates', () => {
   })
 
   it('entry with tags shows in list with associations', async () => {
-    const [tag] = await db.insert(schema.tags).values({
-      userId: testUserId,
-      name: 'Important',
-      color: '#FF0000',
-    }).returning()
+    const [tag] = await db
+      .insert(schema.tags)
+      .values({
+        userId: testUserId,
+        name: 'Important',
+        color: '#FF0000',
+      })
+      .returning()
 
-    const [entry] = await db.insert(schema.entries).values({
-      userId: testUserId,
-      entryType: 'article',
-      title: 'Tagged Entry',
-      authors: [],
-      year: 2024,
-    }).returning()
+    const [entry] = await db
+      .insert(schema.entries)
+      .values({
+        userId: testUserId,
+        entryType: 'article',
+        title: 'Tagged Entry',
+        authors: [],
+        year: 2024,
+      })
+      .returning()
 
     await db.insert(schema.entryTags).values({
       entryId: entry.id,
@@ -221,19 +253,25 @@ describe('Entries List Updates', () => {
   })
 
   it('entry in project shows in both lists', async () => {
-    const [project] = await db.insert(schema.projects).values({
-      userId: testUserId,
-      name: 'Test Project',
-      slug: 'test-project',
-    }).returning()
+    const [project] = await db
+      .insert(schema.projects)
+      .values({
+        userId: testUserId,
+        name: 'Test Project',
+        slug: 'test-project',
+      })
+      .returning()
 
-    const [entry] = await db.insert(schema.entries).values({
-      userId: testUserId,
-      entryType: 'book',
-      title: 'Shared Entry',
-      authors: [],
-      year: 2024,
-    }).returning()
+    const [entry] = await db
+      .insert(schema.entries)
+      .values({
+        userId: testUserId,
+        entryType: 'book',
+        title: 'Shared Entry',
+        authors: [],
+        year: 2024,
+      })
+      .returning()
 
     await db.insert(schema.entryProjects).values({
       entryId: entry.id,
@@ -256,16 +294,19 @@ describe('Entries List Updates', () => {
   it('multiple entries added in sequence appear in correct order', async () => {
     const entries = []
     for (let i = 1; i <= 5; i++) {
-      const [entry] = await db.insert(schema.entries).values({
-        userId: testUserId,
-        entryType: 'article',
-        title: `Sequential Entry ${i}`,
-        authors: [],
-        year: 2024,
-      }).returning()
+      const [entry] = await db
+        .insert(schema.entries)
+        .values({
+          userId: testUserId,
+          entryType: 'article',
+          title: `Sequential Entry ${i}`,
+          authors: [],
+          year: 2024,
+        })
+        .returning()
       entries.push(entry)
-      
-      await new Promise(resolve => setTimeout(resolve, 10))
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
     }
 
     const queriedEntries = await db.query.entries.findMany({
@@ -274,7 +315,7 @@ describe('Entries List Updates', () => {
     })
 
     expect(queriedEntries).toHaveLength(5)
-    
+
     for (let i = 0; i < 5; i++) {
       expect(queriedEntries[i].title).toBe(`Sequential Entry ${5 - i}`)
     }

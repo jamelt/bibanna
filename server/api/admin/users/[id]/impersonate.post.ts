@@ -29,9 +29,16 @@ export default defineEventHandler(async (event) => {
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
 
-  await logAdminAction(admin.id, 'user.impersonate', 'user', userId, {
-    targetEmail: targetUser.email,
-  }, ip)
+  await logAdminAction(
+    admin.id,
+    'user.impersonate',
+    'user',
+    userId,
+    {
+      targetEmail: targetUser.email,
+    },
+    ip,
+  )
 
   await setUserSession(event, {
     user: {

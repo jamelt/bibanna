@@ -27,15 +27,22 @@ export default defineEventHandler(async (event) => {
     db.select({ count: count() }).from(users).where(gte(users.createdAt, sevenDaysAgo)),
     db.select({ count: count() }).from(entries),
     db.select({ count: count() }).from(projects),
-    db.select({
-      tier: users.subscriptionTier,
-      count: count(),
-    }).from(users).groupBy(users.subscriptionTier),
+    db
+      .select({
+        tier: users.subscriptionTier,
+        count: count(),
+      })
+      .from(users)
+      .groupBy(users.subscriptionTier),
     db.select({ count: count() }).from(subscriptions).where(eq(subscriptions.status, 'active')),
-    db.select({
-      tier: subscriptions.tier,
-      count: count(),
-    }).from(subscriptions).where(eq(subscriptions.status, 'active')).groupBy(subscriptions.tier),
+    db
+      .select({
+        tier: subscriptions.tier,
+        count: count(),
+      })
+      .from(subscriptions)
+      .where(eq(subscriptions.status, 'active'))
+      .groupBy(subscriptions.tier),
     db.select({ count: count() }).from(feedback).where(eq(feedback.status, 'open')),
   ])
 

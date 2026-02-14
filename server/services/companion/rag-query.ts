@@ -73,11 +73,16 @@ export async function generateRAGResponse(
   })
 
   const modeInstructions: Record<string, string> = {
-    general: 'Answer the question accurately using the provided sources. Cite sources when making claims.',
-    'fact-check': 'Verify the claim against the provided sources. Identify supporting evidence, contradictions, or gaps in the available information.',
-    brainstorm: 'Use the sources as inspiration to generate creative ideas and connections. Think expansively while staying grounded in the research context.',
-    synthesize: 'Synthesize information from multiple sources to create a comprehensive overview. Identify patterns, themes, and connections.',
-    'gap-analysis': 'Analyze what information is present in the sources and what is missing. Identify potential research gaps or areas needing further investigation.',
+    general:
+      'Answer the question accurately using the provided sources. Cite sources when making claims.',
+    'fact-check':
+      'Verify the claim against the provided sources. Identify supporting evidence, contradictions, or gaps in the available information.',
+    brainstorm:
+      'Use the sources as inspiration to generate creative ideas and connections. Think expansively while staying grounded in the research context.',
+    synthesize:
+      'Synthesize information from multiple sources to create a comprehensive overview. Identify patterns, themes, and connections.',
+    'gap-analysis':
+      'Analyze what information is present in the sources and what is missing. Identify potential research gaps or areas needing further investigation.',
   }
 
   const systemPrompt = `You are a Research Companion AI assistant helping with academic research.
@@ -99,7 +104,7 @@ Guidelines:
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
-    ...conversationHistory.slice(-10).map(msg => ({
+    ...conversationHistory.slice(-10).map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     })),
@@ -122,7 +127,7 @@ Guidelines:
   }
 
   const citations = Array.from(citedSourceIndices)
-    .filter(i => i >= 0 && i < relevantChunks.length)
+    .filter((i) => i >= 0 && i < relevantChunks.length)
     .map((i) => {
       const chunk = relevantChunks[i]
       return {
@@ -133,9 +138,10 @@ Guidelines:
       }
     })
 
-  const avgSimilarity = relevantChunks.length > 0
-    ? relevantChunks.reduce((sum, c) => sum + c.similarity, 0) / relevantChunks.length
-    : 0
+  const avgSimilarity =
+    relevantChunks.length > 0
+      ? relevantChunks.reduce((sum, c) => sum + c.similarity, 0) / relevantChunks.length
+      : 0
 
   const confidence = Math.round(avgSimilarity * 100)
 
@@ -156,7 +162,8 @@ export async function generateFollowUpQuestions(
     messages: [
       {
         role: 'system',
-        content: 'Generate 3 relevant follow-up questions based on the research query and answer. Return only the questions, one per line.',
+        content:
+          'Generate 3 relevant follow-up questions based on the research query and answer. Return only the questions, one per line.',
       },
       {
         role: 'user',
@@ -168,5 +175,8 @@ export async function generateFollowUpQuestions(
   })
 
   const content = completion.choices[0]?.message?.content || ''
-  return content.split('\n').filter(q => q.trim().length > 0).slice(0, 3)
+  return content
+    .split('\n')
+    .filter((q) => q.trim().length > 0)
+    .slice(0, 3)
 }

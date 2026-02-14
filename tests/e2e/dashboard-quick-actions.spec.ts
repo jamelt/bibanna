@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-async function signUpAndLogin(page: import('@playwright/test').Page, testInfo: import('@playwright/test').TestInfo) {
+async function signUpAndLogin(
+  page: import('@playwright/test').Page,
+  testInfo: import('@playwright/test').TestInfo,
+) {
   const testUser = {
     name: 'Dashboard Quick Actions User',
     email: `e2e-dashboard-qa-${testInfo.parallelIndex}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`,
@@ -8,14 +11,16 @@ async function signUpAndLogin(page: import('@playwright/test').Page, testInfo: i
   }
   await page.goto('/signup')
   await page.waitForLoadState('networkidle')
-  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: /Create your account/i })).toBeVisible({
+    timeout: 5000,
+  })
   await page.getByPlaceholder('Your name').fill(testUser.name)
   await page.getByPlaceholder('you@example.com').fill(testUser.email)
   await page.locator('input[type="password"]').first().fill(testUser.password)
   await page.locator('input[type="password"]').nth(1).fill(testUser.password)
 
   const [response] = await Promise.all([
-    page.waitForResponse(r => r.url().includes('/api/auth/register'), { timeout: 15000 }),
+    page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 15000 }),
     page.getByRole('button', { name: 'Create Account' }).click(),
   ])
   if (!response.ok()) {
@@ -44,13 +49,19 @@ test.describe('Dashboard Quick Actions', () => {
   test('New Project opens create modal and user can create a project', async ({ page }) => {
     await page.getByTestId('dashboard-quick-action-new-project').click()
 
-    await expect(page.getByRole('heading', { name: 'Create Project' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: 'Create Project' })).toBeVisible({
+      timeout: 5000,
+    })
     const projectName = `Dashboard Test Project ${Date.now()}`
     await page.getByTestId('project-modal-name').fill(projectName)
-    await page.getByPlaceholder('What is this project about?').fill('Created from dashboard quick action')
+    await page
+      .getByPlaceholder('What is this project about?')
+      .fill('Created from dashboard quick action')
     await page.getByTestId('project-modal-submit').click()
 
-    await expect(page.getByRole('heading', { name: 'Create Project' })).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Create Project' })).not.toBeVisible({
+      timeout: 10000,
+    })
     await page.goto('/app/projects')
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 5000 })
   })

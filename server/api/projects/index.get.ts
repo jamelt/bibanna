@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     )
     .orderBy(desc(projects.updatedAt))
 
-  return userProjects.map(p => ({
+  return userProjects.map((p) => ({
     ...p,
     entryCount: Number(p.entryCount) || 0,
   }))

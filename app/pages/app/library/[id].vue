@@ -14,7 +14,9 @@ const entryId = computed(() => route.params.id as string)
 
 const { data: entry, pending, refresh } = await useFetch<Entry>(`/api/entries/${entryId.value}`)
 
-const { data: veritasScore } = await useFetch(`/api/entries/${entryId.value}/veritas`, { lazy: true })
+const { data: veritasScore } = await useFetch(`/api/entries/${entryId.value}/veritas`, {
+  lazy: true,
+})
 
 const isEditModalOpen = ref(false)
 const isAddAnnotationOpen = ref(false)
@@ -33,7 +35,9 @@ function openEditAnnotation(annotation: Annotation) {
 
 function formatAuthors(authors: any[]) {
   if (!authors || authors.length === 0) return 'Unknown Author'
-  return authors.map(a => `${a.lastName}, ${a.firstName}${a.middleName ? ` ${a.middleName}` : ''}`).join('; ')
+  return authors
+    .map((a) => `${a.lastName}, ${a.firstName}${a.middleName ? ` ${a.middleName}` : ''}`)
+    .join('; ')
 }
 
 async function toggleFavorite() {
@@ -59,7 +63,7 @@ async function handleEntryUpdated() {
 }
 
 const entryTagIds = computed({
-  get: () => entry.value?.tags?.map(t => t.id) ?? [],
+  get: () => entry.value?.tags?.map((t) => t.id) ?? [],
   set: () => {},
 })
 
@@ -120,8 +124,7 @@ async function copyCitation() {
           'text/plain': textBlob,
         }),
       ])
-    }
-    else {
+    } else {
       await navigator.clipboard.writeText(plainText)
     }
 
@@ -130,15 +133,13 @@ async function copyCitation() {
       description: `${defaultStyleName.value} format`,
       color: 'success',
     })
-  }
-  catch (err: any) {
+  } catch (err: any) {
     toast.add({
       title: 'Failed to copy citation',
       description: err.data?.message || err.message || 'Please try again.',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isCopying.value = false
   }
 }
@@ -159,12 +160,8 @@ async function handleAnnotationCreated() {
     <!-- Not found -->
     <UCard v-else-if="!entry" class="text-center py-12">
       <UIcon name="i-heroicons-exclamation-triangle" class="w-16 h-16 mx-auto text-gray-300" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-        Entry not found
-      </h3>
-      <UButton to="/app/library" class="mt-4">
-        Back to Library
-      </UButton>
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Entry not found</h3>
+      <UButton to="/app/library" class="mt-4"> Back to Library </UButton>
     </UCard>
 
     <!-- Entry detail -->
@@ -221,18 +218,22 @@ async function handleAnnotationCreated() {
           <UDropdownMenu
             :items="[
               [
-                { label: 'Copy citation', icon: 'i-heroicons-clipboard-document', onSelect: copyCitation },
+                {
+                  label: 'Copy citation',
+                  icon: 'i-heroicons-clipboard-document',
+                  onSelect: copyCitation,
+                },
               ],
               [
-                { label: 'Delete', icon: 'i-heroicons-trash', onSelect: () => isDeleteModalOpen = true },
+                {
+                  label: 'Delete',
+                  icon: 'i-heroicons-trash',
+                  onSelect: () => (isDeleteModalOpen = true),
+                },
               ],
             ]"
           >
-            <UButton
-              icon="i-heroicons-ellipsis-vertical"
-              variant="outline"
-              color="neutral"
-            />
+            <UButton icon="i-heroicons-ellipsis-vertical" variant="outline" color="neutral" />
           </UDropdownMenu>
         </div>
       </div>
@@ -256,7 +257,8 @@ async function handleAnnotationCreated() {
             <div v-if="entry.metadata?.volume || entry.metadata?.issue">
               <dt class="text-sm text-gray-500 dark:text-gray-400">Volume/Issue</dt>
               <dd class="text-gray-900 dark:text-white">
-                {{ entry.metadata.volume }}{{ entry.metadata.issue ? `(${entry.metadata.issue})` : '' }}
+                {{ entry.metadata.volume
+                }}{{ entry.metadata.issue ? `(${entry.metadata.issue})` : '' }}
               </dd>
             </div>
             <div v-if="entry.metadata?.pages">
@@ -293,7 +295,10 @@ async function handleAnnotationCreated() {
             </div>
           </dl>
 
-          <div v-if="entry.metadata?.abstract" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div
+            v-if="entry.metadata?.abstract"
+            class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+          >
             <h3 class="font-medium text-gray-900 dark:text-white mb-2">Abstract</h3>
             <p class="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
               {{ entry.metadata.abstract }}
@@ -323,16 +328,11 @@ async function handleAnnotationCreated() {
                 :to="`/app/projects/${project.slug || project.id}`"
                 class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
               >
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :style="{ backgroundColor: project.color }"
-                />
+                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: project.color }" />
                 <span class="text-gray-900 dark:text-white">{{ project.name }}</span>
               </NuxtLink>
             </div>
-            <p v-else class="text-gray-500 dark:text-gray-400 text-sm">
-              Not in any projects
-            </p>
+            <p v-else class="text-gray-500 dark:text-gray-400 text-sm">Not in any projects</p>
           </UCard>
 
           <!-- Tags -->
@@ -357,11 +357,7 @@ async function handleAnnotationCreated() {
             <h2 class="font-semibold text-gray-900 dark:text-white">
               Annotations ({{ entry.annotations?.length || 0 }})
             </h2>
-            <UButton
-              icon="i-heroicons-plus"
-              size="sm"
-              @click="openAddAnnotation"
-            >
+            <UButton icon="i-heroicons-plus" size="sm" @click="openAddAnnotation">
               Add Annotation
             </UButton>
           </div>
@@ -376,7 +372,11 @@ async function handleAnnotationCreated() {
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2">
                 <UBadge variant="subtle" size="xs">
-                  {{ ANNOTATION_TYPE_LABELS[annotation.annotationType as keyof typeof ANNOTATION_TYPE_LABELS] }}
+                  {{
+                    ANNOTATION_TYPE_LABELS[
+                      annotation.annotationType as keyof typeof ANNOTATION_TYPE_LABELS
+                    ]
+                  }}
                 </UBadge>
                 <span class="text-xs text-gray-400">
                   {{ new Date(annotation.createdAt).toLocaleDateString() }}
@@ -390,7 +390,9 @@ async function handleAnnotationCreated() {
                 @click="openEditAnnotation(annotation)"
               />
             </div>
-            <div class="text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+            <div
+              class="text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+            >
               {{ annotation.content }}
             </div>
           </div>
@@ -450,9 +452,7 @@ async function handleAnnotationCreated() {
       <template #content>
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Delete Entry
-            </h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Entry</h2>
           </template>
 
           <p class="text-gray-600 dark:text-gray-400">
@@ -464,9 +464,7 @@ async function handleAnnotationCreated() {
               <UButton variant="outline" color="neutral" @click="isDeleteModalOpen = false">
                 Cancel
               </UButton>
-              <UButton color="error" @click="handleDelete">
-                Delete
-              </UButton>
+              <UButton color="error" @click="handleDelete"> Delete </UButton>
             </div>
           </template>
         </UCard>

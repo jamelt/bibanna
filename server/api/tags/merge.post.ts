@@ -31,10 +31,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const targetTag = await db.query.tags.findFirst({
-    where: and(
-      eq(tags.id, targetTagId),
-      eq(tags.userId, user.id),
-    ),
+    where: and(eq(tags.id, targetTagId), eq(tags.userId, user.id)),
   })
 
   if (!targetTag) {
@@ -42,17 +39,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const sourceTags = await db.query.tags.findMany({
-    where: and(
-      eq(tags.userId, user.id),
-      inArray(tags.id, sourceTagIds),
-    ),
+    where: and(eq(tags.userId, user.id), inArray(tags.id, sourceTagIds)),
   })
 
   if (sourceTags.length === 0) {
     throw createError({ statusCode: 404, message: 'No valid source tags found' })
   }
 
-  const validSourceIds = sourceTags.map(t => t.id)
+  const validSourceIds = sourceTags.map((t) => t.id)
 
   // Move all entry-tag associations from source tags to target tag
   // Use ON CONFLICT DO NOTHING to handle entries that already have the target tag
@@ -62,8 +56,8 @@ export default defineEventHandler(async (event) => {
     .where(inArray(entryTags.tagId, validSourceIds))
 
   if (sourceEntryTags.length > 0) {
-    const uniqueEntryIds = [...new Set(sourceEntryTags.map(et => et.entryId))]
-    const newAssociations = uniqueEntryIds.map(entryId => ({
+    const uniqueEntryIds = [...new Set(sourceEntryTags.map((et) => et.entryId))]
+    const newAssociations = uniqueEntryIds.map((entryId) => ({
       entryId,
       tagId: targetTagId,
     }))
@@ -71,12 +65,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Delete source tags (cascade will remove their entry_tags rows)
-  await db.delete(tags).where(
-    and(
-      eq(tags.userId, user.id),
-      inArray(tags.id, validSourceIds),
-    ),
-  )
+  await db.delete(tags).where(and(eq(tags.userId, user.id), inArray(tags.id, validSourceIds)))
 
   // Return the target tag with updated entry count
   const [result] = await db
@@ -88,7 +77,10 @@ export default defineEventHandler(async (event) => {
       description: tags.description,
       groupName: tags.groupName,
       createdAt: tags.createdAt,
-      entryCount: sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as('entry_count'),
+      entryCount:
+        sql<number>`(SELECT count(*) FROM entry_tags WHERE entry_tags.tag_id = "tags"."id")`.as(
+          'entry_count',
+        ),
     })
     .from(tags)
     .where(eq(tags.id, targetTagId))

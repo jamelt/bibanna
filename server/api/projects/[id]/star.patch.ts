@@ -31,10 +31,7 @@ export default defineEventHandler(async (event) => {
       isStarred: !existingProject.isStarred,
       updatedAt: new Date(),
     })
-    .where(and(
-      eq(projects.id, existingProject.id),
-      eq(projects.userId, user.id),
-    ))
+    .where(and(eq(projects.id, existingProject.id), eq(projects.userId, user.id)))
     .returning({
       id: projects.id,
       isStarred: projects.isStarred,

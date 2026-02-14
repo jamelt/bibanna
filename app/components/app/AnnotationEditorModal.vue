@@ -58,21 +58,21 @@ const toolbarItems: EditorToolbarItem[][] = [
     { kind: 'orderedList', icon: 'i-lucide-list-ordered' },
     { kind: 'blockquote', icon: 'i-lucide-text-quote' },
   ],
-  [
-    { kind: 'link', icon: 'i-lucide-link' },
-  ],
+  [{ kind: 'link', icon: 'i-lucide-link' }],
 ]
 
-watch(() => props.open, (open) => {
-  if (open && props.annotation) {
-    content.value = props.annotation.content
-    annotationType.value = props.annotation.annotationType as AnnotationType
-  }
-  else if (open) {
-    content.value = ''
-    annotationType.value = 'descriptive'
-  }
-})
+watch(
+  () => props.open,
+  (open) => {
+    if (open && props.annotation) {
+      content.value = props.annotation.content
+      annotationType.value = props.annotation.annotationType as AnnotationType
+    } else if (open) {
+      content.value = ''
+      annotationType.value = 'descriptive'
+    }
+  },
+)
 
 async function handleSave() {
   if (!content.value.trim()) return
@@ -93,8 +93,7 @@ async function handleSave() {
         title: 'Annotation updated',
         color: 'success',
       })
-    }
-    else {
+    } else {
       await $fetch(`/api/entries/${props.entryId}/annotations`, {
         method: 'POST',
         body: {
@@ -113,15 +112,13 @@ async function handleSave() {
     isOpen.value = false
     content.value = ''
     annotationType.value = 'descriptive'
-  }
-  catch (err: any) {
+  } catch (err: any) {
     toast.add({
       title: 'Failed to save annotation',
       description: err.data?.message || 'Please try again.',
       color: 'error',
     })
-  }
-  finally {
+  } finally {
     isSaving.value = false
   }
 }
@@ -149,7 +146,9 @@ function handleCancel() {
         :class="isMobile ? 'h-full w-full' : 'max-h-[min(90vh,50rem)] rounded-lg'"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div
+          class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700"
+        >
           <DialogTitle class="text-lg font-semibold text-gray-900 dark:text-white">
             {{ isEditing ? 'Edit Annotation' : 'Add Annotation' }}
           </DialogTitle>
@@ -189,7 +188,9 @@ function handleCancel() {
               content-type="markdown"
               placeholder="Write your annotation... Use markdown for formatting."
               class="w-full flex-1 min-h-[360px] sm:min-h-[420px] border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col"
-              :ui="{ base: 'flex-1 p-4 overflow-y-auto prose prose-sm dark:prose-invert max-w-none' }"
+              :ui="{
+                base: 'flex-1 p-4 overflow-y-auto prose prose-sm dark:prose-invert max-w-none',
+              }"
             >
               <UEditorToolbar
                 :editor="editor"
@@ -198,7 +199,9 @@ function handleCancel() {
               />
             </UEditor>
             <template #fallback>
-              <div class="w-full min-h-[360px] sm:min-h-[420px] border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-center">
+              <div
+                class="w-full min-h-[360px] sm:min-h-[420px] border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-center"
+              >
                 <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-gray-400" />
               </div>
             </template>
@@ -206,18 +209,12 @@ function handleCancel() {
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
-          <p class="text-xs text-gray-400 dark:text-gray-500">
-            Markdown supported
-          </p>
+        <div
+          class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3"
+        >
+          <p class="text-xs text-gray-400 dark:text-gray-500">Markdown supported</p>
           <div class="flex gap-2">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="handleCancel"
-            >
-              Cancel
-            </UButton>
+            <UButton variant="outline" color="neutral" @click="handleCancel"> Cancel </UButton>
             <UButton
               color="primary"
               :loading="isSaving"

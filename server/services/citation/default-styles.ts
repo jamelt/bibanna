@@ -203,13 +203,13 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   try {
     const response = await fetch(url, { signal: controller.signal })
     return response
-  }
-  finally {
+  } finally {
     clearTimeout(timer)
   }
 }
 
-const EN_US_LOCALE_URL = 'https://raw.githubusercontent.com/citation-style-language/locales/master/locales-en-US.xml'
+const EN_US_LOCALE_URL =
+  'https://raw.githubusercontent.com/citation-style-language/locales/master/locales-en-US.xml'
 
 let _enUsLocale: string | null = null
 
@@ -223,8 +223,7 @@ export async function getEnUsLocale(): Promise<string> {
     }
     _enUsLocale = await response.text()
     return _enUsLocale
-  }
-  catch {
+  } catch {
     _enUsLocale = getFallbackLocale()
     return _enUsLocale
   }
@@ -341,11 +340,10 @@ async function fetchCslXmlWithRetry(url: string, label: string): Promise<string>
         throw new Error(`HTTP ${response.status} fetching CSL style "${label}" from ${url}`)
       }
       return await response.text()
-    }
-    catch (err: any) {
+    } catch (err: any) {
       lastError = err
       if (attempt < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
       }
     }
   }
@@ -356,12 +354,16 @@ async function fetchCslXmlWithRetry(url: string, label: string): Promise<string>
 }
 
 function extractParentStyleUrl(xml: string): string | null {
-  const match = xml.match(/<link[^>]+rel\s*=\s*"independent-parent"[^>]+href\s*=\s*"([^"]+)"/)
-    || xml.match(/<link[^>]+href\s*=\s*"([^"]+)"[^>]+rel\s*=\s*"independent-parent"/)
+  const match =
+    xml.match(/<link[^>]+rel\s*=\s*"independent-parent"[^>]+href\s*=\s*"([^"]+)"/) ||
+    xml.match(/<link[^>]+href\s*=\s*"([^"]+)"[^>]+rel\s*=\s*"independent-parent"/)
   if (!match) return null
 
   const href = match[1]
-  if (href.startsWith('http://www.zotero.org/styles/') || href.startsWith('https://www.zotero.org/styles/')) {
+  if (
+    href.startsWith('http://www.zotero.org/styles/') ||
+    href.startsWith('https://www.zotero.org/styles/')
+  ) {
     const styleName = href.replace(/^https?:\/\/www\.zotero\.org\/styles\//, '')
     return `https://www.zotero.org/styles/${styleName}?source=1`
   }
@@ -372,7 +374,7 @@ export async function fetchStyleXml(styleId: string): Promise<string> {
   const cached = styleCache.get(styleId)
   if (cached) return cached
 
-  const style = DEFAULT_STYLES.find(s => s.id === styleId)
+  const style = DEFAULT_STYLES.find((s) => s.id === styleId)
   if (!style) {
     throw new Error(`Style not found: ${styleId}`)
   }
@@ -393,13 +395,13 @@ export function getDefaultStyles(): DefaultStyle[] {
 }
 
 export function getStyleById(styleId: string): DefaultStyle | undefined {
-  return DEFAULT_STYLES.find(s => s.id === styleId)
+  return DEFAULT_STYLES.find((s) => s.id === styleId)
 }
 
 export function getStylesByField(field: string): DefaultStyle[] {
-  return DEFAULT_STYLES.filter(s => s.fields.includes(field))
+  return DEFAULT_STYLES.filter((s) => s.fields.includes(field))
 }
 
 export function getStylesByCategory(category: DefaultStyle['category']): DefaultStyle[] {
-  return DEFAULT_STYLES.filter(s => s.category === category)
+  return DEFAULT_STYLES.filter((s) => s.category === category)
 }

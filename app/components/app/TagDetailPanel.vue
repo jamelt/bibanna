@@ -21,26 +21,28 @@ const isOpen = computed({
 const entries = ref<Entry[]>([])
 const loadingEntries = ref(false)
 
-watch(() => props.tag, async (tag) => {
-  if (!tag) {
-    entries.value = []
-    return
-  }
+watch(
+  () => props.tag,
+  async (tag) => {
+    if (!tag) {
+      entries.value = []
+      return
+    }
 
-  loadingEntries.value = true
-  try {
-    const params: Record<string, any> = { tagIds: tag.id, pageSize: 10, page: 1 }
-    if (props.projectId) params.projectId = props.projectId
-    const data = await $fetch<{ data: Entry[] }>('/api/entries', { params })
-    entries.value = data.data
-  }
-  catch {
-    entries.value = []
-  }
-  finally {
-    loadingEntries.value = false
-  }
-}, { immediate: true })
+    loadingEntries.value = true
+    try {
+      const params: Record<string, any> = { tagIds: tag.id, pageSize: 10, page: 1 }
+      if (props.projectId) params.projectId = props.projectId
+      const data = await $fetch<{ data: Entry[] }>('/api/entries', { params })
+      entries.value = data.data
+    } catch {
+      entries.value = []
+    } finally {
+      loadingEntries.value = false
+    }
+  },
+  { immediate: true },
+)
 
 const viewAllLink = computed(() => {
   if (!props.tag) return '/'
@@ -51,7 +53,11 @@ const viewAllLink = computed(() => {
 })
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 </script>
 
@@ -62,10 +68,7 @@ function formatDate(date: Date | string) {
         <div class="p-6 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3 min-w-0">
-              <span
-                class="w-5 h-5 rounded-full shrink-0"
-                :style="{ backgroundColor: tag.color }"
-              />
+              <span class="w-5 h-5 rounded-full shrink-0" :style="{ backgroundColor: tag.color }" />
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
                 {{ tag.name }}
               </h2>
@@ -83,8 +86,14 @@ function formatDate(date: Date | string) {
           </p>
 
           <div class="mt-4 flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-            <span class="tabular-nums">{{ tag.entryCount ?? 0 }} {{ (tag.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}</span>
-            <span v-if="tag.groupName" class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+            <span class="tabular-nums"
+              >{{ tag.entryCount ?? 0 }}
+              {{ (tag.entryCount ?? 0) === 1 ? 'entry' : 'entries' }}</span
+            >
+            <span
+              v-if="tag.groupName"
+              class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+            >
               {{ tag.groupName }}
             </span>
             <span>Created {{ formatDate(tag.createdAt) }}</span>
@@ -92,16 +101,17 @@ function formatDate(date: Date | string) {
         </div>
 
         <div class="flex-1 overflow-y-auto p-6">
-          <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            Recent Entries
-          </h3>
+          <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Recent Entries</h3>
 
           <div v-if="loadingEntries" class="flex justify-center py-8">
             <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin text-gray-400" />
           </div>
 
           <div v-else-if="entries.length === 0" class="text-center py-8">
-            <UIcon name="i-heroicons-book-open" class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600" />
+            <UIcon
+              name="i-heroicons-book-open"
+              class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600"
+            />
             <p class="mt-2 text-sm text-gray-400 dark:text-gray-500">
               No entries with this tag yet
             </p>
@@ -119,8 +129,11 @@ function formatDate(date: Date | string) {
                 {{ entry.title }}
               </p>
               <div class="flex items-center gap-2 mt-1">
-                <p v-if="entry.authors?.length" class="text-xs text-gray-400 dark:text-gray-500 truncate">
-                  {{ entry.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ') }}
+                <p
+                  v-if="entry.authors?.length"
+                  class="text-xs text-gray-400 dark:text-gray-500 truncate"
+                >
+                  {{ entry.authors.map((a) => `${a.firstName} ${a.lastName}`).join(', ') }}
                 </p>
                 <span v-if="entry.year" class="text-xs text-gray-400 dark:text-gray-500 shrink-0">
                   {{ entry.year }}

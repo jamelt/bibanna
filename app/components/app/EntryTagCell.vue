@@ -8,13 +8,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'tag-click': [tagId: string]
-  'updated': []
+  updated: []
 }>()
 
 const toast = useToast()
 const isPopoverOpen = ref(false)
 
-const tagIds = computed(() => props.entryTags.map(t => t.id))
+const tagIds = computed(() => props.entryTags.map((t) => t.id))
 
 async function handleTagsChange(newTagIds: string[]) {
   try {

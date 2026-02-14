@@ -31,7 +31,11 @@ function flagNames() {
 
     <p class="text-sm text-gray-500 dark:text-gray-400">
       View all feature flags and their state across subscription tiers.
-      {{ flagsData?.unleashConfigured ? 'Flags are managed via Unleash.' : 'Unleash is not configured. Showing hardcoded defaults.' }}
+      {{
+        flagsData?.unleashConfigured
+          ? 'Flags are managed via Unleash.'
+          : 'Unleash is not configured. Showing hardcoded defaults.'
+      }}
     </p>
 
     <UCard>
@@ -42,7 +46,9 @@ function flagNames() {
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <tr
+              class="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700"
+            >
               <th class="pb-3 font-medium">Flag Name</th>
               <th class="pb-3 font-medium text-center">Default</th>
               <th v-for="plan in allPlans" :key="plan.id" class="pb-3 font-medium text-center">
@@ -61,16 +67,28 @@ function flagNames() {
               </td>
               <td class="py-3 text-center">
                 <UIcon
-                  :name="flagsData?.flags[name] ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    flagsData?.flags[name] ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'
+                  "
                   class="w-5 h-5"
-                  :class="flagsData?.flags[name] ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'"
+                  :class="
+                    flagsData?.flags[name] ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'
+                  "
                 />
               </td>
               <td v-for="plan in allPlans" :key="plan.id" class="py-3 text-center">
                 <UIcon
-                  :name="flagsData?.flagsByTier[plan.id]?.[name] ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    flagsData?.flagsByTier[plan.id]?.[name]
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   class="w-5 h-5"
-                  :class="flagsData?.flagsByTier[plan.id]?.[name] ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'"
+                  :class="
+                    flagsData?.flagsByTier[plan.id]?.[name]
+                      ? 'text-green-500'
+                      : 'text-gray-300 dark:text-gray-600'
+                  "
                 />
               </td>
             </tr>

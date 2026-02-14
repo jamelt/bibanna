@@ -896,10 +896,7 @@ watch(search, () => {
               <UButton
                 label="Done"
                 color="primary"
-                @click="
-                  isResetPasswordOpen = false
-                  resetPasswordResult = null
-                "
+                @click="isResetPasswordOpen = false; resetPasswordResult = null"
               />
             </div>
           </template>

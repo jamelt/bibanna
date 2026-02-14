@@ -165,10 +165,10 @@ test.describe('Smoke Tests - Navigation', () => {
   test('quick add button opens modal', async ({ page }) => {
     const quickAddButton = page.getByTestId('quick-add-button')
     await quickAddButton.click()
-    
+
     // Modal should appear
     await expect(page.getByTestId('quick-add-modal')).toBeVisible({ timeout: 5000 })
-    
+
     // Close button should work
     await page.getByTestId('quick-add-close').click()
     await expect(page.getByTestId('quick-add-modal')).not.toBeVisible({ timeout: 5000 })
@@ -177,7 +177,7 @@ test.describe('Smoke Tests - Navigation', () => {
   test('user menu dropdown works', async ({ page }) => {
     const userAvatar = page.getByTestId('user-menu-trigger')
     await userAvatar.click()
-    
+
     // Dropdown should appear with menu items
     await expect(page.getByText('Profile')).toBeVisible()
     await expect(page.getByText('Settings')).toBeVisible()
@@ -195,7 +195,7 @@ test.describe('Smoke Tests - Feature Pages', () => {
 
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage()
-    
+
     // Sign up
     await page.goto('/signup')
     await page.waitForLoadState('networkidle')
@@ -211,18 +211,18 @@ test.describe('Smoke Tests - Feature Pages', () => {
     await page.getByRole('button', { name: /New Project/i }).click()
     await page.getByTestId('project-modal-name').fill('Smoke Test Project')
     await page.getByTestId('project-modal-submit').click()
-    
+
     // Wait for project to be created and get its ID from URL
     await page.waitForTimeout(2000)
     await page.getByText('Smoke Test Project').click()
     await page.waitForURL(/\/app\/projects\//)
-    
+
     const url = page.url()
     const match = url.match(/\/app\/projects\/([^/]+)/)
     if (match) {
       projectId = match[1]
     }
-    
+
     await page.close()
   })
 
@@ -236,10 +236,10 @@ test.describe('Smoke Tests - Feature Pages', () => {
 
   test('project detail page loads', async ({ page }) => {
     test.skip(!projectId, 'No project ID available')
-    
+
     await page.goto(`/app/projects/${projectId}`)
     await expect(page.getByText('Smoke Test Project')).toBeVisible()
-    
+
     // Check for key project detail elements
     await expect(page.getByRole('button', { name: /Research Companion/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /Mind Map/i })).toBeVisible()
@@ -247,26 +247,38 @@ test.describe('Smoke Tests - Feature Pages', () => {
 
   test('mind map page loads for project', async ({ page }) => {
     test.skip(!projectId, 'No project ID available')
-    
+
     await page.goto(`/app/projects/${projectId}/mindmap`)
     await expect(page.getByRole('heading', { name: /Mind Map/i })).toBeVisible()
-    
+
     // Should show upgrade prompt or mind map content
-    const hasUpgradePrompt = await page.getByText(/Unlock|Upgrade/i).isVisible().catch(() => false)
-    const hasMindMapContent = await page.getByText(/No entries|entries, .* authors/i).isVisible().catch(() => false)
-    
+    const hasUpgradePrompt = await page
+      .getByText(/Unlock|Upgrade/i)
+      .isVisible()
+      .catch(() => false)
+    const hasMindMapContent = await page
+      .getByText(/No entries|entries, .* authors/i)
+      .isVisible()
+      .catch(() => false)
+
     expect(hasUpgradePrompt || hasMindMapContent).toBe(true)
   })
 
   test('research companion page loads for project', async ({ page }) => {
     test.skip(!projectId, 'No project ID available')
-    
+
     await page.goto(`/app/projects/${projectId}/companion`)
-    
+
     // Should show upgrade prompt or companion content
-    const hasUpgradePrompt = await page.getByText(/Unlock|Upgrade|Pro/i).isVisible().catch(() => false)
-    const hasCompanionContent = await page.getByText(/companion|chat|ask/i).isVisible().catch(() => false)
-    
+    const hasUpgradePrompt = await page
+      .getByText(/Unlock|Upgrade|Pro/i)
+      .isVisible()
+      .catch(() => false)
+    const hasCompanionContent = await page
+      .getByText(/companion|chat|ask/i)
+      .isVisible()
+      .catch(() => false)
+
     expect(hasUpgradePrompt || hasCompanionContent).toBe(true)
   })
 })
@@ -300,10 +312,10 @@ test.describe('Smoke Tests - Modals & Components', () => {
 
   test('project creation modal opens and closes', async ({ page }) => {
     await page.goto('/app/projects')
-    
+
     await page.getByRole('button', { name: /New Project/i }).click()
     await expect(page.getByTestId('project-modal-name')).toBeVisible()
-    
+
     // Close via X button or clicking outside
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('project-modal-name')).not.toBeVisible({ timeout: 5000 })
@@ -311,14 +323,17 @@ test.describe('Smoke Tests - Modals & Components', () => {
 
   test('entry form modal can be opened', async ({ page }) => {
     await page.goto('/app/library')
-    
+
     // Click add entry button
     const addButton = page.getByRole('button', { name: /Add Entry|New Entry/i })
     if (await addButton.isVisible()) {
       await addButton.click()
-      
+
       // Check for entry form fields
-      const hasEntryForm = await page.getByText(/Entry Type|Title/i).isVisible().catch(() => false)
+      const hasEntryForm = await page
+        .getByText(/Entry Type|Title/i)
+        .isVisible()
+        .catch(() => false)
       expect(hasEntryForm).toBe(true)
     }
   })
@@ -329,7 +344,7 @@ test.describe('Smoke Tests - Responsive Layout', () => {
     // Desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 })
     await page.goto('/')
-    
+
     // Mobile nav should not be visible
     const mobileNav = page.locator('nav.fixed.bottom-0')
     await expect(mobileNav).not.toBeVisible()
@@ -339,10 +354,10 @@ test.describe('Smoke Tests - Responsive Layout', () => {
     // Mobile viewport
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/login')
-    
+
     await page.getByPlaceholder('you@example.com').fill(`smoke-mobile-${Date.now()}@example.com`)
     await page.locator('input[type="password"]').fill('testpassword123')
-    
+
     // Note: This test may fail if user doesn't exist, which is fine for smoke test
   })
 })
@@ -350,7 +365,7 @@ test.describe('Smoke Tests - Responsive Layout', () => {
 test.describe('Smoke Tests - Error Handling', () => {
   test('404 page for non-existent route', async ({ page }) => {
     await page.goto('/this-page-does-not-exist')
-    
+
     // Should show some kind of not found indicator
     const has404 = await page.locator('body').textContent()
     // Nuxt may redirect or show 404 page
@@ -359,7 +374,7 @@ test.describe('Smoke Tests - Error Handling', () => {
 
   test('protected routes redirect to login', async ({ page }) => {
     await page.goto('/app')
-    
+
     // Should redirect to login if not authenticated
     await page.waitForURL(/\/(login|app)/, { timeout: 5000 })
   })

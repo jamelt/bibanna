@@ -34,10 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const entry = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.id, entryId),
-      eq(entries.userId, user.id),
-    ),
+    where: and(eq(entries.id, entryId), eq(entries.userId, user.id)),
   })
 
   if (!entry) {
@@ -48,10 +45,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingAssociation = await db.query.entryProjects.findFirst({
-    where: and(
-      eq(entryProjects.entryId, entryId),
-      eq(entryProjects.projectId, project.id),
-    ),
+    where: and(eq(entryProjects.entryId, entryId), eq(entryProjects.projectId, project.id)),
   })
 
   if (!existingAssociation) {
@@ -63,10 +57,7 @@ export default defineEventHandler(async (event) => {
 
   await db
     .delete(entryProjects)
-    .where(and(
-      eq(entryProjects.entryId, entryId),
-      eq(entryProjects.projectId, project.id),
-    ))
+    .where(and(eq(entryProjects.entryId, entryId), eq(entryProjects.projectId, project.id)))
 
   return {
     success: true,

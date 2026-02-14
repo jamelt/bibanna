@@ -18,7 +18,11 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL_MS)
 
-export function checkRateLimit(key: string, maxRequests: number, windowMs: number): { allowed: boolean; remaining: number; retryAfterMs: number } {
+export function checkRateLimit(
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+): { allowed: boolean; remaining: number; retryAfterMs: number } {
   const now = Date.now()
   const entry = windows.get(key)
 
@@ -35,7 +39,12 @@ export function checkRateLimit(key: string, maxRequests: number, windowMs: numbe
   return { allowed: true, remaining: maxRequests - entry.count, retryAfterMs: 0 }
 }
 
-export function enforceRateLimit(event: H3Event, prefix: string, maxRequests: number, windowMs: number) {
+export function enforceRateLimit(
+  event: H3Event,
+  prefix: string,
+  maxRequests: number,
+  windowMs: number,
+) {
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
   const key = `${prefix}:${ip}`
 

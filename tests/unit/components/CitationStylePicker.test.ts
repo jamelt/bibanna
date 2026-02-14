@@ -13,9 +13,8 @@ describe('CitationStylePicker', () => {
     const filterBySearch = (styles: typeof mockStyles, search: string) => {
       if (!search) return styles
       const term = search.toLowerCase()
-      return styles.filter(s => 
-        s.name.toLowerCase().includes(term) ||
-        s.id.toLowerCase().includes(term)
+      return styles.filter(
+        (s) => s.name.toLowerCase().includes(term) || s.id.toLowerCase().includes(term),
       )
     }
 
@@ -28,7 +27,7 @@ describe('CitationStylePicker', () => {
   it('filters styles by category', () => {
     const filterByCategory = (styles: typeof mockStyles, category: string | null) => {
       if (!category) return styles
-      return styles.filter(s => s.category === category)
+      return styles.filter((s) => s.category === category)
     }
 
     expect(filterByCategory(mockStyles, 'author-date')).toHaveLength(3)
@@ -40,7 +39,7 @@ describe('CitationStylePicker', () => {
   it('filters styles by field', () => {
     const filterByField = (styles: typeof mockStyles, field: string | null) => {
       if (!field) return styles
-      return styles.filter(s => s.field === field)
+      return styles.filter((s) => s.field === field)
     }
 
     expect(filterByField(mockStyles, 'psychology')).toHaveLength(1)
@@ -59,18 +58,17 @@ describe('CitationStylePicker', () => {
 
       if (search) {
         const term = search.toLowerCase()
-        result = result.filter(s => 
-          s.name.toLowerCase().includes(term) ||
-          s.id.toLowerCase().includes(term)
+        result = result.filter(
+          (s) => s.name.toLowerCase().includes(term) || s.id.toLowerCase().includes(term),
         )
       }
 
       if (category) {
-        result = result.filter(s => s.category === category)
+        result = result.filter((s) => s.category === category)
       }
 
       if (field) {
-        result = result.filter(s => s.field === field)
+        result = result.filter((s) => s.field === field)
       }
 
       return result

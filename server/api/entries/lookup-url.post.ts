@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'AnnoBib/1.0',
-          'Accept': 'text/html',
+          Accept: 'text/html',
         },
         signal: AbortSignal.timeout(5000),
       })
@@ -38,8 +38,7 @@ export default defineEventHandler(async (event) => {
         const html = await response.text()
         metadata = await enhanceMetadataWithAI(url, metadata, html)
       }
-    }
-    catch (error) {
+    } catch (error) {
       metadata = await enhanceMetadataWithAI(url, metadata)
     }
   }

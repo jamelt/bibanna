@@ -19,10 +19,10 @@ export interface VeritasScore {
 
 const FACTOR_WEIGHTS = {
   publisher: 0.25,
-  peerReview: 0.20,
+  peerReview: 0.2,
   venueQuality: 0.15,
   authorCredentials: 0.15,
-  citationImpact: 0.10,
+  citationImpact: 0.1,
   currency: 0.05,
   transparency: 0.05,
   retractionStatus: 0.05,
@@ -124,9 +124,7 @@ export async function calculateVeritasScore(entry: Entry): Promise<VeritasScore>
     source: oaData ? 'OpenAlex' : 'Not checked',
   })
 
-  const overall = Math.round(
-    factors.reduce((sum, f) => sum + f.score * f.weight, 0),
-  )
+  const overall = Math.round(factors.reduce((sum, f) => sum + f.score * f.weight, 0))
 
   const confidence = dataSources.length / 3
 
@@ -156,7 +154,11 @@ function calculatePeerReviewScore(
     }
 
     if (ssData?.publicationTypes?.includes('JournalArticle')) {
-      return { score: 85, evidence: 'Published in peer-reviewed journal', source: 'Semantic Scholar' }
+      return {
+        score: 85,
+        evidence: 'Published in peer-reviewed journal',
+        source: 'Semantic Scholar',
+      }
     }
 
     return { score: 75, evidence: 'Journal article (likely peer-reviewed)', source: 'Entry type' }
@@ -165,7 +167,11 @@ function calculatePeerReviewScore(
   if (entry.entryType === 'book') {
     const publisherScore = getPublisherScore(entry.metadata?.publisher)
     if (publisherScore && publisherScore.score >= 75) {
-      return { score: 80, evidence: 'Academic publisher with editorial review', source: 'Publisher database' }
+      return {
+        score: 80,
+        evidence: 'Academic publisher with editorial review',
+        source: 'Publisher database',
+      }
     }
     return { score: 60, evidence: 'Book (editorial review)', source: 'Entry type' }
   }
@@ -207,9 +213,7 @@ function calculateAuthorCredentialsScore(
   oaData: Awaited<ReturnType<typeof getOpenAlexData>>,
 ): { score: number; evidence: string; source: string } {
   if (ssData?.authors && ssData.authors.length > 0) {
-    const hIndices = ssData.authors
-      .map(a => a.hIndex)
-      .filter((h): h is number => h !== undefined)
+    const hIndices = ssData.authors.map((a) => a.hIndex).filter((h): h is number => h !== undefined)
 
     if (hIndices.length > 0) {
       const score = calculateAuthorScore(ssData.authors)
@@ -223,12 +227,12 @@ function calculateAuthorCredentialsScore(
   }
 
   if (oaData?.authorships && oaData.authorships.length > 0) {
-    const hasInstitutions = oaData.authorships.some(a => a.institutions.length > 0)
-    const institutions = oaData.authorships.flatMap(a => a.institutions)
+    const hasInstitutions = oaData.authorships.some((a) => a.institutions.length > 0)
+    const institutions = oaData.authorships.flatMap((a) => a.institutions)
 
     if (hasInstitutions) {
       const score = calculateAuthorScore([], institutions)
-      const instTypes = [...new Set(institutions.map(i => i.type))]
+      const instTypes = [...new Set(institutions.map((i) => i.type))]
       return {
         score,
         evidence: `Authors affiliated with ${instTypes.join(', ')} institutions`,
@@ -283,9 +287,10 @@ function calculateTransparencyScore(
   }
 }
 
-function calculateRetractionScore(
-  oaData: Awaited<ReturnType<typeof getOpenAlexData>>,
-): { score: number; evidence: string } {
+function calculateRetractionScore(oaData: Awaited<ReturnType<typeof getOpenAlexData>>): {
+  score: number
+  evidence: string
+} {
   if (!oaData) {
     return { score: 75, evidence: 'Retraction status not checked' }
   }
@@ -297,7 +302,9 @@ function calculateRetractionScore(
   return { score: 100, evidence: 'No retraction found' }
 }
 
-export function getVeritasLabel(score: number): 'exceptional' | 'high' | 'moderate' | 'limited' | 'low' {
+export function getVeritasLabel(
+  score: number,
+): 'exceptional' | 'high' | 'moderate' | 'limited' | 'low' {
   if (score >= 90) return 'exceptional'
   if (score >= 75) return 'high'
   if (score >= 60) return 'moderate'

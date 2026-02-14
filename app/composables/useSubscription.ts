@@ -73,7 +73,7 @@ export function useSubscription() {
     }
   }
 
-  const paidTierIds = getPaidPlansForDisplay().map(p => p.id) as SubscriptionTier[]
+  const paidTierIds = getPaidPlansForDisplay().map((p) => p.id) as SubscriptionTier[]
 
   async function startCheckout(targetTier: SubscriptionTier, interval: 'month' | 'year' = 'month') {
     const response = await $fetch<{ url: string }>('/api/subscription/checkout', {

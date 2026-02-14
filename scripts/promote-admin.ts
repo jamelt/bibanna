@@ -3,7 +3,8 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { sql } from 'drizzle-orm'
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://annobib:annobib@localhost:5432/annobib'
 
 const email = process.argv[2]
 const password = process.argv[3] || 'admin123'
@@ -13,7 +14,9 @@ if (!email) {
   console.error('Usage: npx tsx scripts/promote-admin.ts <email> [password] [name]')
   console.error('')
   console.error('  If the user exists, promotes them to admin.')
-  console.error('  If the user does NOT exist, creates them with the given password and promotes to admin.')
+  console.error(
+    '  If the user does NOT exist, creates them with the given password and promotes to admin.',
+  )
   console.error('')
   console.error('Examples:')
   console.error('  npx tsx scripts/promote-admin.ts admin@annobib.dev')
@@ -26,7 +29,7 @@ async function hashPassword(raw: string): Promise<string> {
   const data = encoder.encode(raw)
   const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 async function main() {
@@ -64,8 +67,7 @@ async function main() {
     console.log('Created new admin user:')
     console.log(created[0])
     console.log(`\nLogin with:  email=${normalizedEmail}  password=${password}`)
-  }
-  finally {
+  } finally {
     await client.end()
   }
 }

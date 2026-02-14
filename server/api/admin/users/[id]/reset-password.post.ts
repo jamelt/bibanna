@@ -35,10 +35,13 @@ export default defineEventHandler(async (event) => {
   const hashedPassword = await hashPassword(newPassword)
   const newAuth0Id = `local:${targetUser.email}:${hashedPassword}`
 
-  await db.update(users).set({
-    auth0Id: newAuth0Id,
-    updatedAt: new Date(),
-  }).where(eq(users.id, userId))
+  await db
+    .update(users)
+    .set({
+      auth0Id: newAuth0Id,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
 
   const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
   await logAdminAction(admin.id, 'user.reset_password', 'user', userId, {}, ip)
@@ -51,5 +54,5 @@ async function hashPassword(password: string): Promise<string> {
   const data = encoder.encode(password)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }

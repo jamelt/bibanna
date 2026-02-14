@@ -6,8 +6,7 @@ export default defineEventHandler(async () => {
 
   try {
     await db.execute(sql`SELECT 1`)
-  }
-  catch (error: any) {
+  } catch (error: any) {
     throw createError({
       statusCode: 503,
       message: 'Service unhealthy',

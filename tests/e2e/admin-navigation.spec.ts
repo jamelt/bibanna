@@ -21,7 +21,7 @@ test.describe('Admin Navigation', () => {
     await page.locator('input[type="password"]').fill(ADMIN_PASSWORD)
 
     const [loginResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/auth/login'), { timeout: 10000 }),
+      page.waitForResponse((r) => r.url().includes('/api/auth/login'), { timeout: 10000 }),
       page.getByRole('button', { name: 'Sign in' }).click(),
     ])
 
@@ -55,35 +55,47 @@ test.describe('Admin Navigation', () => {
     await sidebar.getByText('Admin Dashboard').click()
 
     await expect(page).toHaveURL('/app/admin', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({
+      timeout: 10000,
+    })
   })
 
   test('can navigate between all admin pages without getting stuck', async ({ page }) => {
     await page.goto('/app/admin')
     await page.waitForLoadState('networkidle')
-    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     const sidebar = page.locator('aside')
 
     // Admin Dashboard -> Users
     await sidebar.getByText('Users').click()
     await expect(page).toHaveURL('/app/admin/users', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Users -> Feedback
     await sidebar.getByText('Feedback').click()
     await expect(page).toHaveURL('/app/admin/feedback', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Feedback -> Announcements
     await sidebar.getByText('Announcements').click()
     await expect(page).toHaveURL('/app/admin/announcements', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Announcements/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Announcements/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Announcements -> Feature Flags
     await sidebar.getByText('Feature Flags').click()
     await expect(page).toHaveURL('/app/admin/feature-flags', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Feature Flags/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Feature Flags/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Feature Flags -> Audit Log
     await sidebar.getByText('Audit Log').click()
@@ -93,14 +105,18 @@ test.describe('Admin Navigation', () => {
     // Audit Log -> back to Admin Dashboard
     await sidebar.getByText('Admin Dashboard').click()
     await expect(page).toHaveURL('/app/admin', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({
+      timeout: 10000,
+    })
   })
 
   test('can navigate from admin pages back to regular app pages', async ({ page }) => {
     // Start on admin users page (the page that was causing the freeze)
     await page.goto('/app/admin/users')
     await page.waitForLoadState('networkidle')
-    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     const sidebar = page.locator('aside')
 
@@ -112,7 +128,9 @@ test.describe('Admin Navigation', () => {
     // App Dashboard -> Admin Users (back into admin)
     await sidebar.getByText('Users').click()
     await expect(page).toHaveURL('/app/admin/users', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Admin Users -> Library
     await sidebar.getByText('Library').click()
@@ -122,12 +140,16 @@ test.describe('Admin Navigation', () => {
     // Library -> Admin Feedback
     await sidebar.getByText('Feedback').click()
     await expect(page).toHaveURL('/app/admin/feedback', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({
+      timeout: 10000,
+    })
 
     // Admin Feedback -> Projects
     await sidebar.getByText('Projects').click()
     await expect(page).toHaveURL('/app/projects', { timeout: 10000 })
-    await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 10000,
+    })
   })
 
   test('admin pages are accessible via direct URL', async ({ page }) => {

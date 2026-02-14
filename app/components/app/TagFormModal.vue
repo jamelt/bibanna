@@ -39,14 +39,18 @@ const existingGroups = computed(() => {
   return [...groups].sort()
 })
 
-watch(() => props.tag, (tag) => {
-  if (tag) {
-    form.name = tag.name
-    form.description = tag.description || ''
-    form.color = tag.color
-    form.groupName = tag.groupName || ''
-  }
-}, { immediate: true })
+watch(
+  () => props.tag,
+  (tag) => {
+    if (tag) {
+      form.name = tag.name
+      form.description = tag.description || ''
+      form.color = tag.color
+      form.groupName = tag.groupName || ''
+    }
+  },
+  { immediate: true },
+)
 
 function resetForm() {
   form.name = ''
@@ -75,8 +79,7 @@ async function handleSubmit() {
         groupName: form.groupName || undefined,
       })
       emit('updated', updated)
-    }
-    else {
+    } else {
       const created = await createNewTag(form.name, form.color, {
         description: form.description || undefined,
         groupName: form.groupName || undefined,
@@ -86,11 +89,9 @@ async function handleSubmit() {
 
     isOpen.value = false
     resetForm()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     error.value = e.data?.message || 'An error occurred'
-  }
-  finally {
+  } finally {
     isSubmitting.value = false
   }
 }
@@ -123,12 +124,7 @@ async function handleSubmit() {
           />
 
           <UFormField label="Name" required>
-            <UInput
-              v-model="form.name"
-              placeholder="Enter tag name"
-              autofocus
-              class="w-full"
-            />
+            <UInput v-model="form.name" placeholder="Enter tag name" autofocus class="w-full" />
           </UFormField>
 
           <UFormField label="Description">
@@ -152,9 +148,11 @@ async function handleSubmit() {
                 :key="group"
                 type="button"
                 class="text-xs px-2 py-1 rounded-md transition-colors"
-                :class="form.groupName === group
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                :class="
+                  form.groupName === group
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                "
                 @click="form.groupName = form.groupName === group ? '' : group"
               >
                 {{ group }}
@@ -169,7 +167,9 @@ async function handleSubmit() {
                 :key="color"
                 type="button"
                 class="w-9 h-9 rounded-lg transition-transform hover:scale-110"
-                :class="form.color === color ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white' : ''"
+                :class="
+                  form.color === color ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white' : ''
+                "
                 :style="{ backgroundColor: color }"
                 @click="form.color = color"
               />
@@ -191,18 +191,8 @@ async function handleSubmit() {
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="isOpen = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="primary"
-              :loading="isSubmitting"
-              @click="handleSubmit"
-            >
+            <UButton variant="outline" color="neutral" @click="isOpen = false"> Cancel </UButton>
+            <UButton color="primary" :loading="isSubmitting" @click="handleSubmit">
               {{ isEditing ? 'Save Changes' : 'Create Tag' }}
             </UButton>
           </div>

@@ -23,9 +23,9 @@ export async function analyzeBookCover(imageBuffer: Buffer): Promise<ImageAnalys
     .resize(1024, 1024, { fit: 'inside' })
     .jpeg({ quality: 85 })
     .toBuffer()
-  
+
   const base64Image = resizedImage.toString('base64')
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -88,9 +88,9 @@ export async function extractTextFromImage(imageBuffer: Buffer): Promise<string>
     .resize(2048, 2048, { fit: 'inside' })
     .jpeg({ quality: 90 })
     .toBuffer()
-  
+
   const base64Image = resizedImage.toString('base64')
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -126,7 +126,7 @@ export async function analyzePDFFirstPage(pdfBuffer: Buffer): Promise<{
 }> {
   const pdfData = await pdfParse(pdfBuffer, { max: 2 })
   const text = pdfData.text
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -163,9 +163,9 @@ export async function generateImageEmbedding(imageBuffer: Buffer): Promise<numbe
     .resize(512, 512, { fit: 'inside' })
     .jpeg({ quality: 80 })
     .toBuffer()
-  
+
   const base64Image = resizedImage.toString('base64')
-  
+
   const description = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -189,7 +189,7 @@ export async function generateImageEmbedding(imageBuffer: Buffer): Promise<numbe
   })
 
   const descriptionText = description.choices[0]?.message?.content || ''
-  
+
   const embedding = await openai.embeddings.create({
     model: 'text-embedding-3-small',
     input: descriptionText,
@@ -204,9 +204,9 @@ export async function detectISBNFromImage(imageBuffer: Buffer): Promise<string |
     .sharpen()
     .jpeg({ quality: 90 })
     .toBuffer()
-  
+
   const base64Image = resizedImage.toString('base64')
-  
+
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -231,7 +231,7 @@ export async function detectISBNFromImage(imageBuffer: Buffer): Promise<string |
   })
 
   const content = completion.choices[0]?.message?.content?.trim() || ''
-  
+
   const isbnMatch = content.match(/(?:97[89])?\d{9}[\dXx]/)
   return isbnMatch ? isbnMatch[0].replace(/-/g, '') : null
 }

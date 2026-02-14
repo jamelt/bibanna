@@ -1,5 +1,12 @@
 import { db } from '~/server/database/client'
-import { entries, projects, tags, annotations, entryTags, entryProjects } from '~/server/database/schema'
+import {
+  entries,
+  projects,
+  tags,
+  annotations,
+  entryTags,
+  entryProjects,
+} from '~/server/database/schema'
 import { eq, and, or, ilike, sql, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
@@ -15,11 +22,11 @@ const searchParamsSchema = z.object({
   yearTo: z.coerce.number().int().optional(),
   doi: z.string().optional(),
   entryType: z.string().optional(),
-  isFavorite: z.preprocess(v => v === 'true', z.boolean().optional()),
-  isStarred: z.preprocess(v => v === 'true', z.boolean().optional()),
-  isArchived: z.preprocess(v => v === 'true', z.boolean().optional()),
+  isFavorite: z.preprocess((v) => v === 'true', z.boolean().optional()),
+  isStarred: z.preprocess((v) => v === 'true', z.boolean().optional()),
+  isArchived: z.preprocess((v) => v === 'true', z.boolean().optional()),
   contextProjectId: z.string().uuid().optional(),
-  semantic: z.preprocess(v => v === 'true', z.boolean().optional()),
+  semantic: z.preprocess((v) => v === 'true', z.boolean().optional()),
   limit: z.coerce.number().int().min(1).max(20).optional().default(5),
 })
 
@@ -37,7 +44,15 @@ export default defineEventHandler(async (event) => {
   const searchScope = params.scope!
   const limit = params.limit!
 
-  const hasQuery = !!(params.q || params.author || params.title || params.tag || params.project || params.year || params.doi)
+  const hasQuery = !!(
+    params.q ||
+    params.author ||
+    params.title ||
+    params.tag ||
+    params.project ||
+    params.year ||
+    params.doi
+  )
 
   if (!hasQuery) {
     return {
@@ -152,18 +167,20 @@ export default defineEventHandler(async (event) => {
       : sql<number>`0`
 
     const [countResult, entryResults] = await Promise.all([
-      db.select({ count: sql<number>`count(DISTINCT ${entries.id})` })
+      db
+        .select({ count: sql<number>`count(DISTINCT ${entries.id})` })
         .from(entries)
         .where(and(...conditions)),
-      db.select({
-        id: entries.id,
-        entryType: entries.entryType,
-        title: entries.title,
-        authors: entries.authors,
-        year: entries.year,
-        metadata: entries.metadata,
-        isFavorite: entries.isFavorite,
-      })
+      db
+        .select({
+          id: entries.id,
+          entryType: entries.entryType,
+          title: entries.title,
+          authors: entries.authors,
+          year: entries.year,
+          metadata: entries.metadata,
+          isFavorite: entries.isFavorite,
+        })
         .from(entries)
         .where(and(...conditions))
         .orderBy(q ? desc(relevanceScore) : desc(entries.updatedAt))
@@ -176,48 +193,61 @@ export default defineEventHandler(async (event) => {
       return { items: [], total }
     }
 
-    const entryIds = entryResults.map(e => e.id)
+    const entryIds = entryResults.map((e) => e.id)
 
     const [tagData, projectData, annotationCounts] = await Promise.all([
-      db.select({
-        entryId: entryTags.entryId,
-        tagId: tags.id,
-        tagName: tags.name,
-        tagColor: tags.color,
-      })
+      db
+        .select({
+          entryId: entryTags.entryId,
+          tagId: tags.id,
+          tagName: tags.name,
+          tagColor: tags.color,
+        })
         .from(entryTags)
         .innerJoin(tags, eq(entryTags.tagId, tags.id))
         .where(inArray(entryTags.entryId, entryIds)),
-      db.select({
-        entryId: entryProjects.entryId,
-        projectId: projects.id,
-        projectName: projects.name,
-        projectColor: projects.color,
-      })
+      db
+        .select({
+          entryId: entryProjects.entryId,
+          projectId: projects.id,
+          projectName: projects.name,
+          projectColor: projects.color,
+        })
         .from(entryProjects)
         .innerJoin(projects, eq(entryProjects.projectId, projects.id))
         .where(inArray(entryProjects.entryId, entryIds)),
-      db.select({
-        entryId: annotations.entryId,
-        count: sql<number>`count(*)`,
-      })
+      db
+        .select({
+          entryId: annotations.entryId,
+          count: sql<number>`count(*)`,
+        })
         .from(annotations)
         .where(inArray(annotations.entryId, entryIds))
         .groupBy(annotations.entryId),
     ])
 
-    const tagsByEntry: Record<string, Array<{ id: string; name: string; color: string | null }>> = {}
+    const tagsByEntry: Record<
+      string,
+      Array<{ id: string; name: string; color: string | null }>
+    > = {}
     for (const t of tagData) {
       if (!t.entryId) continue
       if (!tagsByEntry[t.entryId]) tagsByEntry[t.entryId] = []
       tagsByEntry[t.entryId].push({ id: t.tagId, name: t.tagName, color: t.tagColor })
     }
 
-    const projectsByEntry: Record<string, Array<{ id: string; name: string; color: string | null }>> = {}
+    const projectsByEntry: Record<
+      string,
+      Array<{ id: string; name: string; color: string | null }>
+    > = {}
     for (const p of projectData) {
       if (!p.entryId) continue
       if (!projectsByEntry[p.entryId]) projectsByEntry[p.entryId] = []
-      projectsByEntry[p.entryId].push({ id: p.projectId, name: p.projectName, color: p.projectColor })
+      projectsByEntry[p.entryId].push({
+        id: p.projectId,
+        name: p.projectName,
+        color: p.projectColor,
+      })
     }
 
     const annotationsByEntry: Record<string, number> = {}
@@ -225,7 +255,7 @@ export default defineEventHandler(async (event) => {
       if (a.entryId) annotationsByEntry[a.entryId] = Number(a.count)
     }
 
-    const items = entryResults.map(e => ({
+    const items = entryResults.map((e) => ({
       ...e,
       tags: tagsByEntry[e.id] || [],
       projects: projectsByEntry[e.id] || [],
@@ -245,12 +275,7 @@ export default defineEventHandler(async (event) => {
     if (params.q || params.project) {
       const term = params.project || params.q!
       const pattern = `%${term}%`
-      conditions.push(
-        or(
-          ilike(projects.name, pattern),
-          ilike(projects.description, pattern),
-        )!,
-      )
+      conditions.push(or(ilike(projects.name, pattern), ilike(projects.description, pattern))!)
     }
 
     if (params.isStarred) {
@@ -262,18 +287,20 @@ export default defineEventHandler(async (event) => {
     }
 
     const [countResult, projectResults] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` })
+      db
+        .select({ count: sql<number>`count(*)` })
         .from(projects)
         .where(and(...conditions)),
-      db.select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        color: projects.color,
-        isStarred: projects.isStarred,
-        isArchived: projects.isArchived,
-        slug: projects.slug,
-      })
+      db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          color: projects.color,
+          isStarred: projects.isStarred,
+          isArchived: projects.isArchived,
+          slug: projects.slug,
+        })
         .from(projects)
         .where(and(...conditions))
         .orderBy(desc(projects.updatedAt))
@@ -286,7 +313,7 @@ export default defineEventHandler(async (event) => {
       return { items: [], total }
     }
 
-    const projectIds = projectResults.map(p => p.id)
+    const projectIds = projectResults.map((p) => p.id)
     const entryCounts = await db
       .select({
         projectId: entryProjects.projectId,
@@ -301,7 +328,7 @@ export default defineEventHandler(async (event) => {
       countMap[c.projectId] = Number(c.count)
     }
 
-    const items = projectResults.map(p => ({
+    const items = projectResults.map((p) => ({
       ...p,
       entryCount: countMap[p.id] || 0,
     }))
@@ -319,24 +346,21 @@ export default defineEventHandler(async (event) => {
     if (params.q || params.tag) {
       const term = params.tag || params.q!
       const pattern = `%${term}%`
-      conditions.push(
-        or(
-          ilike(tags.name, pattern),
-          ilike(tags.description, pattern),
-        )!,
-      )
+      conditions.push(or(ilike(tags.name, pattern), ilike(tags.description, pattern))!)
     }
 
     const [countResult, tagResults] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` })
+      db
+        .select({ count: sql<number>`count(*)` })
         .from(tags)
         .where(and(...conditions)),
-      db.select({
-        id: tags.id,
-        name: tags.name,
-        color: tags.color,
-        description: tags.description,
-      })
+      db
+        .select({
+          id: tags.id,
+          name: tags.name,
+          color: tags.color,
+          description: tags.description,
+        })
         .from(tags)
         .where(and(...conditions))
         .orderBy(tags.name)
@@ -349,7 +373,7 @@ export default defineEventHandler(async (event) => {
       return { items: [], total }
     }
 
-    const tagIds = tagResults.map(t => t.id)
+    const tagIds = tagResults.map((t) => t.id)
     const entryCounts = await db
       .select({
         tagId: entryTags.tagId,
@@ -364,7 +388,7 @@ export default defineEventHandler(async (event) => {
       countMap[c.tagId] = Number(c.count)
     }
 
-    const items = tagResults.map(t => ({
+    const items = tagResults.map((t) => ({
       ...t,
       entryCount: countMap[t.id] || 0,
     }))
@@ -384,16 +408,18 @@ export default defineEventHandler(async (event) => {
     }
 
     const [countResult, annotationResults] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` })
+      db
+        .select({ count: sql<number>`count(*)` })
         .from(annotations)
         .where(and(...conditions)),
-      db.select({
-        id: annotations.id,
-        content: annotations.content,
-        annotationType: annotations.annotationType,
-        entryId: annotations.entryId,
-        createdAt: annotations.createdAt,
-      })
+      db
+        .select({
+          id: annotations.id,
+          content: annotations.content,
+          annotationType: annotations.annotationType,
+          entryId: annotations.entryId,
+          createdAt: annotations.createdAt,
+        })
         .from(annotations)
         .where(and(...conditions))
         .orderBy(desc(annotations.createdAt))
@@ -406,7 +432,7 @@ export default defineEventHandler(async (event) => {
       return { items: [], total }
     }
 
-    const entryIds = [...new Set(annotationResults.map(a => a.entryId))]
+    const entryIds = [...new Set(annotationResults.map((a) => a.entryId))]
     const parentEntries = await db
       .select({
         id: entries.id,
@@ -421,7 +447,7 @@ export default defineEventHandler(async (event) => {
       entryMap[e.id] = { title: e.title, entryType: e.entryType }
     }
 
-    const items = annotationResults.map(a => ({
+    const items = annotationResults.map((a) => ({
       id: a.id,
       content: a.content.slice(0, 200),
       annotationType: a.annotationType,

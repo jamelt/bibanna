@@ -22,8 +22,7 @@ export default defineEventHandler(async () => {
     const dbStart = Date.now()
     await db.execute(sql`SELECT 1`)
     checks.database!.latency = Date.now() - dbStart
-  }
-  catch (error: any) {
+  } catch (error: any) {
     checks.database!.status = 'unhealthy'
     checks.database!.error = error.message
   }
@@ -32,8 +31,7 @@ export default defineEventHandler(async () => {
   if (!stripeKey) {
     checks.stripe!.status = 'unconfigured'
     checks.stripe!.error = 'Stripe secret key not configured'
-  }
-  else {
+  } else {
     try {
       const stripeStart = Date.now()
       const res = await fetch('https://api.stripe.com/v1/balance', {
@@ -44,15 +42,14 @@ export default defineEventHandler(async () => {
         checks.stripe!.status = 'unhealthy'
         checks.stripe!.error = `Stripe API returned ${res.status}`
       }
-    }
-    catch (error: any) {
+    } catch (error: any) {
       checks.stripe!.status = 'unhealthy'
       checks.stripe!.error = error.message
     }
   }
 
-  const criticalChecks = Object.values(checks).filter(c => c.critical)
-  const overallStatus = criticalChecks.every(c => c.status === 'healthy')
+  const criticalChecks = Object.values(checks).filter((c) => c.critical)
+  const overallStatus = criticalChecks.every((c) => c.status === 'healthy')
     ? 'healthy'
     : 'unhealthy'
 

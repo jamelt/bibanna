@@ -8,12 +8,14 @@ const openai = new OpenAI({
   apiKey: process.env.NUXT_OPENAI_API_KEY,
 })
 
-const suggestSchema = z.object({
-  entryId: z.string().uuid().optional(),
-  text: z.string().optional(),
-}).refine(data => data.entryId || data.text, {
-  message: 'Either entryId or text is required',
-})
+const suggestSchema = z
+  .object({
+    entryId: z.string().uuid().optional(),
+    text: z.string().optional(),
+  })
+  .refine((data) => data.entryId || data.text, {
+    message: 'Either entryId or text is required',
+  })
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -39,7 +41,9 @@ export default defineEventHandler(async (event) => {
       metadata?.journal as string | undefined,
       metadata?.publisher as string | undefined,
       entry.notes,
-    ].filter(Boolean).join('\n')
+    ]
+      .filter(Boolean)
+      .join('\n')
   }
 
   if (!sourceText.trim()) {
@@ -50,7 +54,7 @@ export default defineEventHandler(async (event) => {
     where: eq(tags.userId, user.id),
   })
 
-  const existingTagNames = userTags.map(t => t.name)
+  const existingTagNames = userTags.map((t) => t.name)
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -89,19 +93,20 @@ Rules:
   try {
     const result = JSON.parse(content)
     return {
-      suggestions: (result.suggestions || []).map((s: { name: string; confidence: number; reason: string }) => {
-        const existingTag = userTags.find(t => t.name.toLowerCase() === s.name.toLowerCase())
-        return {
-          name: s.name,
-          confidence: s.confidence,
-          reason: s.reason,
-          isExisting: !!existingTag,
-          existingTagId: existingTag?.id,
-        }
-      }),
+      suggestions: (result.suggestions || []).map(
+        (s: { name: string; confidence: number; reason: string }) => {
+          const existingTag = userTags.find((t) => t.name.toLowerCase() === s.name.toLowerCase())
+          return {
+            name: s.name,
+            confidence: s.confidence,
+            reason: s.reason,
+            isExisting: !!existingTag,
+            existingTagId: existingTag?.id,
+          }
+        },
+      ),
     }
-  }
-  catch {
+  } catch {
     return { suggestions: [] }
   }
 })

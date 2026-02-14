@@ -28,7 +28,7 @@ export async function generateResearchPersona(
     .from(entryProjects)
     .where(eq(entryProjects.projectId, projectId))
 
-  const entryIds = projectEntryIds.map(e => e.entryId)
+  const entryIds = projectEntryIds.map((e) => e.entryId)
 
   if (entryIds.length === 0) {
     return getDefaultPersona()
@@ -46,13 +46,13 @@ export async function generateResearchPersona(
     .innerJoin(tags, eq(tags.id, entryTags.tagId))
     .where(inArray(entryTags.entryId, entryIds))
 
-  const entryTypes = [...new Set(projectEntries.map(e => e.entryType))]
-  const years = projectEntries.map(e => e.year).filter(Boolean) as number[]
+  const entryTypes = [...new Set(projectEntries.map((e) => e.entryType))]
+  const years = projectEntries.map((e) => e.year).filter(Boolean) as number[]
   const minYear = years.length > 0 ? Math.min(...years) : null
   const maxYear = years.length > 0 ? Math.max(...years) : null
 
-  const titles = projectEntries.map(e => e.title).slice(0, 20)
-  const tagNames = [...new Set(projectTags.map(t => t.name))]
+  const titles = projectEntries.map((e) => e.title).slice(0, 20)
+  const tagNames = [...new Set(projectTags.map((t) => t.name))]
 
   const projectContext = `
 Project Analysis:
@@ -62,7 +62,7 @@ Project Analysis:
 - Tags/Topics: ${tagNames.length > 0 ? tagNames.join(', ') : 'None specified'}
 
 Sample Titles:
-${titles.map(t => `- ${t}`).join('\n')}
+${titles.map((t) => `- ${t}`).join('\n')}
 `
 
   const completion = await openai.chat.completions.create({
@@ -117,21 +117,11 @@ The identifiedGaps should be research gaps that the persona has identified based
       systemPrompt: parsed.systemPrompt || getDefaultSystemPrompt(parsed.name),
     }
 
-    await db.insert(researchPersonas).values({
-      projectId,
-      userId,
-      name: persona.name,
-      title: persona.title,
-      expertise: persona.expertise,
-      personality: persona.personality,
-      dominantTopics: persona.dominantTopics,
-      timeRange: persona.timeRange,
-      sourceCount: persona.sourceCount,
-      identifiedGaps: persona.identifiedGaps,
-      systemPrompt: persona.systemPrompt,
-    }).onConflictDoUpdate({
-      target: [researchPersonas.projectId],
-      set: {
+    await db
+      .insert(researchPersonas)
+      .values({
+        projectId,
+        userId,
         name: persona.name,
         title: persona.title,
         expertise: persona.expertise,
@@ -141,13 +131,25 @@ The identifiedGaps should be research gaps that the persona has identified based
         sourceCount: persona.sourceCount,
         identifiedGaps: persona.identifiedGaps,
         systemPrompt: persona.systemPrompt,
-        updatedAt: new Date(),
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: [researchPersonas.projectId],
+        set: {
+          name: persona.name,
+          title: persona.title,
+          expertise: persona.expertise,
+          personality: persona.personality,
+          dominantTopics: persona.dominantTopics,
+          timeRange: persona.timeRange,
+          sourceCount: persona.sourceCount,
+          identifiedGaps: persona.identifiedGaps,
+          systemPrompt: persona.systemPrompt,
+          updatedAt: new Date(),
+        },
+      })
 
     return persona
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to parse persona:', error)
     return getDefaultPersona()
   }
@@ -161,7 +163,13 @@ function getDefaultPersona(): ResearchPersona {
   return {
     name: 'Research Assistant',
     title: 'General Research Companion',
-    expertise: ['Literature Review', 'Source Analysis', 'Academic Writing', 'Research Methods', 'Citation Management'],
+    expertise: [
+      'Literature Review',
+      'Source Analysis',
+      'Academic Writing',
+      'Research Methods',
+      'Citation Management',
+    ],
     personality: 'Clear, supportive, and academically rigorous',
     dominantTopics: [],
     identifiedGaps: [],

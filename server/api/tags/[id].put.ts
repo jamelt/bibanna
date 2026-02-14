@@ -26,10 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const existingTag = await db.query.tags.findFirst({
-    where: and(
-      eq(tags.id, tagId),
-      eq(tags.userId, user.id),
-    ),
+    where: and(eq(tags.id, tagId), eq(tags.userId, user.id)),
   })
 
   if (!existingTag) {
@@ -41,10 +38,7 @@ export default defineEventHandler(async (event) => {
 
   if (parsed.data.name && parsed.data.name !== existingTag.name) {
     const duplicateTag = await db.query.tags.findFirst({
-      where: and(
-        eq(tags.userId, user.id),
-        eq(tags.name, parsed.data.name),
-      ),
+      where: and(eq(tags.userId, user.id), eq(tags.name, parsed.data.name)),
     })
 
     if (duplicateTag) {
@@ -58,10 +52,7 @@ export default defineEventHandler(async (event) => {
   const [updatedTag] = await db
     .update(tags)
     .set(parsed.data)
-    .where(and(
-      eq(tags.id, tagId),
-      eq(tags.userId, user.id),
-    ))
+    .where(and(eq(tags.id, tagId), eq(tags.userId, user.id)))
     .returning()
 
   return updatedTag

@@ -1,11 +1,8 @@
-import ExcelJS from 'exceljs'
+import type ExcelJS from 'exceljs'
 import type { Entry } from '~/shared/types'
 import { ENTRY_TYPE_LABELS } from '~/shared/types'
 
-export function addSummarySheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addSummarySheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('Summary', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -25,35 +22,34 @@ export function addSummarySheet(
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } }
 
   const yearRange = entries
-    .map(e => e.year)
+    .map((e) => e.year)
     .filter((y): y is number => y !== null && y !== undefined)
-  
+
   const minYear = yearRange.length > 0 ? Math.min(...yearRange) : 'N/A'
   const maxYear = yearRange.length > 0 ? Math.max(...yearRange) : 'N/A'
 
-  const entriesWithVeritas = entries.filter(e => e.veritasScore)
-  const avgVeritas = entriesWithVeritas.length > 0
-    ? entriesWithVeritas.reduce((acc, e) => acc + (e.veritasScore?.overallScore || 0), 0) / entriesWithVeritas.length
-    : 0
+  const entriesWithVeritas = entries.filter((e) => e.veritasScore)
+  const avgVeritas =
+    entriesWithVeritas.length > 0
+      ? entriesWithVeritas.reduce((acc, e) => acc + (e.veritasScore?.overallScore || 0), 0) /
+        entriesWithVeritas.length
+      : 0
 
   const summaryData = [
     { metric: 'Total Entries', value: entries.length },
     { metric: 'Year Range', value: `${minYear} - ${maxYear}` },
     { metric: 'Unique Authors', value: countUniqueAuthors(entries) },
-    { metric: 'With DOI', value: entries.filter(e => e.metadata?.doi).length },
-    { metric: 'With Abstract', value: entries.filter(e => e.metadata?.abstract).length },
-    { metric: 'Favorited', value: entries.filter(e => e.isFavorite).length },
+    { metric: 'With DOI', value: entries.filter((e) => e.metadata?.doi).length },
+    { metric: 'With Abstract', value: entries.filter((e) => e.metadata?.abstract).length },
+    { metric: 'Favorited', value: entries.filter((e) => e.isFavorite).length },
     { metric: 'Average Veritas Score', value: avgVeritas ? avgVeritas.toFixed(1) : 'N/A' },
     { metric: 'Export Date', value: new Date().toLocaleDateString() },
   ]
 
-  summaryData.forEach(data => sheet.addRow(data))
+  summaryData.forEach((data) => sheet.addRow(data))
 }
 
-export function addTypeBreakdownSheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addTypeBreakdownSheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('By Type', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -72,10 +68,13 @@ export function addTypeBreakdownSheet(
     fgColor: { argb: 'FF4F46E5' },
   }
 
-  const typeCounts = entries.reduce((acc, entry) => {
-    acc[entry.entryType] = (acc[entry.entryType] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const typeCounts = entries.reduce(
+    (acc, entry) => {
+      acc[entry.entryType] = (acc[entry.entryType] || 0) + 1
+      return acc
+    },
+    {} as Record<string, number>,
+  )
 
   Object.entries(typeCounts)
     .sort((a, b) => b[1] - a[1])
@@ -89,17 +88,14 @@ export function addTypeBreakdownSheet(
 
   sheet.addRow({})
   sheet.addRow({ type: 'Total', count: entries.length, percentage: '100%' })
-  
+
   const lastRow = sheet.lastRow
   if (lastRow) {
     lastRow.font = { bold: true }
   }
 }
 
-export function addYearBreakdownSheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addYearBreakdownSheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('By Year', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -118,11 +114,14 @@ export function addYearBreakdownSheet(
     fgColor: { argb: 'FF4F46E5' },
   }
 
-  const yearCounts = entries.reduce((acc, entry) => {
-    const year = entry.year || 'Unknown'
-    acc[year] = (acc[year] || 0) + 1
-    return acc
-  }, {} as Record<string | number, number>)
+  const yearCounts = entries.reduce(
+    (acc, entry) => {
+      const year = entry.year || 'Unknown'
+      acc[year] = (acc[year] || 0) + 1
+      return acc
+    },
+    {} as Record<string | number, number>,
+  )
 
   let cumulative = 0
   Object.entries(yearCounts)
@@ -141,10 +140,7 @@ export function addYearBreakdownSheet(
     })
 }
 
-export function addAuthorBreakdownSheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addAuthorBreakdownSheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('By Author', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -165,9 +161,9 @@ export function addAuthorBreakdownSheet(
 
   const authorEntries: Record<string, { count: number; titles: string[] }> = {}
 
-  entries.forEach(entry => {
+  entries.forEach((entry) => {
     const authors = entry.authors || []
-    authors.forEach(author => {
+    authors.forEach((author) => {
       const name = `${author.lastName}, ${author.firstName}`
       if (!authorEntries[name]) {
         authorEntries[name] = { count: 0, titles: [] }
@@ -190,10 +186,7 @@ export function addAuthorBreakdownSheet(
     })
 }
 
-export function addJournalBreakdownSheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addJournalBreakdownSheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('By Journal', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -215,8 +208,8 @@ export function addJournalBreakdownSheet(
   const journalEntries: Record<string, { count: number; years: number[] }> = {}
 
   entries
-    .filter(e => e.metadata?.journal)
-    .forEach(entry => {
+    .filter((e) => e.metadata?.journal)
+    .forEach((entry) => {
       const journal = entry.metadata?.journal as string
       if (!journalEntries[journal]) {
         journalEntries[journal] = { count: 0, years: [] }
@@ -232,21 +225,21 @@ export function addJournalBreakdownSheet(
     .forEach(([journal, data]) => {
       const minYear = data.years.length > 0 ? Math.min(...data.years) : null
       const maxYear = data.years.length > 0 ? Math.max(...data.years) : null
-      
+
       sheet.addRow({
         journal,
         count: data.count,
-        yearRange: minYear && maxYear 
-          ? (minYear === maxYear ? String(minYear) : `${minYear}-${maxYear}`)
-          : 'N/A',
+        yearRange:
+          minYear && maxYear
+            ? minYear === maxYear
+              ? String(minYear)
+              : `${minYear}-${maxYear}`
+            : 'N/A',
       })
     })
 }
 
-export function addVeritasBreakdownSheet(
-  workbook: ExcelJS.Workbook,
-  entries: Entry[],
-): void {
+export function addVeritasBreakdownSheet(workbook: ExcelJS.Workbook, entries: Entry[]): void {
   const sheet = workbook.addWorksheet('Veritas Scores', {
     views: [{ state: 'frozen', ySplit: 1 }],
   })
@@ -268,9 +261,9 @@ export function addVeritasBreakdownSheet(
   }
 
   entries
-    .filter(e => e.veritasScore)
+    .filter((e) => e.veritasScore)
     .sort((a, b) => (b.veritasScore?.overallScore || 0) - (a.veritasScore?.overallScore || 0))
-    .forEach(entry => {
+    .forEach((entry) => {
       const vs = entry.veritasScore!
       const row = sheet.addRow({
         title: entry.title,
@@ -297,8 +290,8 @@ export function addVeritasBreakdownSheet(
 
 function countUniqueAuthors(entries: Entry[]): number {
   const authors = new Set<string>()
-  entries.forEach(entry => {
-    (entry.authors || []).forEach(author => {
+  entries.forEach((entry) => {
+    ;(entry.authors || []).forEach((author) => {
       authors.add(`${author.lastName}, ${author.firstName}`.toLowerCase())
     })
   })
@@ -331,7 +324,7 @@ export function addAllSummarySheets(
   if (includeYearBreakdown) addYearBreakdownSheet(workbook, entries)
   if (includeAuthorBreakdown) addAuthorBreakdownSheet(workbook, entries)
   if (includeJournalBreakdown) addJournalBreakdownSheet(workbook, entries)
-  if (includeVeritasBreakdown && entries.some(e => e.veritasScore)) {
+  if (includeVeritasBreakdown && entries.some((e) => e.veritasScore)) {
     addVeritasBreakdownSheet(workbook, entries)
   }
 }

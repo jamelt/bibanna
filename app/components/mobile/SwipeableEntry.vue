@@ -45,10 +45,10 @@ function handleTouchStart(e: TouchEvent) {
 
 function handleTouchMove(e: TouchEvent) {
   if (!isDragging.value) return
-  
+
   const diff = e.touches[0].clientX - startX.value
   currentX.value = diff
-  
+
   if (diff > 20) {
     swipeDirection.value = 'right'
   } else if (diff < -20) {
@@ -64,7 +64,7 @@ function handleTouchEnd() {
       emit('delete')
     }
   }
-  
+
   isDragging.value = false
   currentX.value = 0
   swipeDirection.value = null
@@ -106,7 +106,10 @@ function handleTouchEnd() {
               {{ entry.title }}
             </h3>
             <p class="text-sm text-gray-500 truncate">
-              {{ entry.authors?.map(a => `${a.firstName} ${a.lastName}`).join(', ') || 'Unknown author' }}
+              {{
+                entry.authors?.map((a) => `${a.firstName} ${a.lastName}`).join(', ') ||
+                'Unknown author'
+              }}
             </p>
             <p class="text-xs text-gray-400 mt-1">
               {{ entry.year }} · {{ entry.entryType.replace('_', ' ') }}

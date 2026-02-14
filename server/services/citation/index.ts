@@ -42,7 +42,7 @@ export async function formatEntriesWithStyle(
   const cslItems = entries.map(entryToCSLItem)
   const engine = await createCitationProcessor(styleXml, localeXml, cslItems)
 
-  const itemIds = cslItems.map(item => item.id)
+  const itemIds = cslItems.map((item) => item.id)
   const bibliographies = formatBibliography(engine, itemIds)
 
   const formattedEntries: FormattedCitation[] = entries.map((entry, index) => ({
@@ -61,10 +61,7 @@ export async function formatEntriesWithStyle(
   }
 }
 
-export async function formatSingleEntry(
-  entry: Entry,
-  styleId: string,
-): Promise<FormattedCitation> {
+export async function formatSingleEntry(entry: Entry, styleId: string): Promise<FormattedCitation> {
   const result = await formatEntriesWithStyle([entry], styleId)
   return result.entries[0]
 }
@@ -132,7 +129,7 @@ export async function formatWithCustomStyle(
   const cslItems = entries.map(entryToCSLItem)
   const engine = await createCitationProcessor(styleXml, localeXml, cslItems)
 
-  const itemIds = cslItems.map(item => item.id)
+  const itemIds = cslItems.map((item) => item.id)
   const bibliographies = formatBibliography(engine, itemIds)
 
   const formattedEntries: FormattedCitation[] = entries.map((entry, index) => ({
@@ -157,7 +154,4 @@ export {
   type DefaultStyle,
 } from './default-styles'
 
-export {
-  entryToCSLItem,
-  type CitationItem,
-} from './csl-processor'
+export { entryToCSLItem, type CitationItem } from './csl-processor'

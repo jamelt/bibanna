@@ -12,9 +12,7 @@ export function useUserPreferences() {
     () => data.value?.defaultCitationStyle || DEFAULT_CITATION_STYLE,
   )
 
-  const defaultExportFormat = computed(
-    () => data.value?.defaultExportFormat,
-  )
+  const defaultExportFormat = computed(() => data.value?.defaultExportFormat)
 
   async function setDefaultCitationStyle(styleId: string) {
     await $fetch('/api/user/preferences', {

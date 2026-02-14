@@ -72,16 +72,20 @@ export default defineEventHandler(async (event) => {
     if (!newEntry) continue
 
     if (projectId) {
-      await db.insert(entryProjects).values({
-        entryId: newEntry.id,
-        projectId,
-      }).onConflictDoNothing()
+      await db
+        .insert(entryProjects)
+        .values({
+          entryId: newEntry.id,
+          projectId,
+        })
+        .onConflictDoNothing()
     }
 
     if (tagIds && tagIds.length > 0) {
-      await db.insert(entryTags).values(
-        tagIds.map(tagId => ({ entryId: newEntry.id, tagId })),
-      ).onConflictDoNothing()
+      await db
+        .insert(entryTags)
+        .values(tagIds.map((tagId) => ({ entryId: newEntry.id, tagId })))
+        .onConflictDoNothing()
     }
 
     created.push(newEntry)

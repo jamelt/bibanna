@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-async function signUpAndLogin(page: import('@playwright/test').Page, testInfo: import('@playwright/test').TestInfo) {
+async function signUpAndLogin(
+  page: import('@playwright/test').Page,
+  testInfo: import('@playwright/test').TestInfo,
+) {
   const testUser = {
     name: 'User Menu Test',
     email: `e2e-user-menu-${testInfo.parallelIndex}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`,
@@ -8,7 +11,7 @@ async function signUpAndLogin(page: import('@playwright/test').Page, testInfo: i
   }
   await page.goto('/signup')
   await page.waitForLoadState('networkidle')
-  
+
   // Handle potential redirect to login if signup is disabled or other flows, but assuming standard flow
   const heading = page.getByRole('heading', { name: /Create your account/i })
   if (await heading.isVisible()) {
@@ -18,16 +21,16 @@ async function signUpAndLogin(page: import('@playwright/test').Page, testInfo: i
     await page.locator('input[type="password"]').nth(1).fill(testUser.password)
 
     const [response] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/auth/register'), { timeout: 15000 }),
+      page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 15000 }),
       page.getByRole('button', { name: 'Create Account' }).click(),
     ])
-    
+
     if (!response.ok()) {
-       console.log('Register failed (likely user exists), trying login...')
-       await page.goto('/login')
-       await page.getByPlaceholder('you@example.com').fill(testUser.email)
-       await page.getByPlaceholder('••••••••').fill(testUser.password)
-       await page.getByRole('button', { name: 'Sign in' }).click()
+      console.log('Register failed (likely user exists), trying login...')
+      await page.goto('/login')
+      await page.getByPlaceholder('you@example.com').fill(testUser.email)
+      await page.getByPlaceholder('••••••••').fill(testUser.password)
+      await page.getByRole('button', { name: 'Sign in' }).click()
     }
   }
 
@@ -60,14 +63,14 @@ test.describe('User Menu Navigation', () => {
   test('User can navigate to Settings from user menu', async ({ page }) => {
     await page.getByTestId('user-menu-trigger').click()
     await page.getByText('Settings').click()
-    
+
     await expect(page).toHaveURL('/app/settings')
   })
 
   test('User can log out from user menu', async ({ page }) => {
     await page.getByTestId('user-menu-trigger').click()
     await page.getByText('Sign out').click()
-    
+
     // Should redirect to login or home
     await expect(page).toHaveURL(/\/login|^\/$/)
   })

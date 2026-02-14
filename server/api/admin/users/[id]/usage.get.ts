@@ -26,10 +26,7 @@ export default defineEventHandler(async (event) => {
   const dailyUsage = await db
     .select()
     .from(apiUsageDaily)
-    .where(and(
-      eq(apiUsageDaily.userId, userId),
-      gte(apiUsageDaily.date, sinceDateStr),
-    ))
+    .where(and(eq(apiUsageDaily.userId, userId), gte(apiUsageDaily.date, sinceDateStr)))
     .orderBy(desc(apiUsageDaily.date))
 
   const totalRequests = dailyUsage.reduce((sum, d) => sum + d.requestCount, 0)
@@ -48,7 +45,7 @@ export default defineEventHandler(async (event) => {
     .map(([endpoint, count]) => ({ endpoint, count }))
 
   return {
-    daily: dailyUsage.map(d => ({
+    daily: dailyUsage.map((d) => ({
       date: d.date,
       requestCount: d.requestCount,
     })),

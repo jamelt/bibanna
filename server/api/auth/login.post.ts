@@ -28,10 +28,7 @@ export default defineEventHandler(async (event) => {
   const auth0Id = `local:${normalizedEmail}:${hashedPassword}`
 
   const user = await db.query.users.findFirst({
-    where: and(
-      eq(users.email, normalizedEmail),
-      eq(users.auth0Id, auth0Id),
-    ),
+    where: and(eq(users.email, normalizedEmail), eq(users.auth0Id, auth0Id)),
   })
 
   if (!user) {
@@ -61,5 +58,5 @@ async function hashPassword(password: string): Promise<string> {
   const data = encoder.encode(password)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }

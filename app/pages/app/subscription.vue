@@ -46,7 +46,7 @@ onMounted(() => {
 })
 
 const tiers = computed(() => {
-  return getAllPlansForDisplay().map(plan => {
+  return getAllPlansForDisplay().map((plan) => {
     const priceMonthly = plan.pricing ? plan.pricing.monthly / 100 : 0
     const priceYearly = plan.pricing ? plan.pricing.yearly / 100 : 0
 
@@ -81,11 +81,9 @@ async function handleUpgrade(targetTier: SubscriptionTier) {
 
   try {
     await startCheckout(targetTier, billingInterval.value)
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Checkout failed:', error)
-  }
-  finally {
+  } finally {
     isCheckoutLoading.value = false
     checkoutTier.value = null
   }
@@ -94,8 +92,7 @@ async function handleUpgrade(targetTier: SubscriptionTier) {
 async function handleManageBilling() {
   try {
     await openPortal()
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('Portal failed:', error)
   }
 }
@@ -122,24 +119,16 @@ async function handleManageBilling() {
 
     <!-- Header -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-        Subscription
-      </h1>
-      <p class="text-gray-500 dark:text-gray-400">
-        Manage your subscription and billing
-      </p>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Subscription</h1>
+      <p class="text-gray-500 dark:text-gray-400">Manage your subscription and billing</p>
     </div>
 
     <!-- Current Plan Card -->
     <UCard v-if="isPaid && subscription">
       <template #header>
         <div class="flex items-center justify-between">
-          <h2 class="font-semibold text-gray-900 dark:text-white">
-            Current Plan
-          </h2>
-          <UBadge
-            :color="subscription.status === 'active' ? 'green' : 'yellow'"
-          >
+          <h2 class="font-semibold text-gray-900 dark:text-white">Current Plan</h2>
+          <UBadge :color="subscription.status === 'active' ? 'green' : 'yellow'">
             {{ subscription.status }}
           </UBadge>
         </div>
@@ -155,11 +144,7 @@ async function handleManageBilling() {
               {{ isCanceled ? 'Ends' : 'Renews' }} on {{ periodEnd.toLocaleDateString() }}
             </p>
           </div>
-          <UButton
-            variant="outline"
-            color="gray"
-            @click="handleManageBilling"
-          >
+          <UButton variant="outline" color="gray" @click="handleManageBilling">
             Manage Billing
           </UButton>
         </div>
@@ -177,9 +162,7 @@ async function handleManageBilling() {
     <!-- Usage Stats -->
     <UCard v-if="limits">
       <template #header>
-        <h2 class="font-semibold text-gray-900 dark:text-white">
-          Your Limits
-        </h2>
+        <h2 class="font-semibold text-gray-900 dark:text-white">Your Limits</h2>
       </template>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -198,7 +181,11 @@ async function handleManageBilling() {
         <div>
           <p class="text-sm text-gray-500">Collaborators</p>
           <p class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ limits.collaboratorsPerProject === Infinity ? 'Unlimited' : limits.collaboratorsPerProject || 'None' }}
+            {{
+              limits.collaboratorsPerProject === Infinity
+                ? 'Unlimited'
+                : limits.collaboratorsPerProject || 'None'
+            }}
           </p>
         </div>
         <div>
@@ -226,9 +213,7 @@ async function handleManageBilling() {
           @click="billingInterval = 'year'"
         >
           Yearly
-          <UBadge color="green" variant="subtle" size="xs" class="ml-2">
-            Save 17%
-          </UBadge>
+          <UBadge color="green" variant="subtle" size="xs" class="ml-2"> Save 17% </UBadge>
         </UButton>
       </UFieldGroup>
     </div>
@@ -244,9 +229,7 @@ async function handleManageBilling() {
         }"
       >
         <div v-if="tierData.highlighted" class="absolute -top-3 left-1/2 -translate-x-1/2">
-          <UBadge color="primary" variant="solid">
-            Most Popular
-          </UBadge>
+          <UBadge color="primary" variant="solid"> Most Popular </UBadge>
         </div>
 
         <div class="space-y-4">
@@ -287,22 +270,10 @@ async function handleManageBilling() {
             </li>
           </ul>
 
-          <UButton
-            v-if="tierData.current"
-            block
-            variant="outline"
-            color="gray"
-            disabled
-          >
+          <UButton v-if="tierData.current" block variant="outline" color="gray" disabled>
             Current Plan
           </UButton>
-          <UButton
-            v-else-if="!tierData.isPaid"
-            block
-            variant="outline"
-            color="gray"
-            disabled
-          >
+          <UButton v-else-if="!tierData.isPaid" block variant="outline" color="gray" disabled>
             {{ isPaid ? 'Downgrade via Billing' : 'Current Plan' }}
           </UButton>
           <UButton
@@ -327,28 +298,30 @@ async function handleManageBilling() {
     <!-- FAQ -->
     <UCard>
       <template #header>
-        <h2 class="font-semibold text-gray-900 dark:text-white">
-          Frequently Asked Questions
-        </h2>
+        <h2 class="font-semibold text-gray-900 dark:text-white">Frequently Asked Questions</h2>
       </template>
 
       <UAccordion
         :items="[
           {
             label: 'Can I cancel my subscription?',
-            content: 'Yes, you can cancel anytime. Your subscription will remain active until the end of your billing period.',
+            content:
+              'Yes, you can cancel anytime. Your subscription will remain active until the end of your billing period.',
           },
           {
             label: 'What happens to my data if I downgrade?',
-            content: 'Your data is never deleted. However, you may lose access to certain features and any content exceeding the new tier limits will be read-only.',
+            content:
+              'Your data is never deleted. However, you may lose access to certain features and any content exceeding the new tier limits will be read-only.',
           },
           {
             label: 'Do you offer refunds?',
-            content: 'We offer a full refund within 7 days of your first subscription. Contact support for assistance.',
+            content:
+              'We offer a full refund within 7 days of your first subscription. Contact support for assistance.',
           },
           {
             label: 'Can I switch between monthly and yearly billing?',
-            content: 'Yes, you can switch anytime through the Manage Billing portal. Changes take effect at the next billing cycle.',
+            content:
+              'Yes, you can switch anytime through the Manage Billing portal. Changes take effect at the next billing cycle.',
           },
         ]"
       />

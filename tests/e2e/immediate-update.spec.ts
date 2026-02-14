@@ -26,7 +26,10 @@ test.describe('Immediate UI Updates', () => {
 
     await expect(page.locator('text=No projects yet')).toBeVisible()
 
-    await page.getByRole('button', { name: /New Project|Create Project/i }).first().click()
+    await page
+      .getByRole('button', { name: /New Project|Create Project/i })
+      .first()
+      .click()
 
     const projectName = `Immediate Test ${Date.now()}`
     await page.getByTestId('project-modal-name').fill(projectName)
@@ -49,7 +52,10 @@ test.describe('Immediate UI Updates', () => {
       const projectName = `Project ${i} ${Date.now()}`
       projectNames.push(projectName)
 
-      await page.getByRole('button', { name: /New Project|Create Project/i }).first().click()
+      await page
+        .getByRole('button', { name: /New Project|Create Project/i })
+        .first()
+        .click()
       await page.getByTestId('project-modal-name').fill(projectName)
       await page.getByTestId('project-modal-submit').click()
       await expect(page.getByTestId('project-modal-name')).toBeHidden({ timeout: 10000 })
@@ -69,9 +75,14 @@ test.describe('Immediate UI Updates', () => {
     await page.goto('/app/library')
     await expect(page.getByRole('heading', { name: 'Library' })).toBeVisible()
 
-    const initialEntryCount = await page.locator('[data-testid="entry-card"], [data-testid="entry-row"]').count()
+    const initialEntryCount = await page
+      .locator('[data-testid="entry-card"], [data-testid="entry-row"]')
+      .count()
 
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
 
     const entryTitle = `Test Entry ${Date.now()}`
     await page.getByLabel('Title').fill(entryTitle)
@@ -85,7 +96,9 @@ test.describe('Immediate UI Updates', () => {
 
     await expect(page.getByText(entryTitle)).toBeVisible({ timeout: 5000 })
 
-    const newEntryCount = await page.locator('[data-testid="entry-card"], [data-testid="entry-row"]').count()
+    const newEntryCount = await page
+      .locator('[data-testid="entry-card"], [data-testid="entry-row"]')
+      .count()
     expect(newEntryCount).toBe(initialEntryCount + 1)
   })
 
@@ -97,7 +110,10 @@ test.describe('Immediate UI Updates', () => {
       const entryTitle = `Entry ${i} ${Date.now()}`
       entryTitles.push(entryTitle)
 
-      await page.getByRole('button', { name: /Add Entry/i }).first().click()
+      await page
+        .getByRole('button', { name: /Add Entry/i })
+        .first()
+        .click()
       await page.getByLabel('Title').fill(entryTitle)
       await page.getByLabel('First Name').fill('Author')
       await page.getByLabel('Last Name').fill(`${i}`)
@@ -176,7 +192,10 @@ test.describe('Immediate UI Updates', () => {
     const initialCount = await statsCard.locator('text=/^\\d+$/').first().textContent()
 
     await page.goto('/app/library')
-    await page.getByRole('button', { name: /Add Entry/i }).first().click()
+    await page
+      .getByRole('button', { name: /Add Entry/i })
+      .first()
+      .click()
 
     const entryTitle = `Count Entry ${Date.now()}`
     await page.getByLabel('Title').fill(entryTitle)

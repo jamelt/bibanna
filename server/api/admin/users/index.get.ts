@@ -10,7 +10,10 @@ const querySchema = z.object({
   tier: z.enum(tierZodSchema()).optional(),
   role: z.enum(['user', 'admin', 'support']).optional(),
   banned: z.enum(['true', 'false']).optional(),
-  sortBy: z.enum(['createdAt', 'email', 'name', 'subscriptionTier']).optional().default('createdAt'),
+  sortBy: z
+    .enum(['createdAt', 'email', 'name', 'subscriptionTier'])
+    .optional()
+    .default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).optional().default(20),
@@ -40,32 +43,38 @@ export default defineEventHandler(async (event) => {
     conditions.push(eq(users.isBanned, false))
   }
 
-  const whereClause = conditions.length > 0
-    ? sql`${sql.join(conditions.map(c => sql`(${c})`), sql` AND `)}`
-    : undefined
+  const whereClause =
+    conditions.length > 0
+      ? sql`${sql.join(
+          conditions.map((c) => sql`(${c})`),
+          sql` AND `,
+        )}`
+      : undefined
 
-  const sortColumn = {
-    createdAt: users.createdAt,
-    email: users.email,
-    name: users.name,
-    subscriptionTier: users.subscriptionTier,
-  }[parsed.sortBy] ?? users.createdAt
+  const sortColumn =
+    {
+      createdAt: users.createdAt,
+      email: users.email,
+      name: users.name,
+      subscriptionTier: users.subscriptionTier,
+    }[parsed.sortBy] ?? users.createdAt
 
   const orderFn = parsed.sortOrder === 'asc' ? asc : desc
 
   const [totalResult, userRows] = await Promise.all([
     db.select({ count: count() }).from(users).where(whereClause),
-    db.select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      avatarUrl: users.avatarUrl,
-      subscriptionTier: users.subscriptionTier,
-      role: users.role,
-      isBanned: users.isBanned,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-    })
+    db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatarUrl: users.avatarUrl,
+        subscriptionTier: users.subscriptionTier,
+        role: users.role,
+        isBanned: users.isBanned,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
       .from(users)
       .where(whereClause)
       .orderBy(orderFn(sortColumn))

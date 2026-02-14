@@ -10,9 +10,7 @@ export async function enhanceMetadataWithAI(
   existingMetadata: ExtractedMetadata,
   htmlContent?: string,
 ): Promise<ExtractedMetadata> {
-  const textContent = htmlContent
-    ? extractTextFromHtml(htmlContent)
-    : ''
+  const textContent = htmlContent ? extractTextFromHtml(htmlContent) : ''
 
   const prompt = `Analyze this webpage and extract bibliographic metadata.
 
@@ -43,7 +41,8 @@ Be conservative - only include fields you can extract with high confidence from 
       messages: [
         {
           role: 'system',
-          content: 'You are a metadata extraction assistant. Extract bibliographic information from web content. Return valid JSON only.',
+          content:
+            'You are a metadata extraction assistant. Extract bibliographic information from web content. Return valid JSON only.',
         },
         {
           role: 'user',
@@ -63,10 +62,12 @@ Be conservative - only include fields you can extract with high confidence from 
     const enhanced: ExtractedMetadata = { ...existingMetadata }
 
     if (aiMetadata.title && !enhanced.title) enhanced.title = aiMetadata.title
-    if (aiMetadata.authors?.length && !enhanced.authors?.length) enhanced.authors = aiMetadata.authors
+    if (aiMetadata.authors?.length && !enhanced.authors?.length)
+      enhanced.authors = aiMetadata.authors
     if (aiMetadata.year && !enhanced.year) enhanced.year = aiMetadata.year
     if (aiMetadata.entryType && !enhanced.entryType) enhanced.entryType = aiMetadata.entryType
-    if (aiMetadata.description && !enhanced.description) enhanced.description = aiMetadata.description
+    if (aiMetadata.description && !enhanced.description)
+      enhanced.description = aiMetadata.description
     if (aiMetadata.publisher && !enhanced.publisher) enhanced.publisher = aiMetadata.publisher
     if (aiMetadata.doi && !enhanced.doi) enhanced.doi = aiMetadata.doi
     if (aiMetadata.journal && !enhanced.journal) enhanced.journal = aiMetadata.journal
@@ -75,15 +76,23 @@ Be conservative - only include fields you can extract with high confidence from 
     if (aiMetadata.pages && !enhanced.pages) enhanced.pages = aiMetadata.pages
 
     let confidence = enhanced.confidence
-    const aiFields = ['title', 'authors', 'year', 'entryType', 'description', 'publisher', 'doi', 'journal']
-    const addedFields = aiFields.filter(f => aiMetadata[f] && !(existingMetadata as any)[f])
+    const aiFields = [
+      'title',
+      'authors',
+      'year',
+      'entryType',
+      'description',
+      'publisher',
+      'doi',
+      'journal',
+    ]
+    const addedFields = aiFields.filter((f) => aiMetadata[f] && !(existingMetadata as any)[f])
     confidence += addedFields.length * 5
 
     enhanced.confidence = Math.min(confidence, 95)
 
     return enhanced
-  }
-  catch (error) {
+  } catch (error) {
     console.error('AI metadata enhancement failed:', error)
     return existingMetadata
   }

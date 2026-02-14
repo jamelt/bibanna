@@ -3,25 +3,18 @@ import type { Entry, ExcelColumnConfig, ExcelExportOptions, Author } from '~/sha
 import { ENTRY_TYPE_LABELS } from '~/shared/types'
 import { systemPresets, type ExcelExportPreset } from './excel-presets'
 
-export async function generateExcel(
-  entries: Entry[],
-  preset: ExcelExportPreset,
-): Promise<Buffer> {
+export async function generateExcel(entries: Entry[], preset: ExcelExportPreset): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'AnnoBib'
   workbook.created = new Date()
 
   const mainSheet = workbook.addWorksheet('Bibliography', {
-    views: preset.options.freezeHeaderRow
-      ? [{ state: 'frozen', ySplit: 1 }]
-      : [],
+    views: preset.options.freezeHeaderRow ? [{ state: 'frozen', ySplit: 1 }] : [],
   })
 
-  const enabledColumns = preset.columns
-    .filter(c => c.enabled)
-    .sort((a, b) => a.order - b.order)
+  const enabledColumns = preset.columns.filter((c) => c.enabled).sort((a, b) => a.order - b.order)
 
-  mainSheet.columns = enabledColumns.map(col => ({
+  mainSheet.columns = enabledColumns.map((col) => ({
     header: col.header,
     key: col.id,
     width: col.width,
@@ -118,21 +111,25 @@ export async function generateExcel(
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   if (path === 'annotations_all_content') {
-    const annotations = obj.annotations as Array<{ content?: string; sortOrder?: number }> | undefined
+    const annotations = obj.annotations as
+      | Array<{ content?: string; sortOrder?: number }>
+      | undefined
     if (!Array.isArray(annotations) || annotations.length === 0) return ''
     return [...annotations]
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-      .map(a => a.content ?? '')
+      .map((a) => a.content ?? '')
       .filter(Boolean)
       .join('\n\n---\n\n')
   }
 
   if (path === 'annotations_all_types') {
-    const annotations = obj.annotations as Array<{ annotationType?: string; sortOrder?: number }> | undefined
+    const annotations = obj.annotations as
+      | Array<{ annotationType?: string; sortOrder?: number }>
+      | undefined
     if (!Array.isArray(annotations) || annotations.length === 0) return ''
     const types = [...annotations]
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-      .map(a => a.annotationType ?? '')
+      .map((a) => a.annotationType ?? '')
       .filter(Boolean)
     const unique = [...new Set(types)]
     return unique.join(', ')
@@ -153,12 +150,10 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
       value = (value as Record<string, unknown>)[key]
       if (Array.isArray(value)) {
         value = value[index]
-      }
-      else {
+      } else {
         return undefined
       }
-    }
-    else {
+    } else {
       value = (value as Record<string, unknown>)[part]
     }
   }
@@ -173,7 +168,10 @@ function formatCellValue(value: unknown, format: string, entry: Entry): unknown 
     case 'author_format':
       if (Array.isArray(value)) {
         return (value as Author[])
-          .map(a => `${a.lastName}, ${a.firstName}${a.middleName ? ` ${a.middleName.charAt(0)}.` : ''}`)
+          .map(
+            (a) =>
+              `${a.lastName}, ${a.firstName}${a.middleName ? ` ${a.middleName.charAt(0)}.` : ''}`,
+          )
           .join('; ')
       }
       return value
@@ -241,7 +239,7 @@ function addSummarySheet(workbook: ExcelJS.Workbook, entries: Entry[]) {
   sheet.getRow(1).font = { bold: true, size: 14 }
   sheet.addRow([])
 
-  const years = entries.map(e => e.year).filter((y): y is number => y !== undefined && y !== null)
+  const years = entries.map((e) => e.year).filter((y): y is number => y !== undefined && y !== null)
   const minYear = years.length > 0 ? Math.min(...years) : 'N/A'
   const maxYear = years.length > 0 ? Math.max(...years) : 'N/A'
 
@@ -249,21 +247,20 @@ function addSummarySheet(workbook: ExcelJS.Workbook, entries: Entry[]) {
   sheet.addRow(['Date Range', `${minYear} - ${maxYear}`])
 
   const uniqueAuthors = new Set(
-    entries.flatMap(e => e.authors?.map(a => `${a.lastName}, ${a.firstName}`) || []),
+    entries.flatMap((e) => e.authors?.map((a) => `${a.lastName}, ${a.firstName}`) || []),
   )
   sheet.addRow(['Unique Authors', uniqueAuthors.size])
 
-  const uniqueTags = new Set(
-    entries.flatMap(e => e.tags?.map(t => t.name) || []),
-  )
+  const uniqueTags = new Set(entries.flatMap((e) => e.tags?.map((t) => t.name) || []))
   sheet.addRow(['Unique Tags', uniqueTags.size])
 
-  const entriesWithVeritas = entries.filter(e => e.veritasScore?.overallScore)
+  const entriesWithVeritas = entries.filter((e) => e.veritasScore?.overallScore)
   if (entriesWithVeritas.length > 0) {
-    const avgVeritas = entriesWithVeritas.reduce((sum, e) => sum + (e.veritasScore?.overallScore || 0), 0) / entriesWithVeritas.length
+    const avgVeritas =
+      entriesWithVeritas.reduce((sum, e) => sum + (e.veritasScore?.overallScore || 0), 0) /
+      entriesWithVeritas.length
     sheet.addRow(['Average Veritas Score', avgVeritas.toFixed(1)])
-  }
-  else {
+  } else {
     sheet.addRow(['Average Veritas Score', 'N/A'])
   }
 
@@ -338,9 +335,8 @@ function addVeritasDistributionSheet(workbook: ExcelJS.Workbook, entries: Entry[
   ranges.forEach((range) => {
     let count: number
     if (range.min === -1) {
-      count = entries.filter(e => !e.veritasScore?.overallScore).length
-    }
-    else {
+      count = entries.filter((e) => !e.veritasScore?.overallScore).length
+    } else {
       count = entries.filter((e) => {
         const score = e.veritasScore?.overallScore
         return score !== undefined && score >= range.min && score <= range.max

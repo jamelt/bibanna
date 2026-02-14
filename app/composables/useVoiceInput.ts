@@ -53,8 +53,7 @@ export function useVoiceInput(options: VoiceInputOptions = {}) {
           const result = event.results[i]
           if (result.isFinal) {
             final += result[0].transcript
-          }
-          else {
+          } else {
             interim += result[0].transcript
           }
         }
@@ -64,8 +63,7 @@ export function useVoiceInput(options: VoiceInputOptions = {}) {
         if (final) {
           state.transcript += final
           onResult?.(final, true)
-        }
-        else if (interim) {
+        } else if (interim) {
           onResult?.(interim, false)
         }
       }
@@ -75,8 +73,8 @@ export function useVoiceInput(options: VoiceInputOptions = {}) {
           'no-speech': 'No speech detected. Please try again.',
           'audio-capture': 'No microphone found. Please check your settings.',
           'not-allowed': 'Microphone access denied. Please allow microphone access.',
-          'network': 'Network error occurred. Please check your connection.',
-          'aborted': 'Speech recognition was aborted.',
+          network: 'Network error occurred. Please check your connection.',
+          aborted: 'Speech recognition was aborted.',
           'service-not-allowed': 'Speech recognition service is not allowed.',
         }
 
@@ -106,16 +104,14 @@ export function useVoiceInput(options: VoiceInputOptions = {}) {
     try {
       recognition.start()
       state.isListening = true
-    }
-    catch (error: any) {
+    } catch (error: any) {
       if (error.message?.includes('already started')) {
         recognition.stop()
         setTimeout(() => {
           recognition?.start()
           state.isListening = true
         }, 100)
-      }
-      else {
+      } else {
         state.error = error.message
         onError?.(error.message)
       }
@@ -132,8 +128,7 @@ export function useVoiceInput(options: VoiceInputOptions = {}) {
   function toggle() {
     if (state.isListening) {
       stop()
-    }
-    else {
+    } else {
       start()
     }
   }

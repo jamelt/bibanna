@@ -31,7 +31,7 @@ test.describe('Starred Projects', () => {
 
     await page.waitForURL(/\/app\/projects\/.+/)
     const projectUrl = page.url()
-    const projectMatch = projectUrl.match(/\/app\/projects\/([^\/]+)/)
+    const projectMatch = projectUrl.match(/\/app\/projects\/([^/]+)/)
     if (projectMatch) {
       projectSlug = projectMatch[1]
     }
@@ -132,9 +132,12 @@ test.describe('Starred Projects', () => {
       await expect(page.getByText('Star Test Project')).toBeVisible({ timeout: 5000 })
 
       const projectCard = page.locator('.group', { hasText: 'Star Test Project' }).first()
-      const menuButton = projectCard.locator('button').filter({
-        has: page.locator('svg[class*="i-heroicons-ellipsis-vertical"]'),
-      }).first()
+      const menuButton = projectCard
+        .locator('button')
+        .filter({
+          has: page.locator('svg[class*="i-heroicons-ellipsis-vertical"]'),
+        })
+        .first()
 
       await menuButton.click({ force: true })
 
@@ -146,16 +149,21 @@ test.describe('Starred Projects', () => {
       await expect(page.getByText('Star Test Project')).toBeVisible({ timeout: 5000 })
 
       const projectCard = page.locator('.group', { hasText: 'Star Test Project' }).first()
-      const menuButton = projectCard.locator('button').filter({
-        has: page.locator('svg[class*="i-heroicons-ellipsis-vertical"]'),
-      }).first()
+      const menuButton = projectCard
+        .locator('button')
+        .filter({
+          has: page.locator('svg[class*="i-heroicons-ellipsis-vertical"]'),
+        })
+        .first()
 
       await menuButton.click({ force: true })
       await page.getByRole('menuitem', { name: /^star$/i }).click()
 
       await expect(page.getByText(/project starred/i)).toBeVisible({ timeout: 5000 })
 
-      await expect(projectCard.locator('svg[class*="i-heroicons-star-solid"]')).toBeVisible({ timeout: 3000 })
+      await expect(projectCard.locator('svg[class*="i-heroicons-star-solid"]')).toBeVisible({
+        timeout: 3000,
+      })
     })
 
     test('starred project shows amber star icon on card', async ({ page }) => {
@@ -196,9 +204,12 @@ test.describe('Starred Projects', () => {
       await page.goto('/app')
       await page.waitForLoadState('networkidle')
 
-      const hamburger = page.locator('button').filter({
-        has: page.locator('svg[class*="i-heroicons-bars-3"]'),
-      }).first()
+      const hamburger = page
+        .locator('button')
+        .filter({
+          has: page.locator('svg[class*="i-heroicons-bars-3"]'),
+        })
+        .first()
       await hamburger.click()
 
       await page.waitForTimeout(500)
@@ -216,9 +227,12 @@ test.describe('Starred Projects', () => {
       await page.goto('/app')
       await page.waitForLoadState('networkidle')
 
-      const hamburger = page.locator('button').filter({
-        has: page.locator('svg[class*="i-heroicons-bars-3"]'),
-      }).first()
+      const hamburger = page
+        .locator('button')
+        .filter({
+          has: page.locator('svg[class*="i-heroicons-bars-3"]'),
+        })
+        .first()
       await hamburger.click()
       await page.waitForTimeout(500)
 

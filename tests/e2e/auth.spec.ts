@@ -19,7 +19,7 @@ test.describe('Auth Flow', () => {
     await page.locator('input[type="password"]').nth(1).fill(testUser.password)
 
     const [response] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/auth/register'), { timeout: 15000 }),
+      page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 15000 }),
       page.getByRole('button', { name: 'Create Account' }).click(),
     ])
 
@@ -40,12 +40,12 @@ test.describe('Auth Flow', () => {
 
     await page.getByPlaceholder('you@example.com').fill(testUser.email)
     await page.locator('input[type="password"]').fill(testUser.password)
-    
+
     const [loginResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/auth/login'), { timeout: 10000 }),
+      page.waitForResponse((r) => r.url().includes('/api/auth/login'), { timeout: 10000 }),
       page.getByRole('button', { name: 'Sign in' }).click(),
     ])
-    
+
     if (!loginResponse.ok()) {
       const body = await loginResponse.text().catch(() => 'Unable to read response body')
       throw new Error(`Login API failed: ${loginResponse.status()} - ${body}`)
@@ -64,7 +64,7 @@ test.describe('Auth Flow', () => {
     await page.locator('input[type="password"]').fill(testUser.password)
 
     const [loginResponse] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/auth/login'), { timeout: 10000 }),
+      page.waitForResponse((r) => r.url().includes('/api/auth/login'), { timeout: 10000 }),
       page.getByRole('button', { name: 'Sign in' }).click(),
     ])
 

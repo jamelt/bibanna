@@ -42,13 +42,17 @@ const colors = [
 const isSubmitting = ref(false)
 const error = ref('')
 
-watch(() => props.project, (project) => {
-  if (project) {
-    form.name = project.name
-    form.description = project.description || ''
-    form.color = project.color
-  }
-}, { immediate: true })
+watch(
+  () => props.project,
+  (project) => {
+    if (project) {
+      form.name = project.name
+      form.description = project.description || ''
+      form.color = project.color
+    }
+  },
+  { immediate: true },
+)
 
 function resetForm() {
   form.name = ''
@@ -74,8 +78,7 @@ async function handleSubmit() {
         body: form,
       })
       emit('updated', updated)
-    }
-    else {
+    } else {
       const created = await $fetch<Project>('/api/projects', {
         method: 'POST',
         body: form,
@@ -85,11 +88,9 @@ async function handleSubmit() {
 
     isOpen.value = false
     resetForm()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     error.value = e.data?.message || 'An error occurred'
-  }
-  finally {
+  } finally {
     isSubmitting.value = false
   }
 }
@@ -147,7 +148,9 @@ async function handleSubmit() {
                 :key="color"
                 type="button"
                 class="w-8 h-8 rounded-lg transition-transform hover:scale-110"
-                :class="form.color === color ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white' : ''"
+                :class="
+                  form.color === color ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white' : ''
+                "
                 :style="{ backgroundColor: color }"
                 @click="form.color = color"
               />
@@ -157,13 +160,7 @@ async function handleSubmit() {
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="isOpen = false"
-            >
-              Cancel
-            </UButton>
+            <UButton variant="outline" color="neutral" @click="isOpen = false"> Cancel </UButton>
             <UButton
               color="primary"
               :loading="isSubmitting"

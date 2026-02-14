@@ -49,11 +49,9 @@ async function loadStats() {
     const params: Record<string, string> = {}
     if (props.projectId) params.projectId = props.projectId
     stats.value = await $fetch<TagStats>('/api/tags/stats', { params })
-  }
-  catch {
+  } catch {
     error.value = 'Failed to load analytics'
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -67,22 +65,25 @@ watch(isOpen, (open) => {
   if (open) loadStats()
 })
 
-watch(() => props.projectId, () => {
-  invalidateStats()
-})
+watch(
+  () => props.projectId,
+  () => {
+    invalidateStats()
+  },
+)
 
 const topTags = computed(() => {
   return [...props.tags]
-    .filter(t => (t.entryCount ?? 0) > 0)
+    .filter((t) => (t.entryCount ?? 0) > 0)
     .sort((a, b) => (b.entryCount ?? 0) - (a.entryCount ?? 0))
     .slice(0, 15)
 })
 
 const maxEntryCount = computed(() => {
-  return Math.max(...topTags.value.map(t => t.entryCount ?? 0), 1)
+  return Math.max(...topTags.value.map((t) => t.entryCount ?? 0), 1)
 })
 
-const heading = computed(() => props.projectId ? 'Tag Analytics for This Project' : 'Analytics')
+const heading = computed(() => (props.projectId ? 'Tag Analytics for This Project' : 'Analytics'))
 
 const untaggedLink = computed(() => {
   if (props.projectId) return undefined
@@ -135,7 +136,10 @@ function handleUntaggedClick() {
             {{ stats.untaggedEntries }} of {{ stats.totalEntries }} entries have no tags
             <UIcon name="i-heroicons-arrow-right" class="w-3 h-3 ml-auto shrink-0" />
           </component>
-          <div v-if="stats.underusedTags.length > 0" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs">
+          <div
+            v-if="stats.underusedTags.length > 0"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs"
+          >
             <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
             {{ stats.underusedTags.length }} tags have 0-1 entries
           </div>
@@ -143,7 +147,9 @@ function handleUntaggedClick() {
 
         <!-- Distribution: entries per tag -->
         <div v-if="topTags.length > 0">
-          <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          <h4
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3"
+          >
             Entries per Tag
           </h4>
           <div class="space-y-1">
@@ -153,11 +159,10 @@ function handleUntaggedClick() {
               class="w-full flex items-center gap-3 px-2 py-1.5 -mx-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 group/row"
               @click="emit('select-tag', tag.id)"
             >
+              <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: tag.color }" />
               <span
-                class="w-3 h-3 rounded-full shrink-0"
-                :style="{ backgroundColor: tag.color }"
-              />
-              <span class="text-xs text-gray-600 dark:text-gray-400 w-32 truncate shrink-0 text-left">
+                class="text-xs text-gray-600 dark:text-gray-400 w-32 truncate shrink-0 text-left"
+              >
                 {{ tag.name }}
               </span>
               <div class="flex-1 h-5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -170,7 +175,9 @@ function handleUntaggedClick() {
                   }"
                 />
               </div>
-              <span class="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-8 text-right shrink-0">
+              <span
+                class="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-8 text-right shrink-0"
+              >
                 {{ tag.entryCount ?? 0 }}
               </span>
               <UIcon
@@ -183,7 +190,9 @@ function handleUntaggedClick() {
 
         <!-- Co-occurrence -->
         <div v-if="stats?.coOccurrence?.length">
-          <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          <h4
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3"
+          >
             Frequently Co-occurring Tags
           </h4>
           <div class="space-y-1">
@@ -197,12 +206,21 @@ function handleUntaggedClick() {
                 @click="emit('select-tag-pair', pair.tagAId, pair.tagBId)"
               >
                 <span class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: pair.tagAColor }" />
+                  <span
+                    class="w-2.5 h-2.5 rounded-full"
+                    :style="{ backgroundColor: pair.tagAColor }"
+                  />
                   <span class="text-gray-700 dark:text-gray-300">{{ pair.tagAName }}</span>
                 </span>
-                <UIcon name="i-heroicons-arrows-right-left" class="w-3 h-3 text-gray-300 dark:text-gray-600 shrink-0" />
+                <UIcon
+                  name="i-heroicons-arrows-right-left"
+                  class="w-3 h-3 text-gray-300 dark:text-gray-600 shrink-0"
+                />
                 <span class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: pair.tagBColor }" />
+                  <span
+                    class="w-2.5 h-2.5 rounded-full"
+                    :style="{ backgroundColor: pair.tagBColor }"
+                  />
                   <span class="text-gray-700 dark:text-gray-300">{{ pair.tagBName }}</span>
                 </span>
                 <span class="ml-auto text-gray-400 tabular-nums">{{ pair.sharedCount }}</span>
@@ -217,7 +235,9 @@ function handleUntaggedClick() {
 
         <!-- Underused tags -->
         <div v-if="stats?.underusedTags?.length">
-          <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          <h4
+            class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3"
+          >
             Underused Tags (0-1 entries)
           </h4>
           <div class="flex flex-wrap gap-2">
