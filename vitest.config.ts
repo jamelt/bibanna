@@ -9,8 +9,10 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['tests/unit/**/*.{test,spec}.{js,ts}', 'tests/integration/**/*.{test,spec}.{js,ts}'],
     alias: {
-      '~': fileURLToPath(new URL('./', import.meta.url)),
-      '@': fileURLToPath(new URL('./', import.meta.url)),
+      '~/server': fileURLToPath(new URL('./server', import.meta.url)),
+      '~': fileURLToPath(new URL('./app', import.meta.url)),
+      '@': fileURLToPath(new URL('./app', import.meta.url)),
+      '#imports': fileURLToPath(new URL('./.nuxt/imports.d.ts', import.meta.url)),
     },
     coverage: {
       provider: 'v8',
