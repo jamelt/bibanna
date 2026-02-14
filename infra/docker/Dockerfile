@@ -18,9 +18,6 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
-# Prune dev dependencies in-place (much faster than a second install)
-RUN pnpm prune --prod
-
 # Production stage
 FROM node:24-alpine AS runner
 
@@ -29,15 +26,14 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nuxtjs
 
-# Copy built application
+# Copy built application (self-contained, no node_modules needed at runtime)
 COPY --from=builder /app/.output ./.output
 
-# Copy migration scripts and dependencies so the K8s migration Job
-# can run `npx tsx scripts/migrate.ts up` from this same image.
+# Copy migration tooling and full node_modules (avoids slow prune/reinstall)
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/scripts/db ./scripts/db
 COPY --from=builder /app/server/database/migrations ./server/database/migrations
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
 
 RUN chown -R nuxtjs:nodejs /app
 
