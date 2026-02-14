@@ -231,7 +231,7 @@ module "cloudsql" {
   deletion_protection = var.environment == "production"
 
   ip_configuration = {
-    ipv4_enabled        = false
+    ipv4_enabled        = true
     private_network     = module.vpc.network_self_link
     require_ssl         = true
     allocated_ip_range  = google_compute_global_address.private_ip_range.name
