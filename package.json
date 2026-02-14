@@ -131,7 +131,8 @@
   "packageManager": "pnpm@8.15.1",
   "pnpm": {
     "overrides": {
-      "sharp": "^0.34.5"
+      "sharp": "^0.34.5",
+      "esbuild": ">=0.25.0"
     }
   }
 }
