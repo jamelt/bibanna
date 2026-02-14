@@ -71,6 +71,23 @@ const selectedProjectId = ref<string | null>(props.defaultProjectId ?? null)
 
 const { data: projects } = useFetch('/api/projects', { lazy: true })
 
+function sanitizeAuthors(authors: Author[]): Author[] {
+  return authors
+    .map((a) => ({
+      ...a,
+      firstName: (a.firstName ?? '').trim(),
+      lastName: (a.lastName ?? '').trim(),
+    }))
+    .filter((a) => a.lastName.length > 0)
+}
+
+function resolveProjectId(): string | undefined {
+  if (!selectedProjectId.value) return undefined
+  return typeof selectedProjectId.value === 'string'
+    ? selectedProjectId.value
+    : (selectedProjectId.value as any).id
+}
+
 const inputRef = ref<HTMLElement | null>(null)
 
 const activeQualifier = ref<FieldQualifier>('any')
@@ -389,20 +406,14 @@ async function addToLibrary() {
   try {
     const s = selectedSuggestion.value
 
+    const projectId = resolveProjectId()
     const payload: Record<string, unknown> = {
       entryType: s.entryType,
       title: s.title,
-      authors: s.authors,
+      authors: sanitizeAuthors(s.authors),
       year: s.year,
       metadata: s.metadata,
-    }
-
-    if (selectedProjectId.value) {
-      const projectId =
-        typeof selectedProjectId.value === 'string'
-          ? selectedProjectId.value
-          : (selectedProjectId.value as any).id
-      payload.projectIds = [projectId]
+      ...(projectId && { projectIds: [projectId] }),
     }
 
     const entry = await $fetch('/api/entries', {
@@ -442,20 +453,14 @@ async function forceAddToLibrary() {
   try {
     const s = selectedSuggestion.value
 
+    const projectId = resolveProjectId()
     const payload: Record<string, unknown> = {
       entryType: s.entryType,
       title: s.title,
-      authors: s.authors,
+      authors: sanitizeAuthors(s.authors),
       year: s.year,
       metadata: s.metadata,
-    }
-
-    if (selectedProjectId.value) {
-      const projectId =
-        typeof selectedProjectId.value === 'string'
-          ? selectedProjectId.value
-          : (selectedProjectId.value as any).id
-      payload.projectIds = [projectId]
+      ...(projectId && { projectIds: [projectId] }),
     }
 
     const entry = await $fetch('/api/entries?skipDedupe=true', {
@@ -509,11 +514,8 @@ async function addAnyway() {
       payload.metadata = { isbn: trimmed.replace(/[-\s]/g, '') }
     }
 
-    if (selectedProjectId.value) {
-      const projectId =
-        typeof selectedProjectId.value === 'string'
-          ? selectedProjectId.value
-          : (selectedProjectId.value as any).id
+    const projectId = resolveProjectId()
+    if (projectId) {
       payload.projectIds = [projectId]
     }
 

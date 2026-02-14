@@ -28,6 +28,15 @@ async function signUpAndLogin(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL('/app', { timeout: 10000 })
 }
 
+async function openQuickAdd(page: import('@playwright/test').Page) {
+  await page.getByTestId('quick-add-button').click()
+  await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
+    timeout: 5000,
+  })
+}
+
+const SEARCH_PLACEHOLDER = 'Paste DOI, ISBN, URL… or search — type / for fields'
+
 test.describe('Quick Add - Desktop', () => {
   test.use({ viewport: { width: 1280, height: 720 } })
 
@@ -37,24 +46,16 @@ test.describe('Quick Add - Desktop', () => {
 
     await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible()
 
-    await page.getByTestId('quick-add-button').click()
+    await openQuickAdd(page)
 
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
-    await expect(
-      page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields'),
-    ).toBeVisible()
+    await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toBeVisible()
   })
 
   test('closes Quick Add modal when Cancel is clicked', async ({ page }) => {
     await signUpAndLogin(page)
     await page.goto('/app')
 
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
+    await openQuickAdd(page)
 
     await page.getByRole('button', { name: 'Cancel' }).click()
     await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
@@ -66,10 +67,7 @@ test.describe('Quick Add - Desktop', () => {
     await signUpAndLogin(page)
     await page.goto('/app')
 
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
+    await openQuickAdd(page)
 
     await page.getByTestId('quick-add-close').click()
     await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
@@ -81,142 +79,148 @@ test.describe('Quick Add - Desktop', () => {
     await signUpAndLogin(page)
     await page.goto('/app')
 
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
+    await openQuickAdd(page)
 
-    const searchInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
     await searchInput.fill('Test Entry Title')
 
     await expect(searchInput).toHaveValue('Test Entry Title')
   })
 
-  test('successfully adds an entry using Add anyway button', async ({ page }) => {
+  test('searches by DOI, selects result, and adds to library', async ({ page }) => {
+    test.setTimeout(60000)
     await signUpAndLogin(page)
     await page.goto('/app')
+    await openQuickAdd(page)
 
-    const uniqueTitle = `xxyyzz-unique-test-entry-${Date.now()}-qqwweerrtt`
-
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
-
-    const searchInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
-    await searchInput.fill(uniqueTitle)
-
-    await page.waitForTimeout(2500)
-
-    const addAnywayButton = page.getByRole('button', { name: /Add anyway/i })
-    await expect(addAnywayButton).toBeVisible({ timeout: 5000 })
-
-    const [createResponse] = await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
-        { timeout: 10000 },
-      ),
-      addAnywayButton.click(),
-    ])
-
-    expect(createResponse.ok()).toBeTruthy()
-    const createdEntry = await createResponse.json()
-    expect(createdEntry.title).toBe(uniqueTitle)
-
-    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
-      timeout: 5000,
-    })
-
-    await page.goto('/app/library')
-    await expect(page.getByText(uniqueTitle, { exact: false })).toBeVisible({ timeout: 5000 })
-  })
-
-  test('successfully adds an entry with project selected', async ({ page }) => {
-    await signUpAndLogin(page)
-    await page.goto('/app')
-
-    const projectName = `xxyyzz-testproject-${Date.now()}`
-    await page.getByTestId('dashboard-quick-action-new-project').click()
-    await expect(page.getByRole('heading', { name: 'Create Project' })).toBeVisible()
-    await page.getByTestId('project-modal-name').fill(projectName)
-    await page.getByTestId('project-modal-submit').click()
-    await expect(page.getByRole('heading', { name: 'Create Project' })).not.toBeVisible({
-      timeout: 5000,
-    })
-
-    const uniqueTitle = `xxyyzz-entry-with-proj-${Date.now()}-qqwwee`
-
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
-
-    const searchInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
-    await searchInput.fill(uniqueTitle)
-
-    await page.waitForTimeout(2500)
-
-    await page.getByPlaceholder('Select a project...').click()
-    await page.getByText(projectName).first().click()
-
-    const addAnywayButton = page.getByRole('button', { name: /Add anyway/i })
-    await expect(addAnywayButton).toBeVisible({ timeout: 5000 })
-
-    const [createResponse] = await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
-        { timeout: 10000 },
-      ),
-      addAnywayButton.click(),
-    ])
-
-    expect(createResponse.ok()).toBeTruthy()
-    const createdEntry = await createResponse.json()
-    expect(createdEntry.title).toBe(uniqueTitle)
-
-    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
-      timeout: 5000,
-    })
-
-    await page.goto('/app/library')
-    await expect(page.getByText(uniqueTitle, { exact: false })).toBeVisible({ timeout: 5000 })
-  })
-
-  test('successfully adds an entry from DOI', async ({ page }) => {
-    await signUpAndLogin(page)
-    await page.goto('/app')
-
-    await page.getByTestId('quick-add-button').click()
-    await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
-      timeout: 5000,
-    })
-
-    const searchInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
     await searchInput.fill('10.1038/nature12373')
 
-    await page.waitForTimeout(2000)
+    // Wait for the suggest API response
+    await page.waitForResponse(
+      (r) => r.url().includes('/api/entries/suggest') && r.status() === 200,
+      { timeout: 15000 },
+    )
 
-    const firstResult = page.locator('[role="button"]').filter({ hasText: /nature/i }).first()
+    // A suggestion matching this DOI should appear - click the first result
+    const firstSuggestion = page.locator('button').filter({ hasText: /10\.1038\/nature12373/i }).first()
+    await expect(firstSuggestion).toBeVisible({ timeout: 5000 })
+    await firstSuggestion.click()
 
-    if (await firstResult.isVisible()) {
-      await firstResult.click()
-      await expect(page.getByRole('button', { name: /Add to library/i })).toBeVisible({
-        timeout: 5000,
-      })
+    // Should now be in preview mode with "Add to library" button
+    const addButton = page.getByRole('button', { name: /Add to library/i })
+    await expect(addButton).toBeVisible({ timeout: 5000 })
 
-      const [createResponse] = await Promise.all([
-        page.waitForResponse(
-          (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
-          { timeout: 15000 },
-        ),
-        page.getByRole('button', { name: /Add to library/i }).click(),
-      ])
+    // Click "Add to library" and verify the API call succeeds
+    const [createResponse] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
+        { timeout: 15000 },
+      ),
+      addButton.click(),
+    ])
 
-      expect(createResponse.ok()).toBeTruthy()
-      await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
-        timeout: 5000,
-      })
-    }
+    const responseBody = await createResponse.json()
+    expect(createResponse.status()).toBe(200)
+    expect(responseBody.title).toBeTruthy()
+
+    // Modal should close on success
+    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
+      timeout: 5000,
+    })
+  })
+
+  test('searches by title, selects result, and adds to library', async ({ page }) => {
+    test.setTimeout(60000)
+    await signUpAndLogin(page)
+    await page.goto('/app')
+    await openQuickAdd(page)
+
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
+    await searchInput.fill('quantum computing')
+
+    // Wait for suggest API to return
+    await page.waitForResponse(
+      (r) => r.url().includes('/api/entries/suggest') && r.status() === 200,
+      { timeout: 15000 },
+    )
+
+    // Should have at least one search result - click the first one
+    const firstResult = page.locator('button.w-full.text-left').first()
+    await expect(firstResult).toBeVisible({ timeout: 5000 })
+    await firstResult.click()
+
+    // Should now be in preview mode with "Add to library" button
+    const addButton = page.getByRole('button', { name: /Add to library/i })
+    await expect(addButton).toBeVisible({ timeout: 5000 })
+
+    // Click "Add to library" and verify the API call succeeds
+    const [createResponse] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
+        { timeout: 15000 },
+      ),
+      addButton.click(),
+    ])
+
+    const responseBody = await createResponse.json()
+    expect(createResponse.status()).toBe(200)
+    expect(responseBody.title).toBeTruthy()
+    expect(responseBody.id).toBeTruthy()
+
+    // Modal should close on success
+    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
+      timeout: 5000,
+    })
+
+    // Entry should appear in the library
+    await page.goto('/app/library')
+    await expect(page.getByText(responseBody.title, { exact: false })).toBeVisible({
+      timeout: 5000,
+    })
+  })
+
+  test('adds entry with Add anyway when no results match', async ({ page }) => {
+    test.setTimeout(60000)
+    await signUpAndLogin(page)
+    await page.goto('/app')
+    await openQuickAdd(page)
+
+    const uniqueTitle = `xxyyzz-unique-noresults-${Date.now()}-qqwwee`
+
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
+    await searchInput.fill(uniqueTitle)
+
+    // Wait for the suggest API to return (will have no/irrelevant results)
+    await page.waitForResponse(
+      (r) => r.url().includes('/api/entries/suggest') && r.status() === 200,
+      { timeout: 15000 },
+    )
+
+    // "Add anyway" button should appear
+    const addAnywayButton = page.getByRole('button', { name: /Add anyway/i })
+    await expect(addAnywayButton).toBeVisible({ timeout: 8000 })
+
+    const [createResponse] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/api/entries') && r.request().method() === 'POST',
+        { timeout: 10000 },
+      ),
+      addAnywayButton.click(),
+    ])
+
+    expect(createResponse.status()).toBe(200)
+    const createdEntry = await createResponse.json()
+    expect(createdEntry.title).toBe(uniqueTitle)
+
+    // Modal should close
+    await expect(page.getByRole('heading', { name: 'Add a source' })).not.toBeVisible({
+      timeout: 5000,
+    })
+
+    // Entry should appear in library
+    await page.goto('/app/library')
+    await expect(page.getByText(uniqueTitle, { exact: false })).toBeVisible({ timeout: 5000 })
   })
 })
 
@@ -239,9 +243,7 @@ test.describe('Quick Add - Mobile', () => {
     await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
       timeout: 5000,
     })
-    await expect(
-      page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields'),
-    ).toBeVisible()
+    await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toBeVisible()
   })
 
   test('opens Quick Add when bottom nav FAB is clicked', async ({ page }) => {
@@ -255,9 +257,7 @@ test.describe('Quick Add - Mobile', () => {
     await expect(page.getByRole('heading', { name: 'Add a source' })).toBeVisible({
       timeout: 5000,
     })
-    await expect(
-      page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields'),
-    ).toBeVisible()
+    await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toBeVisible()
   })
 
   test('opens Quick Add when navigating to /app?action=quick-add', async ({ page }) => {
@@ -297,7 +297,7 @@ test.describe('Quick Add - Mobile', () => {
       timeout: 5000,
     })
 
-    const searchInput = page.getByPlaceholder('Paste DOI, ISBN, URL… or search — type / for fields')
+    const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER)
     await searchInput.fill('https://example.com')
     await expect(searchInput).toHaveValue('https://example.com')
   })

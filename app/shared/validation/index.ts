@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const authorSchema = z.object({
-  firstName: z.string().min(1),
+  firstName: z.string().default(''),
   lastName: z.string().min(1),
   middleName: z.string().nullish(),
   suffix: z.string().nullish(),
