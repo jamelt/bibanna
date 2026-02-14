@@ -15,6 +15,13 @@
       "when": 1770508800000,
       "tag": "0001_add_project_starred",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770768000000,
+      "tag": "0002_add_tag_group_name",
+      "breakpoints": true
     }
   ]
 }
