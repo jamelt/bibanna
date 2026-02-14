@@ -165,7 +165,8 @@ module "gke" {
   enable_private_nodes    = var.enable_private_nodes
   master_ipv4_cidr_block  = var.enable_private_nodes ? "172.16.0.0/28" : null
 
-  release_channel = "REGULAR"
+  grant_registry_access = true
+  release_channel       = "REGULAR"
 
   maintenance_start_time = "2025-01-04T02:00:00Z"
   maintenance_end_time   = "2025-01-04T14:00:00Z"
@@ -371,6 +372,7 @@ resource "google_service_account_iam_binding" "workload_identity" {
 
   members = [
     "serviceAccount:${var.project_id}.svc.id.goog[${var.app_name}-${local.env_name}/${var.app_name}-app]",
+    "serviceAccount:${var.project_id}.svc.id.goog[external-secrets/external-secrets]",
   ]
 
   depends_on = [module.gke]

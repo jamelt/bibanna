@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: annobib-ingress
+spec:
+  tls:
+    - hosts:
+        - staging.annobib.com
+      secretName: annobib-staging-tls
+  rules:
+    - host: staging.annobib.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: annobib-app
+                port:
+                  number: 80
