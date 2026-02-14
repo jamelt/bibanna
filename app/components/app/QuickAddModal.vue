@@ -398,7 +398,11 @@ async function addToLibrary() {
     }
 
     if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value]
+      const projectId =
+        typeof selectedProjectId.value === 'string'
+          ? selectedProjectId.value
+          : (selectedProjectId.value as any).id
+      payload.projectIds = [projectId]
     }
 
     const entry = await $fetch('/api/entries', {
@@ -447,7 +451,11 @@ async function forceAddToLibrary() {
     }
 
     if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value]
+      const projectId =
+        typeof selectedProjectId.value === 'string'
+          ? selectedProjectId.value
+          : (selectedProjectId.value as any).id
+      payload.projectIds = [projectId]
     }
 
     const entry = await $fetch('/api/entries?skipDedupe=true', {
@@ -502,7 +510,11 @@ async function addAnyway() {
     }
 
     if (selectedProjectId.value) {
-      payload.projectIds = [selectedProjectId.value]
+      const projectId =
+        typeof selectedProjectId.value === 'string'
+          ? selectedProjectId.value
+          : (selectedProjectId.value as any).id
+      payload.projectIds = [projectId]
     }
 
     const entry = await $fetch('/api/entries', {
