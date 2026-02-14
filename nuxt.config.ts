@@ -6,7 +6,7 @@ const rootDir = fileURLToPath(new URL(".", import.meta.url));
 export default defineNuxtConfig({
   srcDir: "app/",
 
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== "production" },
 
   css: ["~/assets/css/main.css"],
 
@@ -161,6 +161,16 @@ export default defineNuxtConfig({
     build: {
       sourcemap: false,
       rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes("node_modules/d3")) return "vendor-d3";
+            if (id.includes("node_modules/openai")) return "vendor-openai";
+            if (id.includes("node_modules/langchain") || id.includes("node_modules/@langchain"))
+              return "vendor-langchain";
+            if (id.includes("node_modules/stripe")) return "vendor-stripe";
+            if (id.includes("node_modules/prosemirror")) return "vendor-prosemirror";
+          },
+        },
         onwarn(warning, warn) {
           if (
             warning.code === "THIS_IS_UNDEFINED" &&
@@ -184,7 +194,7 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    typeCheck: process.env.NUXT_TYPECHECK === "true",
   },
 
   compatibilityDate: "2024-01-29",

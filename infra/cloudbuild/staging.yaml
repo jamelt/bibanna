@@ -4,7 +4,29 @@ steps:
     entrypoint: 'bash'
     args:
       - '-c'
-      - 'corepack enable && pnpm install --frozen-lockfile'
+      - |
+        corepack enable
+        corepack prepare --activate
+        pnpm install --frozen-lockfile
+    volumes:
+      - name: 'pnpm-store'
+        path: /root/.local/share/pnpm/store
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'docker pull ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest || true'
+    waitFor: ['-']
+
+  - name: 'alpine:3'
+    id: 'download-sql-proxy'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'wget -q -O /workspace/cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.21.0/cloud-sql-proxy.linux.amd64 && chmod +x /workspace/cloud-sql-proxy'
+    waitFor: ['-']
 
   - name: 'node:24'
     id: 'lint'
@@ -12,6 +34,9 @@ steps:
     args:
       - '-c'
       - 'corepack enable && pnpm run lint || echo "Lint warnings found (non-blocking)"'
+    volumes:
+      - name: 'pnpm-store'
+        path: /root/.local/share/pnpm/store
     waitFor: ['install']
 
   - name: 'node:24'
@@ -42,8 +67,12 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest'
       - '--cache-from'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest'
+      - '--build-arg'
+      - 'BUILDKIT_INLINE_CACHE=1'
       - '.'
-    waitFor: ['lint', 'typecheck', 'test-unit']
+    env:
+      - 'DOCKER_BUILDKIT=1'
+    waitFor: ['pull-cache']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-push'
@@ -51,15 +80,7 @@ steps:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app'
-    waitFor: ['docker-build']
-
-  - name: 'alpine:3'
-    id: 'download-sql-proxy'
-    entrypoint: 'sh'
-    args:
-      - '-c'
-      - 'wget -q -O /workspace/cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.21.0/cloud-sql-proxy.linux.amd64 && chmod +x /workspace/cloud-sql-proxy'
-    waitFor: ['-']
+    waitFor: ['docker-build', 'lint', 'typecheck', 'test-unit']
 
   - name: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:${SHORT_SHA}'
     id: 'migrate-staging'
@@ -69,8 +90,11 @@ steps:
       - '-c'
       - |
         /workspace/cloud-sql-proxy ${_CLOUD_SQL_CONNECTION} --port 5433 &
-        sleep 3
-        node --import tsx scripts/db/migrate.ts up
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          nc -z localhost 5433 2>/dev/null && break
+          sleep 0.5
+        done
+        node --experimental-strip-types scripts/db/migrate.ts up
         RESULT=$$?
         kill $$(pgrep cloud-sql-proxy) 2>/dev/null || true
         exit $$RESULT
@@ -87,8 +111,11 @@ steps:
       - '-c'
       - |
         /workspace/cloud-sql-proxy ${_CLOUD_SQL_CONNECTION} --port 5433 &
-        sleep 3
-        node --import tsx scripts/db/migrate.ts validate
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          nc -z localhost 5433 2>/dev/null && break
+          sleep 0.5
+        done
+        node --experimental-strip-types scripts/db/migrate.ts validate
         RESULT=$$?
         kill $$(pgrep cloud-sql-proxy) 2>/dev/null || true
         exit $$RESULT
@@ -109,15 +136,18 @@ steps:
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=${_STAGING_ZONE}'
 
-  - name: 'node:24'
+  - name: 'mcr.microsoft.com/playwright:v1.58.2'
     id: 'test-e2e'
     entrypoint: 'bash'
     args:
       - '-c'
-      - 'corepack enable && pnpm run test:e2e'
+      - |
+        corepack enable
+        pnpm run test:e2e --project=chromium
     env:
       - 'BASE_URL=${_STAGING_URL}'
-    waitFor: ['deploy-staging']
+      - 'CI=true'
+    waitFor: ['deploy-staging', 'install']
 
 substitutions:
   _REGION: 'us-central1'
@@ -135,6 +165,8 @@ availableSecrets:
 options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'DOCKER_BUILDKIT=1'
 
 timeout: '1800s'
 

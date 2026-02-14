@@ -1,31 +1,41 @@
 steps:
-  # Install dependencies
-  - name: 'node:20'
+  - name: 'node:24'
     id: 'install'
-    entrypoint: 'npm'
-    args: ['install', '--frozen-lockfile']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        corepack enable
+        corepack prepare --activate
+        pnpm install --frozen-lockfile
+    volumes:
+      - name: 'pnpm-store'
+        path: /root/.local/share/pnpm/store
 
-  # Run linting and type checking
-  - name: 'node:20'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'docker pull ${_REGION}-docker.pkg.dev/${PROJECT_ID}/annobib/annobib-app:latest || true'
+    waitFor: ['-']
+
+  - name: 'node:24'
     id: 'lint'
-    entrypoint: 'npm'
-    args: ['run', 'lint']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'corepack enable && pnpm run lint'
     waitFor: ['install']
 
-  - name: 'node:20'
+  - name: 'node:24'
     id: 'typecheck'
-    entrypoint: 'npm'
-    args: ['run', 'typecheck']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'corepack enable && pnpm run typecheck'
     waitFor: ['install']
 
-  # Build the application
-  - name: 'node:20'
-    id: 'build'
-    entrypoint: 'npm'
-    args: ['run', 'build']
-    waitFor: ['lint', 'typecheck']
-
-  # Build Docker image for preview
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-build'
     args:
@@ -36,18 +46,20 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/annobib/annobib-preview:pr-${_PR_NUMBER}'
       - '--cache-from'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/annobib/annobib-app:latest'
+      - '--build-arg'
+      - 'BUILDKIT_INLINE_CACHE=1'
       - '.'
-    waitFor: ['build']
+    env:
+      - 'DOCKER_BUILDKIT=1'
+    waitFor: ['pull-cache']
 
-  # Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-push'
     args:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/annobib/annobib-preview:pr-${_PR_NUMBER}'
-    waitFor: ['docker-build']
+    waitFor: ['docker-build', 'lint', 'typecheck']
 
-  # Create preview namespace if not exists
   - name: 'gcr.io/cloud-builders/kubectl'
     id: 'create-namespace'
     args:
@@ -67,7 +79,6 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_PREVIEW_CLUSTER}'
     waitFor: ['docker-push']
 
-  # Generate preview Kustomize overlay
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'generate-kustomization'
     entrypoint: 'bash'
@@ -109,7 +120,6 @@ steps:
         EOF
     waitFor: ['create-namespace']
 
-  # Deploy to preview environment
   - name: 'gcr.io/cloud-builders/gke-deploy'
     id: 'deploy-preview'
     args:
@@ -121,7 +131,6 @@ steps:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
     waitFor: ['generate-kustomization']
 
-  # Wait for deployment to be ready
   - name: 'gcr.io/cloud-builders/kubectl'
     id: 'wait-deployment'
     args:
@@ -136,7 +145,6 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_PREVIEW_CLUSTER}'
     waitFor: ['deploy-preview']
 
-  # Post preview URL to GitHub PR
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'post-comment'
     entrypoint: 'bash'
@@ -147,7 +155,7 @@ steps:
           -H "Authorization: token $$GITHUB_TOKEN" \
           -H "Accept: application/vnd.github.v3+json" \
           "https://api.github.com/repos/${_GITHUB_REPO}/issues/${_PR_NUMBER}/comments" \
-          -d "{\"body\": \"🚀 Preview environment deployed!\\n\\n**URL:** https://pr-${_PR_NUMBER}.preview.annobib.com\\n\\nThis preview will be automatically deleted when the PR is closed.\"}"
+          -d "{\"body\": \"Preview environment deployed!\\n\\n**URL:** https://pr-${_PR_NUMBER}.preview.annobib.com\\n\\nThis preview will be automatically deleted when the PR is closed.\"}"
     secretEnv: ['GITHUB_TOKEN']
     waitFor: ['wait-deployment']
 
@@ -165,5 +173,7 @@ availableSecrets:
 options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'DOCKER_BUILDKIT=1'
 
 timeout: '1200s'

@@ -1,0 +1,48 @@
+# Dependencies (reinstalled inside the container)
+node_modules
+
+# Build artifacts
+.output
+.nuxt
+.nitro
+.cache
+dist
+
+# Dev/test tooling
+tests
+.playwright
+.vitest
+
+# IDE and OS
+.vscode
+.idea
+.fleet
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Env files (secrets must not be baked into images)
+.env
+.env.*
+!.env.example
+
+# Documentation and non-build files
+docs
+*.md
+LICENSE
+
+# Infrastructure (not needed inside the app image)
+infra/terraform
+infra/cloudbuild
+infra/k8s
+infra/scripts
+
+# Logs
+logs
+*.log
+
+# TypeScript incremental caches
+*.tsbuildinfo

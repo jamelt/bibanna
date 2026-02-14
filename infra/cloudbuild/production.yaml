@@ -22,16 +22,18 @@ steps:
 
   - name: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:${TAG_NAME}'
     id: 'migrate-production'
-    entrypoint: 'npx'
-    args: ['tsx', 'scripts/db/migrate.ts', 'up']
+    dir: '/app'
+    entrypoint: './node_modules/.bin/tsx'
+    args: ['scripts/db/migrate.ts', 'up']
     env:
       - 'DATABASE_URL=${_PROD_DATABASE_URL}'
     waitFor: ['push-image']
 
   - name: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:${TAG_NAME}'
     id: 'validate-migrations'
-    entrypoint: 'npx'
-    args: ['tsx', 'scripts/db/migrate.ts', 'validate']
+    dir: '/app'
+    entrypoint: './node_modules/.bin/tsx'
+    args: ['scripts/db/migrate.ts', 'validate']
     env:
       - 'DATABASE_URL=${_PROD_DATABASE_URL}'
     waitFor: ['migrate-production']

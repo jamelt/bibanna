@@ -1,12 +1,26 @@
 steps:
-  - name: 'node:20'
+  - name: 'node:24'
     id: 'install'
     entrypoint: 'bash'
     args:
       - '-c'
-      - 'corepack enable && pnpm install --frozen-lockfile'
+      - |
+        corepack enable
+        corepack prepare --activate
+        pnpm install --frozen-lockfile
+    volumes:
+      - name: 'pnpm-store'
+        path: /root/.local/share/pnpm/store
 
-  - name: 'node:20'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'docker pull ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest || true'
+    waitFor: ['-']
+
+  - name: 'node:24'
     id: 'lint'
     entrypoint: 'bash'
     args:
@@ -14,7 +28,7 @@ steps:
       - 'corepack enable && pnpm run lint'
     waitFor: ['install']
 
-  - name: 'node:20'
+  - name: 'node:24'
     id: 'typecheck'
     entrypoint: 'bash'
     args:
@@ -22,7 +36,7 @@ steps:
       - 'corepack enable && pnpm run typecheck'
     waitFor: ['install']
 
-  - name: 'node:20'
+  - name: 'node:24'
     id: 'test-unit'
     entrypoint: 'bash'
     args:
@@ -42,8 +56,12 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest'
       - '--cache-from'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest'
+      - '--build-arg'
+      - 'BUILDKIT_INLINE_CACHE=1'
       - '.'
-    waitFor: ['lint', 'typecheck', 'test-unit']
+    env:
+      - 'DOCKER_BUILDKIT=1'
+    waitFor: ['pull-cache']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-push'
@@ -51,7 +69,7 @@ steps:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app'
-    waitFor: ['docker-build']
+    waitFor: ['docker-build', 'lint', 'typecheck', 'test-unit']
 
 substitutions:
   _REGION: 'us-central1'
@@ -60,6 +78,8 @@ substitutions:
 options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'DOCKER_BUILDKIT=1'
 
 timeout: '900s'
 
