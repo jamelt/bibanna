@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { enforceRateLimit } from '~/server/utils/rate-limit'
 import { DEFAULT_TIER } from '~/shared/subscriptions'
+import { isAutoAdminEmail } from '~/server/utils/admin-emails'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -47,6 +48,7 @@ export default defineEventHandler(async (event) => {
       name,
       auth0Id: `local:${normalizedEmail}:${hashedPassword}`,
       subscriptionTier: DEFAULT_TIER,
+      role: isAutoAdminEmail(normalizedEmail) ? 'admin' : 'user',
     })
     .returning()
 

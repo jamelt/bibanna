@@ -27,6 +27,7 @@ export default defineNuxtConfig({
       },
     },
     databaseUrl: process.env.DATABASE_URL,
+    adminEmails: process.env.NUXT_ADMIN_EMAILS || '',
     auth0Domain: process.env.NUXT_AUTH0_DOMAIN,
     auth0ClientId: process.env.NUXT_AUTH0_CLIENT_ID,
     auth0ClientSecret: process.env.NUXT_AUTH0_CLIENT_SECRET,

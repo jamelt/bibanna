@@ -2,6 +2,7 @@ import { db } from '~/server/database/client'
 import { users } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_TIER } from '~/shared/subscriptions'
+import { isAutoAdminEmail, autoPromoteIfAdmin } from '~/server/utils/admin-emails'
 
 export default defineOAuthAuth0EventHandler({
   config: {
@@ -28,10 +29,13 @@ export default defineOAuthAuth0EventHandler({
           avatarUrl: user.picture || null,
           auth0Id: user.sub,
           subscriptionTier: DEFAULT_TIER,
+          role: isAutoAdminEmail(email) ? 'admin' : 'user',
         })
         .returning()
 
       existingUser = newUser
+    } else {
+      await autoPromoteIfAdmin(email)
     }
 
     if (!existingUser) {

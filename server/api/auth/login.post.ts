@@ -3,6 +3,7 @@ import { users } from '~/server/database/schema'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { enforceRateLimit } from '~/server/utils/rate-limit'
+import { autoPromoteIfAdmin } from '~/server/utils/admin-emails'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -37,6 +38,8 @@ export default defineEventHandler(async (event) => {
       message: 'Invalid email or password',
     })
   }
+
+  await autoPromoteIfAdmin(user.email)
 
   await setUserSession(event, {
     user: {

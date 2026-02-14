@@ -5,6 +5,7 @@ metadata:
 data:
   NODE_ENV: 'staging'
   NUXT_PUBLIC_APP_URL: 'https://staging.annobib.com'
+  NUXT_ADMIN_EMAILS: 'jameltoms@mail.com,tonaytoms@gmail.com,tonayqueen@gmail.com,e2e-admin@test.annobib.com'
   LOG_LEVEL: 'debug'
   GOOGLE_CLOUD_PROJECT: 'annobib-staging'
   GCS_BUCKET_NAME: 'annobib-staging-uploads'

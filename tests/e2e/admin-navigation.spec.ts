@@ -1,16 +1,49 @@
 import { test, expect } from '@playwright/test'
 import { execSync } from 'node:child_process'
 
-const ADMIN_EMAIL = `e2e-admin-nav-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`
-const ADMIN_PASSWORD = 'testpassword123'
+const isRemote = !!process.env.BASE_URL
+
+const ADMIN_EMAIL = isRemote
+  ? 'e2e-admin@test.annobib.com'
+  : `e2e-admin-nav-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`
+const ADMIN_PASSWORD = 'E2eAdminTest123!'
 const ADMIN_NAME = 'E2E Admin Nav User'
 
 test.describe('Admin Navigation', () => {
-  test.beforeAll(async () => {
-    execSync(
-      `npx tsx scripts/promote-admin.ts "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" "${ADMIN_NAME}"`,
-      { cwd: process.cwd(), stdio: 'pipe' },
-    )
+  test.beforeAll(async ({ browser }) => {
+    if (isRemote) {
+      const page = await browser.newPage()
+      await page.goto('/signup', { waitUntil: 'networkidle' })
+
+      const emailField = page.getByPlaceholder('you@example.com')
+      await emailField.waitFor({ timeout: 15000 })
+
+      await page.getByPlaceholder('Your name').fill(ADMIN_NAME)
+      await emailField.fill(ADMIN_EMAIL)
+      await page.locator('input[type="password"]').first().fill(ADMIN_PASSWORD)
+      await page.locator('input[type="password"]').nth(1).fill(ADMIN_PASSWORD)
+
+      const [regResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 20000 }),
+        page.getByRole('button', { name: 'Create Account' }).click(),
+      ])
+
+      if (regResponse.status() === 409) {
+        // User already exists from a prior run — just log in
+        await page.goto('/login', { waitUntil: 'networkidle' })
+        await page.getByPlaceholder('you@example.com').fill(ADMIN_EMAIL)
+        await page.locator('input[type="password"]').fill(ADMIN_PASSWORD)
+        await page.getByRole('button', { name: 'Sign in' }).click()
+      }
+
+      await expect(page).toHaveURL(/\/app/, { timeout: 15000 })
+      await page.close()
+    } else {
+      execSync(
+        `npx tsx scripts/promote-admin.ts "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" "${ADMIN_NAME}"`,
+        { cwd: process.cwd(), stdio: 'pipe' },
+      )
+    }
   })
 
   test.beforeEach(async ({ page }) => {
@@ -69,40 +102,34 @@ test.describe('Admin Navigation', () => {
 
     const sidebar = page.locator('aside')
 
-    // Admin Dashboard -> Users
     await sidebar.getByText('Users').click()
     await expect(page).toHaveURL('/app/admin/users', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Users -> Feedback
     await sidebar.getByText('Feedback').click()
     await expect(page).toHaveURL('/app/admin/feedback', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Feedback -> Announcements
     await sidebar.getByText('Announcements').click()
     await expect(page).toHaveURL('/app/admin/announcements', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Announcements/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Announcements -> Feature Flags
     await sidebar.getByText('Feature Flags').click()
     await expect(page).toHaveURL('/app/admin/feature-flags', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Feature Flags/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Feature Flags -> Audit Log
     await sidebar.getByText('Audit Log').click()
     await expect(page).toHaveURL('/app/admin/audit-log', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Audit Log/i })).toBeVisible({ timeout: 10000 })
 
-    // Audit Log -> back to Admin Dashboard
     await sidebar.getByText('Admin Dashboard').click()
     await expect(page).toHaveURL('/app/admin', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Admin Dashboard/i })).toBeVisible({
@@ -111,7 +138,6 @@ test.describe('Admin Navigation', () => {
   })
 
   test('can navigate from admin pages back to regular app pages', async ({ page }) => {
-    // Start on admin users page (the page that was causing the freeze)
     await page.goto('/app/admin/users')
     await page.waitForLoadState('networkidle')
     await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
@@ -120,31 +146,26 @@ test.describe('Admin Navigation', () => {
 
     const sidebar = page.locator('aside')
 
-    // Users -> App Dashboard
     await sidebar.getByText('Dashboard').first().click()
     await expect(page).toHaveURL('/app', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10000 })
 
-    // App Dashboard -> Admin Users (back into admin)
     await sidebar.getByText('Users').click()
     await expect(page).toHaveURL('/app/admin/users', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /User Management/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Admin Users -> Library
     await sidebar.getByText('Library').click()
     await expect(page).toHaveURL('/app/library', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Library/i })).toBeVisible({ timeout: 10000 })
 
-    // Library -> Admin Feedback
     await sidebar.getByText('Feedback').click()
     await expect(page).toHaveURL('/app/admin/feedback', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: /Feedback Inbox/i })).toBeVisible({
       timeout: 10000,
     })
 
-    // Admin Feedback -> Projects
     await sidebar.getByText('Projects').click()
     await expect(page).toHaveURL('/app/projects', { timeout: 10000 })
     await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
