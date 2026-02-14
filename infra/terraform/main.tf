@@ -123,16 +123,18 @@ module "vpc" {
   }
 }
 
-# Cloud NAT (required for private nodes to pull public images)
+# Cloud NAT (only needed when nodes are private and lack public IPs)
 resource "google_compute_router" "nat_router" {
+  count   = var.enable_private_nodes ? 1 : 0
   name    = "${local.name}-router"
   region  = var.region
   network = module.vpc.network_self_link
 }
 
 resource "google_compute_router_nat" "nat" {
+  count                              = var.enable_private_nodes ? 1 : 0
   name                               = "${local.name}-nat"
-  router                             = google_compute_router.nat_router.name
+  router                             = google_compute_router.nat_router[0].name
   region                             = var.region
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
@@ -150,16 +152,17 @@ module "gke" {
 
   project_id         = var.project_id
   name               = "${local.name}-gke"
+  regional           = var.regional_cluster
   region             = var.region
-  zones              = var.zones
+  zones              = var.regional_cluster ? var.zones : [var.zones[0]]
   network            = module.vpc.network_name
   subnetwork         = module.vpc.subnets_names[0]
   ip_range_pods      = "pods"
   ip_range_services  = "services"
 
   enable_private_endpoint = false
-  enable_private_nodes    = true
-  master_ipv4_cidr_block  = "172.16.0.0/28"
+  enable_private_nodes    = var.enable_private_nodes
+  master_ipv4_cidr_block  = var.enable_private_nodes ? "172.16.0.0/28" : null
 
   release_channel = "REGULAR"
 
@@ -174,7 +177,7 @@ module "gke" {
       min_count          = var.node_min_count
       max_count          = var.node_max_count
       local_ssd_count    = 0
-      disk_size_gb       = 100
+      disk_size_gb       = 50
       disk_type          = "pd-standard"
       image_type         = "COS_CONTAINERD"
       auto_repair        = true

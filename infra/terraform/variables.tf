@@ -87,3 +87,15 @@ variable "billing_account_id" {
   description = "The billing account ID for budget alerts"
   type        = string
 }
+
+variable "regional_cluster" {
+  description = "Whether to create a regional (multi-zone) GKE cluster. Zonal is free, regional costs ~$73/mo."
+  type        = bool
+  default     = true
+}
+
+variable "enable_private_nodes" {
+  description = "Whether GKE nodes use private IPs only. Requires Cloud NAT for outbound internet."
+  type        = bool
+  default     = true
+}

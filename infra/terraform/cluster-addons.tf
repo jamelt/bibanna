@@ -48,7 +48,7 @@ resource "helm_release" "ingress_nginx" {
     value = "128Mi"
   }
 
-  depends_on = [module.gke, google_compute_router_nat.nat]
+  depends_on = [module.gke]
 }
 
 # --- cert-manager ---
@@ -67,7 +67,7 @@ resource "helm_release" "cert_manager" {
     value = "true"
   }
 
-  depends_on = [module.gke, google_compute_router_nat.nat]
+  depends_on = [module.gke]
 }
 
 # Let's Encrypt ClusterIssuer (depends on cert-manager CRDs)
@@ -103,7 +103,7 @@ resource "helm_release" "external_secrets" {
   version          = "0.14.3"
   timeout          = 600
 
-  depends_on = [module.gke, google_compute_router_nat.nat]
+  depends_on = [module.gke]
 }
 
 # ClusterSecretStore for GCP Secret Manager (depends on ESO CRDs)
