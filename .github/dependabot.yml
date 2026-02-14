@@ -1,37 +1,37 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     open-pull-requests-limit: 10
     labels:
-      - "dependencies"
+      - 'dependencies'
     groups:
       nuxt:
         patterns:
-          - "@nuxt/*"
-          - "nuxt"
-          - "nuxt-*"
+          - '@nuxt/*'
+          - 'nuxt'
+          - 'nuxt-*'
       opentelemetry:
         patterns:
-          - "@opentelemetry/*"
-          - "@google-cloud/opentelemetry-*"
+          - '@opentelemetry/*'
+          - '@google-cloud/opentelemetry-*'
       testing:
         patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "@playwright/*"
-          - "msw"
-          - "@vue/test-utils"
+          - 'vitest'
+          - '@vitest/*'
+          - '@playwright/*'
+          - 'msw'
+          - '@vue/test-utils'
 
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     open-pull-requests-limit: 5
     labels:
-      - "dependencies"
-      - "docker"
+      - 'dependencies'
+      - 'docker'

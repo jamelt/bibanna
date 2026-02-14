@@ -144,7 +144,7 @@ steps:
       - '-c'
       - |
         corepack enable
-        pnpm run test:e2e --project=chromium
+        pnpm run test:e2e --project=chromium --workers=1
     env:
       - 'BASE_URL=${_STAGING_URL}'
       - 'CI=true'

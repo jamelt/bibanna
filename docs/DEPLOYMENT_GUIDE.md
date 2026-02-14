@@ -3,6 +3,7 @@
 Step-by-step instructions for setting up the production infrastructure on Google Cloud Platform.
 
 **Prerequisites:**
+
 - A Google account with billing enabled
 - `gcloud` CLI installed and authenticated (`gcloud auth login`)
 - `terraform` CLI installed (>= 1.5.0)
@@ -84,12 +85,14 @@ gcloud storage buckets update gs://annobib-terraform-state --versioning
 Edit the tfvars files with your actual values:
 
 **`infra/terraform/environments/staging.tfvars`:**
+
 ```hcl
 notification_email    = "your-email@example.com"
 billing_account_id    = "YOUR_BILLING_ACCOUNT_ID"
 ```
 
 **`infra/terraform/environments/production.tfvars`:**
+
 ```hcl
 notification_email    = "your-email@example.com"
 billing_account_id    = "YOUR_BILLING_ACCOUNT_ID"
@@ -119,6 +122,7 @@ pnpm ops:tf:apply -- staging
 ```
 
 This will take 10-15 minutes. It provisions:
+
 - VPC network with private subnets and Cloud NAT
 - GKE cluster (1-3 spot e2-medium nodes)
 - Cloud SQL PostgreSQL (db-f1-micro)
@@ -134,11 +138,13 @@ This will take 10-15 minutes. It provisions:
   - Application namespace (`annobib-staging`)
 
 After completion, note the outputs:
+
 ```bash
 cd infra/terraform && terraform output
 ```
 
 Get the ingress external IP (needed for DNS):
+
 ```bash
 gcloud container clusters get-credentials annobib-staging-gke \
   --region us-central1 \
@@ -155,9 +161,9 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller
 
 Go to your domain registrar (wherever you registered annobib.com) and create these DNS records:
 
-| Type | Name | Value | TTL |
-|------|------|-------|-----|
-| A | `staging` | `<staging-ingress-ip>` | 300 |
+| Type | Name      | Value                  | TTL |
+| ---- | --------- | ---------------------- | --- |
+| A    | `staging` | `<staging-ingress-ip>` | 300 |
 
 **Note:** Production DNS records (`@` and `www`) will be added after provisioning production in Step 10.
 
@@ -220,12 +226,14 @@ echo -n "your-google-books-key" | \
 5. Create three triggers:
 
 ### Trigger 1: CI (runs on pull requests)
+
 - **Name:** `annobib-ci`
 - **Event:** Pull request
 - **Source:** Your repo, any branch
 - **Config:** Cloud Build config file: `infra/cloudbuild/ci.yaml`
 
 ### Trigger 2: Staging Deploy (runs on push to main)
+
 - **Name:** `annobib-staging-deploy`
 - **Event:** Push to branch
 - **Branch:** `^main$`
@@ -235,6 +243,7 @@ echo -n "your-google-books-key" | \
   - `_STAGING_URL` = `https://staging.annobib.com`
 
 ### Trigger 3: Production Deploy (runs on tags)
+
 - **Name:** `annobib-production-deploy`
 - **Event:** Push new tag
 - **Tag:** `^v.*$`
@@ -247,6 +256,7 @@ echo -n "your-google-books-key" | \
 ## Step 9: First Staging Deploy
 
 Push your code to main. Cloud Build will automatically:
+
 1. Lint, typecheck, and run unit tests
 2. Build the Docker image and push to Artifact Registry
 3. Run database migrations against staging
@@ -254,17 +264,20 @@ Push your code to main. Cloud Build will automatically:
 5. Run E2E tests
 
 Monitor the build:
+
 ```bash
 gcloud builds list --project=annobib-staging --limit=5
 gcloud builds log LATEST_BUILD_ID --project=annobib-staging --stream
 ```
 
 After the first successful deploy, seed the staging database with test data:
+
 ```bash
 pnpm ops:seed -- staging
 ```
 
 Verify the app is running:
+
 ```bash
 pnpm ops:health -- staging
 
@@ -293,6 +306,7 @@ pnpm ops:tf:apply -- production
 This provisions the same infrastructure as staging (including all cluster add-ons) for production.
 
 After completion, get the production ingress IP:
+
 ```bash
 gcloud container clusters get-credentials annobib-production-gke \
   --region us-central1 \
@@ -308,6 +322,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller
 ## Step 11: Populate Secret Manager (Production)
 
 Same as Step 7, but targeting `annobib-prod` project and using **live** credentials:
+
 - Stripe: live mode keys (`sk_live_...`, `pk_live_...`)
 - Auth0: production tenant/application
 - OpenAI: same key (or a separate one if you prefer billing separation)
@@ -328,11 +343,13 @@ pnpm ops:deploy:production -- v1.0.0
 ```
 
 Monitor the build:
+
 ```bash
 gcloud builds list --project=annobib-staging --limit=5
 ```
 
 Verify production:
+
 ```bash
 pnpm ops:health -- production
 curl https://annobib.com/api/health
@@ -371,7 +388,7 @@ curl https://annobib.com/api/health
 # View staging logs
 pnpm ops:logs -- staging
 
-# View production logs  
+# View production logs
 pnpm ops:logs -- production
 
 # Exec into a staging pod
@@ -450,6 +467,7 @@ pnpm ops:tf:apply -- production
 Budget alerts are configured at $200/mo for staging and $500/mo for production. You'll receive email alerts at 50%, 80%, and 100% of these thresholds.
 
 To check current spend:
+
 ```bash
 gcloud billing projects describe annobib-staging --format="value(billingAccountName)"
 ```
