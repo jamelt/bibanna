@@ -77,6 +77,21 @@ function deduplicateSuggestions(
   suggestions: EntrySuggestion[],
 ): EntrySuggestion[] {
   const seen = new Map<string, EntrySuggestion>();
+  const keysBySuggestion = new Map<EntrySuggestion, string[]>();
+
+  function trackKeys(suggestion: EntrySuggestion, ...keys: string[]) {
+    const existing = keysBySuggestion.get(suggestion) ?? [];
+    keysBySuggestion.set(suggestion, [...existing, ...keys]);
+  }
+
+  function replaceAll(old: EntrySuggestion, merged: EntrySuggestion) {
+    const keys = keysBySuggestion.get(old) ?? [];
+    for (const key of keys) {
+      seen.set(key, merged);
+    }
+    keysBySuggestion.delete(old);
+    trackKeys(merged, ...keys);
+  }
 
   for (const s of suggestions) {
     const doiKey = s.metadata?.doi
@@ -85,7 +100,11 @@ function deduplicateSuggestions(
 
     if (doiKey && seen.has(doiKey)) {
       const existing = seen.get(doiKey)!;
-      seen.set(doiKey, pickRicher(existing, s));
+      const merged = pickRicher(existing, s);
+      replaceAll(existing, merged);
+      const fuzzyKey = buildFuzzyKey(s);
+      seen.set(fuzzyKey, merged);
+      trackKeys(merged, fuzzyKey);
       continue;
     }
 
@@ -93,13 +112,21 @@ function deduplicateSuggestions(
     if (seen.has(fuzzyKey)) {
       const existing = seen.get(fuzzyKey)!;
       const merged = pickRicher(existing, s);
-      seen.set(fuzzyKey, merged);
-      if (doiKey) seen.set(doiKey, merged);
+      replaceAll(existing, merged);
+      if (doiKey) {
+        seen.set(doiKey, merged);
+        trackKeys(merged, doiKey);
+      }
       continue;
     }
 
-    if (doiKey) seen.set(doiKey, s);
+    const keys: string[] = [fuzzyKey];
     seen.set(fuzzyKey, s);
+    if (doiKey) {
+      seen.set(doiKey, s);
+      keys.push(doiKey);
+    }
+    trackKeys(s, ...keys);
   }
 
   const unique = new Set(seen.values());
