@@ -1143,10 +1143,7 @@ onMounted(() => {
                 variant="outline"
                 color="neutral"
                 size="sm"
-                @click="
-                  query = ''
-                  status = 'idle'
-                "
+                @click="query = ''; status = 'idle'"
               >
                 Try again
               </UButton>

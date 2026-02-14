@@ -94,10 +94,7 @@ const typeColors: Record<string, string> = {
         icon="i-heroicons-plus"
         label="New Announcement"
         color="primary"
-        @click="
-          resetForm()
-          isCreateOpen = true
-        "
+        @click="resetForm(); isCreateOpen = true"
       />
     </div>
 
