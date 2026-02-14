@@ -30,14 +30,6 @@ steps:
       - 'corepack enable && pnpm run test:unit'
     waitFor: ['install']
 
-  - name: 'node:20'
-    id: 'build'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - 'export NODE_OPTIONS="--max-old-space-size=4096" && corepack enable && pnpm run build'
-    waitFor: ['lint', 'typecheck', 'test-unit']
-
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-build'
     args:
@@ -49,7 +41,7 @@ steps:
       - '--cache-from'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_APP_NAME}/${_APP_NAME}-app:latest'
       - '.'
-    waitFor: ['build']
+    waitFor: ['lint', 'typecheck', 'test-unit']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'docker-push'

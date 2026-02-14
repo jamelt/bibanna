@@ -6,7 +6,7 @@ RUN corepack enable
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for layer caching
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
@@ -16,6 +16,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build the application
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
 # Production stage
